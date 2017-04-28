@@ -125,6 +125,7 @@ bool  QNode::loadScenario(const std::string& path,int id)
     add_client = n.serviceClient<vrep_common::simRosCloseScene>("/vrep/simRosCloseScene");
     vrep_common::simRosCloseScene srvc;
     add_client.call(srvc);
+
     // load the new scene
     add_client = n.serviceClient<vrep_common::simRosLoadScene>("/vrep/simRosLoadScene");
     vrep_common::simRosLoadScene srv;
@@ -142,7 +143,7 @@ bool  QNode::loadScenario(const std::string& path,int id)
 
         switch(id){
 
-        case 0: case 1:
+        case 0: case 1: case 6:
             // Assembly scenario: the Toy vehicle with ARoS
             // Assembly scenario: the Toy vehicle with Jarde
 
@@ -208,18 +209,18 @@ bool  QNode::loadScenario(const std::string& path,int id)
             subShelf_4_d = n.subscribe("/vrep/Shelf_4_d_pose",1,&QNode::Shelf_4_dCallback,this);
 
             break;
-
         }
 #if MOVEIT==1
         // planning scene of RViZ
         planning_scene_interface_ptr.reset(new moveit::planning_interface::PlanningSceneInterface());
 #endif
         return true;
-    }else{
-        return false;
     }
 
-
+    else
+    {
+        return false;
+    }
 }
 
 #if MOVEIT==1

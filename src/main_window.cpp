@@ -42,6 +42,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     // create Vrep Communication dialog
     mvrepCommdlg = new VrepCommDialog(&qnode, this);
     mvrepCommdlg->setModal(true);
+
 #if MOVEIT==1
     // create RViz Communication dialog
     mrvizCommdlg = new RVizCommDialog(&qnode, this);
@@ -133,6 +134,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     **********************/    
     ui.tabWidget_main->setCurrentIndex(0);
     ui.tabWidget_sol->setCurrentIndex(0);
+
 #if MOVEIT==0
     ui.pushButton_execMov_moveit->setEnabled(false);
     ui.comboBox_planner->clear();
@@ -141,26 +143,26 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     // scenarios
     scenarios.clear();
+
 #if HAND == 0
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Jarde"));
 
 #elif HAND == 1
-
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with ARoS and Bill"));
     scenarios.push_back(QString("Empty scenario: empty scenario with ARoS"));
     scenarios.push_back(QString("Empty scenario: empty scenario with ARoS and NO collisions"));
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with ARoS"));
     scenarios.push_back(QString("Challenging scenario: picking a cup from a shelf with ARoS"));
+    scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
 
 #endif
+
 
     for (size_t i=0; i< scenarios.size();++i){
         ui.listWidget_scenario->addItem(scenarios.at(i));
     }
-
-
-
 }
+
 
 MainWindow::~MainWindow()
 {
@@ -178,28 +180,25 @@ void MainWindow::updateLoggingView()
         ui.view_logging->scrollToBottom();
 }
 
+
 void MainWindow::updateRosStatus(bool c)
 {
-
     if (c){
         ui.labelRosComm->setText(QString("connected"));
         ui.actionVrep_Communication->setEnabled(true);
         ui.labelStatusVrep->setEnabled(true);
         ui.labelVrepComm->setEnabled(true);
     }else{
-
         ui.labelRosComm->setText(QString("disconnected"));
         ui.actionVrep_Communication->setEnabled(false);
         ui.labelStatusVrep->setEnabled(false);
         ui.labelVrepComm->setEnabled(false);
     }
-
-
 }
+
 
 void MainWindow::updateVrepStatus(bool c)
 {
-
     if (c){
         ui.labelVrepComm->setText(QString("on-line"));
 #if MOVEIT==1
@@ -209,7 +208,6 @@ void MainWindow::updateVrepStatus(bool c)
 #elif MOVEIT==0
         ui.tab_scenario->setEnabled(true);
         ui.groupBox_selectScenario->setEnabled(true);
-
 #endif
         //ui.tab_scenario->setEnabled(true);
         //ui.groupBox_selectScenario->setEnabled(true);
@@ -226,6 +224,7 @@ void MainWindow::updateVrepStatus(bool c)
     ui.pushButton_loadScenario->setEnabled(false);
     ui.groupBox_getElements->setEnabled(false);
 }
+
 
 void MainWindow::updateRVizStatus(bool c)
 {
@@ -244,21 +243,20 @@ void MainWindow::updateRVizStatus(bool c)
     ui.groupBox_getElements->setEnabled(false);
 }
 
+
 void MainWindow::addElement(string value)
 {
 
     ui.listWidget_elements->addItem(QString(value.c_str()));
     ui.listWidget_elements->setCurrentRow(0);
-
 }
+
 
 void MainWindow::updateElement(int id, string value)
 {
-
     QListWidgetItem* curr_item = ui.listWidget_elements->takeItem(id);
     delete curr_item;
     ui.listWidget_elements->insertItem(id,QString(value.c_str()));
-
 }
 
 
@@ -269,25 +267,24 @@ void MainWindow::addObject(string value)
    ui.comboBox_objects_eng->addItem(QString(value.c_str()));
 }
 
+
 void MainWindow::addPose(string value)
 {
-
    ui.comboBox_poses->addItem(QString(value.c_str()));
 }
 
 
 void MainWindow::updateHomePosture(string value)
 {
-
     ui.listWidget_homePosture->addItem(QString(value.c_str()));
     ui.listWidget_homePosture->setCurrentRow(0);
-
 }
+
+
 
 /*****************************************************************************
 ** Implementation [Menu]
 *****************************************************************************/
-
 
 void MainWindow::on_actionAbout_triggered()
 {
@@ -295,18 +292,19 @@ void MainWindow::on_actionAbout_triggered()
                                                            "This software is designed to plan the movements of the arms for any humanoid robot</p>"));
 }
 
+
 void MainWindow::on_actionRos_Communication_triggered()
 {
-
     mrosCommdlg->show();
-
 }
+
 
 void MainWindow::on_actionVrep_Communication_triggered()
 {
-
     mvrepCommdlg->show();
 }
+
+
 #if MOVEIT==1
 void MainWindow::on_actionRViz_Communication_triggered()
 {
@@ -315,13 +313,13 @@ void MainWindow::on_actionRViz_Communication_triggered()
 }
 #endif
 
+
+
 /*****************************************************************************
 ** Implementation [Configuration]
 *****************************************************************************/
-
 void MainWindow::on_pushButton_tuning_clicked()
 {
-
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
     switch(planner_id){
@@ -345,14 +343,11 @@ void MainWindow::on_pushButton_tuning_clicked()
         mPRMstardlg->show();
         break;
     }
-
 }
 
 
 void MainWindow::on_pushButton_loadScenario_clicked()
 {
-
-
     //this->scenario_id = ui.listWidget_scenario->currentRow();
     QString scenario_text = ui.listWidget_scenario->currentItem()->text();
     int equal;
@@ -361,18 +356,27 @@ void MainWindow::on_pushButton_loadScenario_clicked()
          if(equal==0){
              // Empty scenario with ARoS
              string path_vrep_emptyscene_aros = PATH_SCENARIOS+string("/vrep/empty_aros.ttt");
+
              // Empty scenario: empty scenario with ARoS and NO self collisions
              string path_vrep_emptyscene_aros_no_self_coll = PATH_SCENARIOS+string("/vrep/empty_aros_no_coll.ttt");
+
              // Toy vehicle scenario with ARoS
              //string path_vrep_toyscene_aros = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_aros.ttt");
              string path_vrep_toyscene_aros = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_aros_bill.ttt");
+
              // Drinking Service task with ARoS
              string path_vrep_drinking_aros = PATH_SCENARIOS+string("/vrep/DrinkingServiceTask_aros_bill.ttt");
+
              // Toy vehicle scenario with Jarde
              string path_vrep_toyscene_jarde = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_jarde.ttt");
              //string path_rviz_toyscene_jarde = PATH_SCENARIOS+string("/rviz/toy_vehicle_jarde.scene");
+
              // Challengingscenario with ARoS
              string path_vrep_challenge_aros = PATH_SCENARIOS+string("/vrep/NarrowShelf_aros.ttt");
+
+             // Toy vehicle scenario with Sawyer
+             string path_vrep_toyscene_sawyer = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_bill.ttt");
+
 
              switch(i){
              case 0: // Assembly scenario
@@ -527,13 +531,37 @@ void MainWindow::on_pushButton_loadScenario_clicked()
 #endif
                  break;
 
+
+             case 5: // Assembly scenario: the Toy vehicle with Sawyer
+#if HAND == 1
+                 this->scenario_id = 6;
+
+                 if (qnode.loadScenario(path_vrep_toyscene_sawyer,this->scenario_id))
+                 {
+                     qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED"));
+                     ui.groupBox_getElements->setEnabled(true);
+                     ui.groupBox_homePosture->setEnabled(true);
+
+                     string title = string("Assembly scenario: the Toy vehicle with Sawyer");
+                     init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                     curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                 }
+
+                 else
+                 {
+                     qnode.log(QNode::Error,std::string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
+                     ui.groupBox_getElements->setEnabled(false);
+                     ui.groupBox_homePosture->setEnabled(false);
+                     ui.pushButton_loadScenario->setEnabled(true);
+                 }
+
+                 break;
+#endif
              }
-
-
          }
     }
-
 }
+
 
 void MainWindow::on_pushButton_getElements_pressed()
 {
@@ -2954,6 +2982,12 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
                 //Challenging scenario: picking a cup from a shelf with ARoS
                 ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
                                                          "ARoS picks and places a cup on a narrow shelf"));
+                break;
+
+            case 5:
+                //Assembly scenario: the Toy vehicle with Sawyer
+                ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
+                                                         "Sawyer has to assemble a toy vehicle on a table in front of him"));
                 break;
 
             }
