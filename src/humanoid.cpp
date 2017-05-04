@@ -273,8 +273,44 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, bar
     this->mat_left = Matrix4d::Identity(4,4);
     this->mat_r_hand = Matrix4d::Identity(4,4);
     this->mat_l_hand = Matrix4d::Identity(4,4);
+}
+
+Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+                   vector<double> &arm, vector<double> &min_armL, vector<double> &max_armL)
+{
 
 
+    this->m_name = name;
+    this->m_torso_pos = ppos;
+    this->m_torso_or = oor;
+    this->m_torso_size = ssize;
+    this->m_arm_specs = aspecs;
+
+    this->m_barrett_hand_specs = hspecs;
+
+    this->rk.push_back(-1.0);
+    this->rk.push_back(1.0);
+    this->rk.push_back(0.0);
+
+    this->jk.push_back(-1.0);
+    this->jk.push_back(-1.0);
+    this->jk.push_back(1.0);
+
+    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    std::copy(arm.begin(),arm.end(),this->rightPosture.begin());
+    std::copy(arm.begin(),arm.end(),this->rightHomePosture.begin());
+
+    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    std::copy(min_armL.begin(),min_armL.end(),this->min_rightLimits.begin());
+    std::copy(max_armL.begin(),max_armL.end(),this->max_rightLimits.begin());
+
+    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->mat_right = Matrix4d::Identity(4,4);
+    this->mat_r_hand = Matrix4d::Identity(4,4);
 }
 #endif
 

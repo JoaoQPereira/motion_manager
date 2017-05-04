@@ -139,7 +139,9 @@ bool  QNode::loadScenario(const std::string& path,int id)
 
         subJoints_state = n.subscribe("/vrep/joints_state",1, &QNode::JointsCallback, this);
         subRightProxSensor = n.subscribe("/vrep/right_prox_sensor",1,&QNode::rightProxCallback,this);
-        subLeftProxSensor = n.subscribe("/vrep/left_prox_sensor",1,&QNode::leftProxCallback,this);
+
+        if(id!=6)
+            subLeftProxSensor = n.subscribe("/vrep/left_prox_sensor",1,&QNode::leftProxCallback,this);
 
         switch(id){
 
@@ -2688,9 +2690,9 @@ bool QNode::getElements(scenarioPtr scene)
 
         // get the number of objects in the scenario
         add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
-
         srvi.request.signalName = NOBJECTS;
         add_client.call(srvi);
+
         if (srvi.response.result == 1)
         {
              n_objs= srvi.response.signalValue;
@@ -2821,15 +2823,14 @@ bool QNode::getElements(scenarioPtr scene)
             {
                 throw string("Error while retrieving the objects of the scenario");
             }
-        }
+        }// while loop objects
 
-        // while loop objects
 
-        // get the info of the Humanoid
+        // get the info of the robot
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-
-        srvs.request.signalName = string("HumanoidName");
+        srvs.request.signalName = string("RobotName");
         add_client.call(srvs);
+
         if (srvs.response.result == 1)
         {
              Hname= srvs.response.signalValue;
@@ -2839,12 +2840,12 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
-        // transformation matrix for both arms
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
 
-        // right arm
+        // transformation matrix for the arm
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("mat_right_arm");
         add_client.call(srvs);
+
         if (srvs.response.result == 1)
         {
              mat_right_arm_str = srvs.response.signalValue;
@@ -2859,58 +2860,33 @@ bool QNode::getElements(scenarioPtr scene)
         {
             mat_right_arm_vec.clear();
         }
+
         floatCount = mat_right_arm_str.size()/sizeof(float);
         for (int k=0;k<floatCount;++k)
             mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
-
-
-        // left arm
-        srvs.request.signalName = string("mat_left_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-        {
-             mat_left_arm_str = srvs.response.signalValue;
-        }
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
-
-        if(!mat_left_arm_vec.empty())
-        {
-            mat_left_arm_vec.clear();
-        }
-        floatCount = mat_left_arm_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            mat_left_arm_vec.push_back(static_cast<double>(((float*)mat_left_arm_str.c_str())[k]));
-
 
         rows=0;
         for(int i=0;i<3;++i){
             for(int j=0;j<4;++j){
                 if(i==3 && j<3){
                     mat_right(i,j) = 0;
-                    mat_left(i,j) = 0;
                 }else if(i==3 && j==3){
                     mat_right(i,j) = 1;
-                    mat_left(i,j) = 1;
                 }else if(i<3 && j==3){
                     mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4)*1000; //[mm]
                 }else{
                     mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
-                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4);
                 }
             }
             ++rows;
         }
 
-        // Arms
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
 
+        // DH_params
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("DH_params_arm");
         add_client.call(srvs);
+
         if (srvs.response.result == 1)
         {
              DH_params_str = srvs.response.signalValue;
@@ -2926,6 +2902,7 @@ bool QNode::getElements(scenarioPtr scene)
         {
             DH_params_vec.clear();
         }
+
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
@@ -2942,12 +2919,14 @@ bool QNode::getElements(scenarioPtr scene)
         }
 
 
+
 #if HAND==1
 
         // Barrett Hand
         add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
         srvf.request.signalName = string("maxAperture_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              maxAp= srvf.response.signalValue*1000;
@@ -2957,8 +2936,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("Aw_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              Aw= srvf.response.signalValue*1000;
@@ -2968,8 +2949,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("A1_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              A1= srvf.response.signalValue*1000;
@@ -2979,8 +2962,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("A2_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              A2= srvf.response.signalValue*1000;
@@ -2990,8 +2975,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("A3_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              A3= srvf.response.signalValue*1000;
@@ -3001,8 +2988,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("D3_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              D3= srvf.response.signalValue*1000;
@@ -3012,8 +3001,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("phi2_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              phi2= srvf.response.signalValue;
@@ -3023,8 +3014,10 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
         }
 
+
         srvf.request.signalName = string("phi3_info");
         add_client.call(srvf);
+
         if (srvf.response.result == 1)
         {
              phi3= srvf.response.signalValue;
@@ -3039,6 +3032,7 @@ bool QNode::getElements(scenarioPtr scene)
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("TorsoInfo");
         add_client.call(srvs);
+
         if (srvs.response.result == 1)
         {
              torso_str = srvs.response.signalValue;
@@ -3048,13 +3042,16 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
             throw string("Error: Couldn't get the information of the torso");
         }
+
         floatCount = torso_str.size()/sizeof(float);
         if (!torso_vec.empty())
         {
             torso_vec.clear();
         }
+
         for (int k=0;k<floatCount;++k)
             torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
+
 
         torso.Xpos = torso_vec.at(0)*1000;//[mm]
         torso.Ypos = torso_vec.at(1)*1000;//[mm]
@@ -3070,9 +3067,7 @@ bool QNode::getElements(scenarioPtr scene)
 
 
 
-        // right home posture
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        // *** right home (park) posture for Sawyer [deg] *** //
+        // Home posture
         // Joint 0 = 0
         // Joint 1 = -90
         // Joint 2 = 0
@@ -3080,11 +3075,13 @@ bool QNode::getElements(scenarioPtr scene)
         // Joint 4 = 0
         // Joint 5 = 0
         // Joint 6 = 0
+        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
 
         for (size_t i = 0; i <rposture.size(); i++)
         {
             srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
             add_client.call(srvf);
+
             if (srvf.response.result == 1)
             {
                  rposture.at(i)= srvf.response.signalValue;
@@ -3095,7 +3092,7 @@ bool QNode::getElements(scenarioPtr scene)
             }
         }
 
-        // minimum right limits
+        // minimum limits
         for (size_t i = 0; i <min_rlimits.size(); i++)
         {
             srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
@@ -3110,7 +3107,7 @@ bool QNode::getElements(scenarioPtr scene)
             }
         }
 
-        // maximum right limits
+        // maximum limits
         for (size_t i = 0; i <max_rlimits.size(); i++){
             srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
             add_client.call(srvf);
@@ -3123,54 +3120,6 @@ bool QNode::getElements(scenarioPtr scene)
                 succ = false;
             }
         }
-
-
-        // left home posture
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        // *** left home (park) posture for ARoS [deg] *** //
-
-        for (size_t i = 0; i <lposture.size(); i++)
-        {
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-            {
-                 lposture.at(i)= srvf.response.signalValue;
-            }
-            else
-            {
-                succ = false;
-            }
-        }
-
-        // minimum left limits
-        for (size_t i = 0; i <min_llimits.size(); i++){
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-            {
-                 min_llimits.at(i)= srvf.response.signalValue;
-            }
-            else
-            {
-                succ = false;
-            }
-        }
-
-        // maximum left limits
-        for (size_t i = 0; i <max_llimits.size(); i++){
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-            {
-                 max_llimits.at(i)= srvf.response.signalValue;
-            }
-            else
-            {
-                succ = false;
-            }
-        }
-
 
 
         if (succ)
@@ -3199,39 +3148,24 @@ bool QNode::getElements(scenarioPtr scene)
 
 #if HAND==1
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
-                                          rposture, lposture,
-                                          min_rlimits,max_rlimits,
-                                          min_llimits,max_llimits);
+                                          rposture,min_rlimits,max_rlimits);
             hptr->setMatRight(mat_right);
-            hptr->setMatLeft(mat_left);
 
             // get the postures
             std::vector<double> rightp;
-            std::vector<double> leftp;
-
             hptr->getRightPosture(rightp);
-            hptr->getLeftPosture(leftp);
 
             std::vector<string> rj = std::vector<string>(rightp.size());
 
             for (size_t i=0; i<rightp.size(); i++ )
             {
-                rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                rj.at(i) = string("joint "+ QString::number(i+1).toStdString()+ ": "+
                                        QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(rj.at(i));
             }
 
 
-            std::vector<string> lj = std::vector<string>(leftp.size());
-
-            for (size_t i=0; i<leftp.size(); i++ )
-            {
-                lj.at(i) = string("left_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                       QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(lj.at(i));
-            }
-
-            // display info of the humanoid
+            // display info of the robot
             infoLine = hptr->getInfoLine();
             Q_EMIT newElement(infoLine);
             scene->addHumanoid(humanoidPtr(hptr));

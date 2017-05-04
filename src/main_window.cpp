@@ -349,7 +349,12 @@ void MainWindow::on_pushButton_tuning_clicked()
 void MainWindow::on_pushButton_loadScenario_clicked()
 {
     //this->scenario_id = ui.listWidget_scenario->currentRow();
+    ui.listWidget_elements->clear();
+    ui.listWidget_homePosture->clear();
+    ui.tab_plan->setEnabled(false);
+    ui.tab_results->setEnabled(false);
     QString scenario_text = ui.listWidget_scenario->currentItem()->text();
+
     int equal;
     for(int i=0; i<scenarios.size();++i){
          equal = scenario_text.compare(scenarios.at(i));
@@ -387,6 +392,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
 
              if (qnode.loadScenario(path_vrep_toyscene_jarde,this->scenario_id)){
                  qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Jarde HAS BEEN LOADED"));
+                 ui.pushButton_getElements->setEnabled(true);
                  ui.groupBox_getElements->setEnabled(true);
                  ui.groupBox_homePosture->setEnabled(true);
                  //ui.pushButton_loadScenario->setEnabled(false);
@@ -410,6 +416,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
 
                  if (qnode.loadScenario(path_vrep_toyscene_aros,this->scenario_id)){
                      qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with ARoS HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
                      ui.groupBox_getElements->setEnabled(true);
                      ui.groupBox_homePosture->setEnabled(true);
                      //ui.pushButton_loadScenario->setEnabled(false);
@@ -438,6 +445,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                  this->scenario_id = 2;
                  if (qnode.loadScenario(path_vrep_emptyscene_aros,this->scenario_id)){
                      qnode.log(QNode::Info,string("Empty scenario: empty scenario with ARoS HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
                      ui.groupBox_getElements->setEnabled(true);
                      ui.groupBox_homePosture->setEnabled(true);
                      //ui.pushButton_loadScenario->setEnabled(false);
@@ -464,6 +472,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                  this->scenario_id = 3;
                  if (qnode.loadScenario(path_vrep_emptyscene_aros_no_self_coll,this->scenario_id)){
                      qnode.log(QNode::Info,string("Empty scenario: empty scenario with ARoS and NO collisions HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
                      ui.groupBox_getElements->setEnabled(true);
                      ui.groupBox_homePosture->setEnabled(true);
                      //ui.pushButton_loadScenario->setEnabled(false);
@@ -489,6 +498,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 this->scenario_id = 4;
                  if (qnode.loadScenario(path_vrep_drinking_aros,this->scenario_id)){
                      qnode.log(QNode::Info,string("Human assistance scenario: Serving a drink with ARoS HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
                      ui.groupBox_getElements->setEnabled(true);
                      ui.groupBox_homePosture->setEnabled(true);
                      //ui.pushButton_loadScenario->setEnabled(false);
@@ -513,6 +523,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 this->scenario_id = 5;
                  if (qnode.loadScenario(path_vrep_challenge_aros,this->scenario_id)){
                      qnode.log(QNode::Info,string("Challenging scenario: picking a cup from a shelf with ARoS HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
                      ui.groupBox_getElements->setEnabled(true);
                      ui.groupBox_homePosture->setEnabled(true);
                      //ui.pushButton_loadScenario->setEnabled(false);
@@ -539,6 +550,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                  if (qnode.loadScenario(path_vrep_toyscene_sawyer,this->scenario_id))
                  {
                      qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
                      ui.groupBox_getElements->setEnabled(true);
                      ui.groupBox_homePosture->setEnabled(true);
 
@@ -546,7 +558,6 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                      init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
                      curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
                  }
-
                  else
                  {
                      qnode.log(QNode::Error,std::string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
@@ -588,40 +599,51 @@ void MainWindow::on_pushButton_getElements_clicked()
 {
 
     ui.listWidget_elements->clear();
-    try{
-        if (qnode.getElements(this->curr_scene)){
 
+    try{
+        if (qnode.getElements(this->curr_scene))
+        {
             this->init_scene = scenarioPtr(new Scenario(*(this->curr_scene.get()))); //set the init scenario
             this->curr_task = taskPtr(new Task());
             ui.pushButton_getElements->setEnabled(false);
-            ui.tab_plan->setEnabled(true);
+            ui.tab_plan->setEnabled(true);            
             ui.tab_results->setEnabled(true);
             ui.groupBox_specs->setEnabled(true);
             ui.groupBox_task->setEnabled(false);
             ui.tabWidget_sol->setEnabled(false);
+
+            if(scenario_id == 6)
+            {
+                ui.pushButton_plan_2d_power_law->setEnabled(false);
+                ui.pushButton_plan_3d_power_law->setEnabled(false);
+                ui.radioButton_right->setEnabled(false);
+                ui.radioButton_left->setEnabled(false);
+                ui.comboBox_Task->setItemData(1, 0, Qt::UserRole-1);
+                ui.radioButton_sagittal->setEnabled(false);
+                ui.radioButton_transverse->setEnabled(false);
+                ui.radioButton_coronal->setEnabled(false);
+            }
+
             // load the objects into RViz
             std::vector<objectPtr> objs; this->curr_scene->getObjects(objs);
 #if MOVEIT==1
             qnode.loadRVizScenario(objs);
 #endif
             qnode.log(QNode::Info,string("The elements of the scenario are now available"));
-
-        }else{
-
+        }
+        else
+        {
             ui.pushButton_getElements->setEnabled(true);
             //ui.tab_plan->setEnabled(false);
             qnode.log(QNode::Error,string("Error in getting the elements of the scenario"));
         }
 
          ui.comboBox_objects_eng->setEnabled(false);
-
     }catch(std::string str){
         qnode.log(QNode::Error,str);
     }catch(std::exception e){
         qnode.log(QNode::Error,e.what());
     }
-
-
 }
 
 
@@ -2831,18 +2853,22 @@ void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
    switch (i){
 
        case 0:
-           // Single- arm task
+       // Single- arm task
        ui.radioButton_right->setEnabled(true);
        ui.radioButton_left->setEnabled(true);
+
+       if(scenario_id == 6)
+       {
+           ui.radioButton_right->setEnabled(false);
+           ui.radioButton_left->setEnabled(false);
+       }
 
        break;
 
        case 1:
-           //Dual-arm task
-
-        ui.radioButton_right->setEnabled(false);
-        ui.radioButton_left->setEnabled(false);
-
+       //Dual-arm task
+       ui.radioButton_right->setEnabled(false);
+       ui.radioButton_left->setEnabled(false);
 
        break;
 
