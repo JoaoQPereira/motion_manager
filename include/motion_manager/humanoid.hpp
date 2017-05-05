@@ -104,21 +104,6 @@ public:
              vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
-
-    /**
-     * @brief Robot with only one arm, a constructor
-     * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
-     * @param aspecs
-     * @param hspecs
-     * @param arm
-     * @param min_armL
-     * @param max_armL
-     */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
-             vector<double>& arm, vector<double>& min_armL, vector<double>& max_armL);
 #endif
 
     /**

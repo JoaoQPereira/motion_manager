@@ -14,39 +14,28 @@ Movement::Movement(int type, int arm)
     this->pose = posePtr(new Pose());
 
     this->type=type;
-    switch (type){
 
+
+    switch (type)
+    {
     case 0:
-
         this->strType = string("Reach-to-grasp");
         break;
-
     case 1:
-
         this->strType = string("Reaching");
         break;
-
     case 2:
-
         this->strType = string("Transport");
         break;
-
     case 3:
-
         this->strType = string("Engage");
         break;
-
     case 4:
-
         this->strType = string("Disengage");
         break;
-
     case 5:
-
         this->strType = string("Go park");
         break;
-
-
     }
 
 
@@ -54,7 +43,6 @@ Movement::Movement(int type, int arm)
 
     this->arm = arm;
     this->executed = false;
-
 }
 
 

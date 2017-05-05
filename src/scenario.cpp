@@ -16,15 +16,21 @@ Scenario::Scenario(const Scenario &scene)
     this->m_scenarioID=scene.m_scenarioID;
 
     this->objs_list.clear();
-    if(!scene.objs_list.empty()){
-        for(size_t i=0; i<scene.objs_list.size();++i){
+
+    if(!scene.objs_list.empty())
+    {
+        for(size_t i=0; i<scene.objs_list.size();++i)
+        {
            objectPtr obj = scene.objs_list.at(i);
            this->objs_list.push_back(objectPtr(new Object(*obj.get())));
         }
     }
+
     this->poses_list.clear();
-    if(!scene.poses_list.empty()){
-        for(size_t i=0; i<scene.poses_list.size();++i){
+    if(!scene.poses_list.empty())
+    {
+        for(size_t i=0; i<scene.poses_list.size();++i)
+        {
            posePtr pt = scene.poses_list.at(i);
            this->poses_list.push_back(posePtr(new Pose(*pt.get())));
         }

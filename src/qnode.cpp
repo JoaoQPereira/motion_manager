@@ -3148,7 +3148,8 @@ bool QNode::getElements(scenarioPtr scene)
 
 #if HAND==1
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
-                                          rposture,min_rlimits,max_rlimits);
+                                          rposture, rposture,
+                                          min_rlimits,max_rlimits, min_rlimits,max_rlimits);
             hptr->setMatRight(mat_right);
 
             // get the postures
@@ -4433,15 +4434,12 @@ double QNode::interpolate(double ya, double yb, double m)
 
 void QNode::stopSim()
 {
-
     ros::NodeHandle node;
 
     // stop the simulation
     add_client = node.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
     vrep_common::simRosStopSimulation srvstop;
     add_client.call(srvstop);
-
-
 }
 
 
