@@ -962,26 +962,33 @@ void MainWindow::on_pushButton_addMov_clicked()
 
 void MainWindow::on_pushButton_plan_clicked()
 {
-    ui.tabWidget_sol->setCurrentIndex(0);    
-    problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
+    ui.tabWidget_sol->setCurrentIndex(0);
+    problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());   
     int planner_id = prob->getPlannerID();
+
     HUMotion::hump_params  tols;
     std::vector<double> move_target;
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
+
     bool use_final;
+
 #if MOVEIT==1
     moveit_planning::moveit_params m_params;
 #endif
+
     bool moveit_plan = false;
 
     bool solved = false;
- try{
-    switch(planner_id){
 
+ try
+ {
+    switch(planner_id)
+    {
     case 0: // HUMP
         moveit_plan = false;
         mTolHumpdlg->setInfo(prob->getInfoLine());
+
         // --- Tolerances for the final posture selection ---- //
         tols.tolTarPos = mTolHumpdlg->getTolTarPos(); // target position tolerances
         tols.tolTarOr = mTolHumpdlg->getTolTarOr(); // target orientation tolerances
@@ -991,6 +998,7 @@ void MainWindow::on_pushButton_plan_clicked()
         tols.obstacle_avoidance = mTolHumpdlg->getObstacleAvoidance(); //obstacle avoidance
         mTolHumpdlg->getLambda(tols.lambda_final); // joint expense factors
         mTolHumpdlg->getLambda(tols.lambda_bounce); // joint expense factors
+
         // --- Tolerances for the bounce posture selection ---- //
         tols.w_max = std::vector<double>(tols.lambda_final.size(),(mTolHumpdlg->getWMax()*M_PI/180)); // max joint velocity
         mTolHumpdlg->getInitVel(tols.bounds.vel_0); // initial velocity
@@ -999,12 +1007,14 @@ void MainWindow::on_pushButton_plan_clicked()
         mTolHumpdlg->getFinalAcc(tols.bounds.acc_f); // final acceleration
         //mTolHumpdlg->getVelApproach(tols.vel_approach); // velocity approach
         //mTolHumpdlg->getAccApproach(tols.acc_approach); // acceleration approach
+
         // tolerances for the obstacles
         mTolHumpdlg->getTolsObstacles(tols.final_tolsObstacles); // final posture tols
         tols.singleArm_tolsObstacles.push_back(MatrixXd::Constant(3,6,1)); // bounce posture tols
         tols.singleArm_tolsObstacles.push_back(MatrixXd::Constant(3,6,1));
         mTolHumpdlg->getTolsObstacles(tols.singleArm_tolsObstacles.at(0));
         mTolHumpdlg->getTolsObstacles(tols.singleArm_tolsObstacles.at(1));
+
         // tolerances for the target
         tols.singleArm_tolsTarget.push_back(MatrixXd::Constant(3,6,1)); // bounce posture tols
         tols.singleArm_tolsTarget.push_back(MatrixXd::Constant(3,6,1));
@@ -1014,6 +1024,7 @@ void MainWindow::on_pushButton_plan_clicked()
         tols.singleArm_tolsTarget.at(2) = 0*tols.singleArm_tolsTarget.at(0);
         //mTolHumpdlg->getTolsTarget(tols.singleArm_tolsTarget.at(1));
         //mTolHumpdlg->getTolsTarget(tols.singleArm_tolsTarget.at(2));
+
         // pick / place settings
         tols.mov_specs.approach = mTolHumpdlg->getApproach();
         tols.mov_specs.retreat = mTolHumpdlg->getRetreat();
@@ -1023,6 +1034,7 @@ void MainWindow::on_pushButton_plan_clicked()
         mTolHumpdlg->getPostPlaceRetreat(tols.mov_specs.post_place_retreat); // place retreat
         tols.mov_specs.rand_init = mTolHumpdlg->getRandInit(); // random initialization for "plan" stages
         tols.mov_specs.coll = mTolHumpdlg->getColl(); // collisions option
+
         // move settings
         mTolHumpdlg->getTargetMove(move_target);
         mTolHumpdlg->getFinalHand(move_final_hand);
@@ -1032,35 +1044,56 @@ void MainWindow::on_pushButton_plan_clicked()
         tols.mov_specs.use_move_plane = mTolHumpdlg->get_add_plane();
         mTolHumpdlg->getPlaneParameters(tols.mov_specs.plane_params);
 
-        h_results = prob->solve(tols); // plan the movement
+        // plan the movement
+        h_results = prob->solve(tols);
 
         ui.pushButton_plan->setCheckable(false);
-        if(h_results!=nullptr){
-            if(h_results->status==0){
+
+        if(h_results!=nullptr)
+        {
+            if(h_results->status==0)
+            {
                 qnode.log(QNode::Info,std::string("The movement has been planned successfully"));
                 this->curr_mov = prob->getMovement();
                 this->timesteps_mov.clear();
-                this->jointsPosition_mov.clear(); this->jointsPosition_mov = h_results->trajectory_stages;
-                this->jointsVelocity_mov.clear(); this->jointsVelocity_mov = h_results->velocity_stages;
-                this->jointsAcceleration_mov.clear(); this->jointsAcceleration_mov = h_results->acceleration_stages;
-                this->traj_descr_mov.clear(); this->traj_descr_mov = h_results->trajectory_descriptions;
+
+                this->jointsPosition_mov.clear();
+                this->jointsPosition_mov = h_results->trajectory_stages;
+
+                this->jointsVelocity_mov.clear();
+                this->jointsVelocity_mov = h_results->velocity_stages;
+
+                this->jointsAcceleration_mov.clear();
+                this->jointsAcceleration_mov = h_results->acceleration_stages;
+
+                this->traj_descr_mov.clear();
+                this->traj_descr_mov = h_results->trajectory_descriptions;
+
                 std::vector<double> timesteps_stage_aux;
-                for(size_t i=0; i<h_results->trajectory_stages.size();++i){
+
+                for(size_t i=0; i<h_results->trajectory_stages.size();++i)
+                {
                     timesteps_stage_aux.clear();
                     double t_stage = h_results->time_steps.at(i);
                     MatrixXd traj_stage = h_results->trajectory_stages.at(i);
-                    for(int j=0;j<traj_stage.rows();++j){
+
+                    for(int j=0;j<traj_stage.rows();++j)
+                    {
                         timesteps_stage_aux.push_back(t_stage);
                     }
                     this->timesteps_mov.push_back(timesteps_stage_aux);
                 }
                 this->moveit_mov = false;
                 solved=true;
-            }else{
+            }
+            else
+            {
                 ui.tableWidget_sol_mov->clear();
                 qnode.log(QNode::Error,std::string("The planning has failed: ")+h_results->status_msg);
             }
-        }else{
+        }
+        else
+        {
             ui.tableWidget_sol_mov->clear();
             qnode.log(QNode::Error,std::string("The planning has failed: unknown status"));
         }
@@ -1201,7 +1234,8 @@ void MainWindow::on_pushButton_plan_clicked()
 #endif
         break;
 
-    } // switch planners
+    }
+    // switch planners
 
 }catch (const std::string message){qnode.log(QNode::Error,std::string("Plan failure: ")+message);
 }catch(const std::exception exc){qnode.log(QNode::Error,std::string("Plan failure: ")+exc.what());}

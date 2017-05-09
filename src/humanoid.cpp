@@ -1880,8 +1880,10 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
     vector<double> handPos = vector<double>(3);
     Matrix3d handOr;
 
-    switch (arm) {
-    case 1: // right arm        
+    switch (arm)
+    {
+    // right arm
+    case 1:
         mat_world = this->mat_right;
         mat_hand = this->mat_r_hand;
         this->computeRightArmDHparams();
@@ -1889,7 +1891,8 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
         m_DH_arm = this->m_DH_rightArm;
         m_DH_hand = this->m_DH_rightHand;
         break;
-    case 2: //left arm
+    //left arm
+    case 2:
         mat_world = this->mat_left;
         mat_hand = this->mat_l_hand;
         this->computeLeftArmDHparams();
@@ -1899,25 +1902,27 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
         break;
     }
 
+
     T = mat_world;
 
-    for (int i = 0; i < posture.size(); ++i){
-
+    for (int i = 0; i < posture.size(); ++i)
+    {
         this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i),T_aux);
 
         T = T * T_aux;
         Vector3d v;
 
-        if (i==0){
+        if (i==1)
+        {
             // get the shoulder
-
             shoulderOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             shoulderPos[0] = v[0];
             shoulderPos[1] = v[1];
             shoulderPos[2] = v[2];
 
-            switch (arm){
+            switch (arm)
+            {
             case 1: // right arm
                 this->rightShoulderPos = shoulderPos;
                 this->rightShoulderOr = shoulderOr;
@@ -1928,17 +1933,18 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
                 break;
             }
 
-        }else if (i==2){
-
+        }
+        else if (i==3)
+        {
             // get the elbow
-
             elbowOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             elbowPos[0] = v[0];
             elbowPos[1] = v[1];
             elbowPos[2] = v[2];
 
-            switch(arm){
+            switch(arm)
+            {
             case 1: // right arm
                 this->rightElbowPos = elbowPos;
                 this->rightElbowOr = elbowOr;
@@ -1949,17 +1955,18 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
                 break;
             }
 
-        }else if (i==4){
-
+        }
+        else if (i==5)
+        {
             // get the wrist
-
             wristOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             wristPos[0] = v[0];
             wristPos[1] = v[1];
             wristPos[2] = v[2];
 
-            switch(arm){
+            switch(arm)
+            {
             case 1: // right arm
                 this->rightWristPos = wristPos;
                 this->rightWristOr = wristOr;
@@ -1971,8 +1978,9 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
             }
 
 
-        } else if (i==6){
-
+        }
+        else if (i==6)
+        {
             //get the hand
             T = T * mat_hand;
 
@@ -1982,7 +1990,8 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
             handPos[1] = v[1];
             handPos[2] = v[2];
 
-            switch(arm){
+            switch(arm)
+            {
             case 1: // right arm
                 this->rightHandPos = handPos;
                 this->rightHandOr = handOr;
@@ -1992,31 +2001,31 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
                 this->leftHandOr = handOr;
                 break;
             }
-
-
         }
-
     }
 
     // Direct kinematics of the fingers
-
     this->rightFingers.resize(HAND_FINGERS,12);
     this->leftFingers.resize(HAND_FINGERS,12);
 
     Matrix4d T_H_0_pos;
     vector<double> fing_pos;
 
-    for (int i=0; i< HAND_FINGERS; ++i){
+    for (int i=0; i< HAND_FINGERS; ++i)
+    {
         DHparams p = m_DH_hand.at(i);
-        switch (arm) {
-        case 1: // right arm
+        switch (arm)
+        {
+        // right arm
+        case 1:
             fing_pos=this->right_fing_pos.at(i);
             T_H_0_pos(0,3)=fing_pos.at(0);
             T_H_0_pos(1,3)=fing_pos.at(1);
             T_H_0_pos(2,3)=fing_pos.at(2);
             this->directKinematicsFinger(p,T,T_H_0_pos,i,rightFingers);
             break;
-        case 2: // left arm
+        // left arm
+        case 2:
             fing_pos=this->left_fing_pos.at(i);
             T_H_0_pos(0,3)=fing_pos.at(0);
             T_H_0_pos(1,3)=fing_pos.at(1);
