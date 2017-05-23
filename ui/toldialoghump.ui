@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>700</y>
-     <width>261</width>
+     <width>264</width>
      <height>27</height>
     </rect>
    </property>
@@ -57,7 +57,7 @@
       <x>10</x>
       <y>30</y>
       <width>171</width>
-      <height>50</height>
+      <height>52</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -88,7 +88,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="tab_huml_params">
     <attribute name="title">
@@ -1143,7 +1143,7 @@
         <x>2</x>
         <y>22</y>
         <width>121</width>
-        <height>317</height>
+        <height>328</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -1330,7 +1330,7 @@
         <x>2</x>
         <y>22</y>
         <width>181</width>
-        <height>317</height>
+        <height>328</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_15">
@@ -1517,7 +1517,7 @@
         <x>2</x>
         <y>22</y>
         <width>121</width>
-        <height>317</height>
+        <height>328</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -1704,7 +1704,7 @@
         <x>2</x>
         <y>22</y>
         <width>181</width>
-        <height>317</height>
+        <height>328</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_20">
@@ -2556,7 +2556,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>orientation [rad]</string>
+       <string>orientation [deg]</string>
       </property>
       <widget class="QWidget" name="layoutWidget_22">
        <property name="geometry">
@@ -2651,7 +2651,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Final arm posture [rad]</string>
+      <string>Final arm posture [deg]</string>
      </property>
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
@@ -2659,7 +2659,7 @@
         <x>4</x>
         <y>20</y>
         <width>101</width>
-        <height>213</height>
+        <height>220</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -2809,8 +2809,8 @@
        <rect>
         <x>0</x>
         <y>20</y>
-        <width>91</width>
-        <height>120</height>
+        <width>99</width>
+        <height>124</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_38">
@@ -2935,7 +2935,7 @@
          <x>10</x>
          <y>30</y>
          <width>221</width>
-         <height>27</height>
+         <height>28</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_62">
@@ -3014,7 +3014,7 @@
          <x>10</x>
          <y>30</y>
          <width>221</width>
-         <height>27</height>
+         <height>28</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_63">
@@ -3093,7 +3093,7 @@
          <x>10</x>
          <y>30</y>
          <width>221</width>
-         <height>27</height>
+         <height>28</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_64">
@@ -3188,7 +3188,7 @@
       <x>10</x>
       <y>30</y>
       <width>171</width>
-      <height>50</height>
+      <height>52</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_26">
@@ -3221,7 +3221,7 @@
      <x>620</x>
      <y>700</y>
      <width>342</width>
-     <height>27</height>
+     <height>28</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -3255,13 +3255,13 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>501</x>
      <y>621</y>
      <width>271</width>
-     <height>50</height>
+     <height>52</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_27">

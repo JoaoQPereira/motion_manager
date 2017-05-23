@@ -301,9 +301,9 @@ void TolDialogHUMP::getTargetMove(std::vector<double> &target)
     target.push_back(ui->lineEdit_target_x->text().toDouble());
     target.push_back(ui->lineEdit_target_y->text().toDouble());
     target.push_back(ui->lineEdit_target_z->text().toDouble());
-    target.push_back(ui->lineEdit_target_roll->text().toDouble());
-    target.push_back(ui->lineEdit_target_pitch->text().toDouble());
-    target.push_back(ui->lineEdit_target_yaw->text().toDouble());
+    target.push_back((ui->lineEdit_target_roll->text().toDouble()*M_PI)/180);
+    target.push_back((ui->lineEdit_target_pitch->text().toDouble()*M_PI)/ 180);
+    target.push_back((ui->lineEdit_target_yaw->text().toDouble()*M_PI)/180);
 }
 
 
@@ -321,13 +321,13 @@ void TolDialogHUMP::setTargetMove(std::vector<double> &target)
 void TolDialogHUMP::getFinalArm(std::vector<double> &finalArm)
 {
     finalArm.clear();
-    finalArm.push_back(ui->lineEdit_final_arm_1->text().toDouble());
-    finalArm.push_back(ui->lineEdit_final_arm_2->text().toDouble());
-    finalArm.push_back(ui->lineEdit_final_arm_3->text().toDouble());
-    finalArm.push_back(ui->lineEdit_final_arm_4->text().toDouble());
-    finalArm.push_back(ui->lineEdit_final_arm_5->text().toDouble());
-    finalArm.push_back(ui->lineEdit_final_arm_6->text().toDouble());
-    finalArm.push_back(ui->lineEdit_final_arm_7->text().toDouble());
+    finalArm.push_back((ui->lineEdit_final_arm_1->text().toDouble()*M_PI)/180);
+    finalArm.push_back((ui->lineEdit_final_arm_2->text().toDouble()*M_PI)/180);
+    finalArm.push_back((ui->lineEdit_final_arm_3->text().toDouble()*M_PI)/180);
+    finalArm.push_back((ui->lineEdit_final_arm_4->text().toDouble()*M_PI)/180);
+    finalArm.push_back((ui->lineEdit_final_arm_5->text().toDouble()*M_PI)/180);
+    finalArm.push_back((ui->lineEdit_final_arm_6->text().toDouble()*M_PI)/180);
+    finalArm.push_back((ui->lineEdit_final_arm_7->text().toDouble()*M_PI)/180);
 }
 
 

@@ -3694,6 +3694,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 {
     this->curr_scene = scene;
     int scenarioID = scene->getID();
+
     this->curr_mov = mov;
     int mov_type = mov->getType();
     int arm_code = mov->getArm();
@@ -3705,10 +3706,12 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
     switch (mov_type)
     {
-    case 0: case 1: case 5: // reach-to-grasp, reaching, go-park
+    // reach-to-grasp, reaching, go-park
+    case 0: case 1: case 5:
         closed.at(0)=false; closed.at(1)=false; closed.at(2)=false;
         break;
-    case 2: case 3: case 4: // transport, engage, disengage
+    // transport, engage, disengage
+    case 2: case 3: case 4:
         closed.at(0)=true; closed.at(1)=true; closed.at(2)=true;
         break;
     }
@@ -3744,7 +3747,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     }
 
     // set joints position or velocity (it depends on the scenario)
-    ros::ServiceClient client_enableSubscriber=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+    ros::ServiceClient client_enableSubscriber = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
     vrep_common::simRosEnableSubscriber srv_enableSubscriber;
 
     srv_enableSubscriber.request.topicName = "/"+nodeName+"/set_joints"; // the topic name
@@ -3754,7 +3757,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 #if HAND==1
     // set joints position (it is used to set the target postion of the 2nd phalanx of the fingers)
-    ros::ServiceClient client_enableSubscriber_hand=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+    ros::ServiceClient client_enableSubscriber_hand = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
     vrep_common::simRosEnableSubscriber srv_enableSubscriber_hand;
 
     srv_enableSubscriber_hand.request.topicName = "/"+nodeName+"/set_pos_hand"; // the topic name
@@ -3777,19 +3780,23 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
     for (size_t k=0; k< traj_mov.size();++k)
     {  // for loop stages
+
         string mov_descr = traj_descr.at(k);
+
         if(strcmp(mov_descr.c_str(),"plan")==0)
         {
             plan=true;
             approach=false;
             retreat=false;
         }
+
         else if(strcmp(mov_descr.c_str(),"approach")==0)
         {
             plan=false;
             approach=true;
             retreat=false;
         }
+
         else if(strcmp(mov_descr.c_str(),"retreat")==0)
         {
             plan=false;
@@ -3797,9 +3804,11 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             retreat=true;
         }
 
+
         switch (mov_type)
         {
-        case 0: // reach-to-grasp
+        // reach-to-grasp
+        case 0:
             if(retreat)
             {
                 if(obj_in_hand)
@@ -3823,9 +3832,11 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 }
             }
             break;
-        case 1: // reaching
+        // reaching
+        case 1:
             break;
-        case 2: case 3: // transport, engage
+        // transport, engage
+        case 2: case 3:
             if(retreat)
             {
                 closed.at(0)=false;
@@ -3855,9 +3866,11 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 //#endif
             }
             break;
-        case 4:// disengage
+        // disengage
+        case 4:
             break;
-        case 5: // go-park
+        // go-park
+        case 5:
             break;
         }
 
@@ -3873,22 +3886,26 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 #if HAND==0
     if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1)){
+
 #elif HAND==1
     if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1) &&
          client_enableSubscriber_hand.call(srv_enableSubscriber_hand) && (srv_enableSubscriber_hand.response.subscriberID!=-1))
     {
         // ok, the service call was ok, and the subscriber was succesfully started on V-REP side
         // V-REP is now listening to the desired values
-        ros::Publisher pub_hand=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand",1);
+        ros::Publisher pub_hand = node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand",1);
 #endif
         // 5. Let's prepare a publisher of those values:
-        ros::Publisher pub=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_joints",1);
+        ros::Publisher pub = node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_joints",1);
 
-        ros::spinOnce(); // handle ROS messages
-        pre_time = simulationTime - timeTot; // update the total time of the movement
+        // handle ROS messages
+        ros::spinOnce();
+        // update the total time of the movement
+        pre_time = simulationTime - timeTot;
 
         //BOOST_LOG_SEV(lg, info) << "timeTot = " << timeTot ;
         //BOOST_LOG_SEV(lg, info) << "pre_time = " << pre_time ;
+
 
         tb = pre_time;
 
@@ -4001,7 +4018,8 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                         case 0: //error
                             // TO DO
                             break;
-                        case 1: case 3: case 4: case 5: case 6: // Toy vehicle scenario with AROS, empty scenario with ARoS, human assistance with ARoS, Challenge scenario with ARoS
+                        // Toy vehicle scenario with AROS, empty scenario with ARoS, human assistance with ARoS, Challenge scenario with ARoS, Toy vehicle scenario with Sawyer
+                        case 1: case 3: case 4: case 5: case 6: case 7:
                             if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
                             {
                                 dataTraj.setModes.data.push_back(1); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
@@ -4019,7 +4037,8 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                             }
                             break;
 
-                        case 2: // Toy vehicle scenario with Jarde
+                        // Toy vehicle scenario with Jarde
+                        case 2:
                             dataTraj.setModes.data.push_back(0); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
                             dataTraj.values.data.push_back(yxt);
                             break;
@@ -4054,9 +4073,8 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
                 // handle ROS messages:
                 ros::spinOnce();
-
-
             } // while
+
 
             if(f_reached)
             {
@@ -4065,11 +4083,13 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             }
         }// for loop steps
 
+
         // ----- post-movement operations -------- //
         //ros::spinOnce(); // handle ROS messages
         switch (mov_type)
         {
-        case 0: // reach-to grasp
+        // reach-to grasp
+        case 0:
             // grasp the object
             if(approach ||(plan && (traj_mov.size()==1)))
             {
@@ -4094,15 +4114,20 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 }
             }
             break;
-        case 1: // reaching
+        // reaching
+        case 1:
             break;
-        case 2: // transport
+        // transport
+        case 2:
             break;
-        case 3: // engage
+        // engage
+        case 3:
             break;
-        case 4: // disengage
+        // disengage
+        case 4:
             break;
-        case 5: // go park
+        // go park
+        case 5:
             break;
         }
     } // if subscriber
