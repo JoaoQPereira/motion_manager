@@ -9,12 +9,12 @@ pre_grasp_y=1
 
 pre_grasp_z=0
 
-pre_grasp_dist=350
+pre_grasp_dist=290
 post_grasp_x=0
 
-post_grasp_y=1
+post_grasp_y=0.99619
 
-post_grasp_z=0
+post_grasp_z=0.08715
 
 post_grasp_dist=350
 # Place settings
@@ -63,11 +63,11 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=0.0
+final_hand_2=1.22
 
-final_hand_3=0.0
+final_hand_3=1.22
 
-final_hand_4=0.0
+final_hand_4=1.22
 
 sel_final=false
 plane_point1_x=0.0

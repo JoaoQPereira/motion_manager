@@ -329,6 +329,7 @@ void MainWindow::on_pushButton_tuning_clicked()
     switch(planner_id){
     case 0: // HUMP
         mTolHumpdlg->setInitJointsVel(this->jointsEndVelocity_mov);
+        mTolHumpdlg->setInitJointsAcc(this->jointsEndAcceleration_mov);
         mTolHumpdlg->show();
         break;
     case 1: // RRT
@@ -1034,7 +1035,13 @@ void MainWindow::on_pushButton_plan_clicked()
         mTolHumpdlg->getPostPlaceRetreat(tols.mov_specs.post_place_retreat); // place retreat
         tols.mov_specs.rand_init = mTolHumpdlg->getRandInit(); // random initialization for "plan" stages
         tols.mov_specs.coll = mTolHumpdlg->getColl(); // collisions option
+<<<<<<< HEAD
 
+=======
+        tols.mov_specs.straight_line = mTolHumpdlg->get_straight_line(); // hand straight line trajectory
+        tols.mov_specs.w_red_app_max = mTolHumpdlg->getW_red_app(); // set the max velocity reduction when approaching
+        tols.mov_specs.w_red_ret_max = mTolHumpdlg->getW_red_ret(); // set the max velocity reduction when retreating
+>>>>>>> upstream/master
         // move settings
         mTolHumpdlg->getTargetMove(move_target);
         mTolHumpdlg->getFinalHand(move_final_hand);
@@ -2749,6 +2756,9 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     string path_vrep_toyscene_jarde = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_jarde.ttt");
     //string path_rviz_toyscene_jarde = PATH_SCENARIOS+string("/rviz/toy_vehicle_jarde.scene");
 
+    // Challengingscenario with ARoS
+    string path_vrep_challenge_aros = PATH_SCENARIOS+string("/vrep/NarrowShelf_aros.ttt");
+
     switch(scene_id){
 
     case 0:
@@ -2787,17 +2797,17 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         failure = string("Human assistance scenario: Serving a drink with ARoS HAS NOT BEEN LOADED");
         break;
     case 5:
-        // Assistive scenario: beverages with Avatar
-        //TO DO
+        // Challenge scenario with ARoS
+        path = path_vrep_challenge_aros;
+        title = string("Challenging scenario: picking a cup from a shelf with ARoS");
+        success = string("Challenging scenario: picking a cup from a shelf with ARoS HAS BEEN LOADED");
+        failure = string("Challenging scenario: picking a cup from a shelf with ARoS HAS NOT BEEN LOADED");
         break;
     case 6:
-        // Organizing scenario: shelfs and objects with ARoS
-        //TO DO
+        // TO DO
         break;
     case 7:
-        // Organizing scenario: shelfs ad objects with Avatar
         //TO DO
-
         break;
     }
 

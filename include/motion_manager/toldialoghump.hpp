@@ -226,10 +226,28 @@ public:
     void getPostPlaceRetreat(std::vector<double>& post_place);
 
     /**
+     * @brief getW_red_app
+     * @return
+     */
+    double getW_red_app();
+
+    /**
+     * @brief getW_red_ret
+     * @return
+     */
+    double getW_red_ret();
+
+    /**
      * @brief setInitJointsVel
      * @param init_vel
      */
     void setInitJointsVel(std::vector<double>& init_vel);
+
+    /**
+     * @brief setInitJointsAcc
+     * @param init_acc
+     */
+    void setInitJointsAcc(std::vector<double>& init_acc);
 
     /**
      * @brief This method sets the information about the tuning of the planner
@@ -296,6 +314,18 @@ public:
      * @return
      */
     bool get_add_plane();
+
+    /**
+     * @brief get_straight_line
+     * @return
+     */
+    bool get_straight_line();
+
+    /**
+     * @brief setStraightLine
+     * @param straight
+     */
+    void setStraightLine(bool straight=true);
 
     /**
      * @brief set_add_plane
