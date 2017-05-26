@@ -1915,6 +1915,7 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
         if (i==1)
         {
             // get the shoulder
+
             shoulderOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             shoulderPos[0] = v[0];
@@ -1932,7 +1933,6 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
                 this->leftShoulderOr = shoulderOr;
                 break;
             }
-
         }
         else if (i==3)
         {
@@ -1954,7 +1954,6 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
                 this->leftElbowOr = elbowOr;
                 break;
             }
-
         }
         else if (i==5)
         {
@@ -1976,8 +1975,6 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
                 this->leftWristOr = wristOr;
                 break;
             }
-
-
         }
         else if (i==6)
         {
