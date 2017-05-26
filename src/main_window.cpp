@@ -1035,13 +1035,9 @@ void MainWindow::on_pushButton_plan_clicked()
         mTolHumpdlg->getPostPlaceRetreat(tols.mov_specs.post_place_retreat); // place retreat
         tols.mov_specs.rand_init = mTolHumpdlg->getRandInit(); // random initialization for "plan" stages
         tols.mov_specs.coll = mTolHumpdlg->getColl(); // collisions option
-<<<<<<< HEAD
-
-=======
         tols.mov_specs.straight_line = mTolHumpdlg->get_straight_line(); // hand straight line trajectory
         tols.mov_specs.w_red_app_max = mTolHumpdlg->getW_red_app(); // set the max velocity reduction when approaching
         tols.mov_specs.w_red_ret_max = mTolHumpdlg->getW_red_ret(); // set the max velocity reduction when retreating
->>>>>>> upstream/master
         // move settings
         mTolHumpdlg->getTargetMove(move_target);
         mTolHumpdlg->getFinalHand(move_final_hand);

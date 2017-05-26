@@ -4011,11 +4011,9 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                             dataTraj.handles.data.push_back(handles.at(k));
                         }
 
-<<<<<<< HEAD
 
-                        switch(scenarioID)
-                        {
-=======
+
+
                         int exec_mode; double exec_value;
 #if VEL==0
                         // position
@@ -4025,7 +4023,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                         exec_mode = 2; exec_value = yx;
 #endif
                         switch(scenarioID){
->>>>>>> upstream/master
+
                         case 0: //error
                             // TO DO
                             break;
@@ -4034,25 +4032,13 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                             if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
                             {
                                 dataTraj.setModes.data.push_back(1); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-<<<<<<< HEAD
-                            }
-                            else if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)))
-                            {
-                                dataTraj.setModes.data.push_back(0); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-                            }
 
-
-                            if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)) || // joints of the arm
-                                    (((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed))
-                            {
-=======
                             }else if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4))){
                                 dataTraj.setModes.data.push_back(exec_mode); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
                             }
                             if((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)){ // joints of the arm
                                 dataTraj.values.data.push_back(exec_value);
                             }else if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed){ // joint of the hand
->>>>>>> upstream/master
                                 dataTraj.values.data.push_back(yxt);
                             }
                             break;

@@ -2334,10 +2334,6 @@ void Humanoid::transfMatrix(double alpha, double a, double d, double theta, Matr
     T(1,0) = sin(theta)*cos(alpha); T(1,1) = -cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
     T(2,0) = sin(theta)*sin(alpha); T(2,1) = cos(theta)*sin(alpha);  T(2,2) = cos(alpha);  T(2,3) = cos(alpha)*d;
     T(3,0) = 0.0;                   T(3,1) = 0.0;                    T(3,2) = 0.0;         T(3,3) = 1.0;
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/master
 }
 
 

@@ -294,8 +294,7 @@ void TolDialogHUMP::getPostPlaceRetreat(std::vector<double> &post_place)
     post_place.push_back(ui->lineEdit_post_place_dist->text().toDouble());
 }
 
-<<<<<<< HEAD
-=======
+
 double TolDialogHUMP::getW_red_app()
 {
     return ui->lineEdit_w_red_app->text().toDouble();
@@ -305,7 +304,7 @@ double TolDialogHUMP::getW_red_ret()
 {
     return ui->lineEdit_w_red_ret->text().toDouble();
 }
->>>>>>> upstream/master
+
 
 void TolDialogHUMP::getTargetMove(std::vector<double> &target)
 {
@@ -387,8 +386,7 @@ void TolDialogHUMP::setInitJointsVel(std::vector<double>& init_vel)
     }
 }
 
-<<<<<<< HEAD
-=======
+
 void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
 {
     if(!init_acc.empty())
@@ -406,7 +404,7 @@ void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
         ui->lineEdit_init_acc_11->setText(QString::number(init_acc.at(10)));
     }
 }
->>>>>>> upstream/master
+
 
 void TolDialogHUMP::getPlaneParameters(std::vector<double> &params)
 {
@@ -1114,8 +1112,6 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                     }else{
                         ui->checkBox_coll->setChecked(false);
                     }
-<<<<<<< HEAD
-=======
 
                 }else if(QString::compare(fields.at(0),QString("straight_line"),Qt::CaseInsensitive)==0){
                     if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
@@ -1124,7 +1120,6 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                         ui->checkBox_straight_line->setChecked(true);
                     }
 
->>>>>>> upstream/master
                 }
             }
         }
@@ -1298,8 +1293,7 @@ bool TolDialogHUMP::get_add_plane()
     return ui->checkBox_add_plane->isChecked();
 }
 
-<<<<<<< HEAD
-=======
+
 bool TolDialogHUMP::get_straight_line()
 {
     return ui->checkBox_straight_line->isChecked();
@@ -1309,7 +1303,7 @@ void TolDialogHUMP::setStraightLine(bool straight)
 {
     ui->checkBox_straight_line->setChecked(straight);
 }
->>>>>>> upstream/master
+
 
 void TolDialogHUMP::set_add_plane(bool plane)
 {
