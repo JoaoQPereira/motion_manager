@@ -3689,8 +3689,8 @@ void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
 }
 
 
-bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene)
-{
+bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene, vector<HUMotion::objectPtr>& obs)
+{    
     this->curr_scene = scene;
     int scenarioID = scene->getID();
 
@@ -3770,11 +3770,38 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     std::vector<double> timesteps_stage;
     double timeTot = 0.0;
 
+
+
+
+    // set position, orientation and size of elipses in scenario(obstacles)
+
+    HUMotion::objectPtr object;
+    for(size_t i=0; i<obs.size(); ++i)
+    {
+        object = obs.at(i);
+
+        std::string name = object->getName();
+
+        std::vector <double> position;
+        object->getPos(position);
+
+        std::vector <double> orientation;
+        object->getOr(orientation);
+
+        std::vector <double> size;
+        object->getSize(size);
+
+        std::string obstacle_info_str;
+        obstacle_info_str = {position.at(0), position.at(1), position.at(2), orientation.at(0), orientation.at(1), orientation.at(2), size.at(0), size.at(1), size.at(2)};
+    }
+
+
     // start the simulation
     add_client = node.serviceClient<vrep_common::simRosStartSimulation>("/vrep/simRosStartSimulation");
     vrep_common::simRosStartSimulation srvstart;
     add_client.call(srvstart);
     ros::spinOnce(); // first handle ROS messages
+
 
 
     for (size_t k=0; k< traj_mov.size();++k)

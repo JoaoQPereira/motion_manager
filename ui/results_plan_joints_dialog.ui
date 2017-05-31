@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1550</width>
+    <width>1250</width>
     <height>800</height>
    </rect>
   </property>
@@ -16,16 +16,13 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>30</y>
-     <width>1511</width>
+     <x>10</x>
+     <y>10</y>
+     <width>1221</width>
      <height>721</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QCustomPlot" name="plot_joint_1" native="true"/>
-    </item>
     <item row="0" column="1">
      <widget class="QCustomPlot" name="plot_joint_4" native="true"/>
     </item>
@@ -56,6 +53,9 @@
     <item row="2" column="2">
      <widget class="QCustomPlot" name="plot_joint_9" native="true"/>
     </item>
+    <item row="0" column="0">
+     <widget class="QCustomPlot" name="plot_joint_1" native="true"/>
+    </item>
    </layout>
   </widget>
   <widget class="QPushButton" name="pushButton_save_joints_plots">
@@ -71,6 +71,9 @@
     <string>Save</string>
    </property>
   </widget>
+  <zorder>layoutWidget</zorder>
+  <zorder>pushButton_save_joints_plots</zorder>
+  <zorder>plot_joint_1</zorder>
  </widget>
  <customwidgets>
   <customwidget>

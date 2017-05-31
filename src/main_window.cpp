@@ -1072,6 +1072,28 @@ void MainWindow::on_pushButton_plan_clicked()
                 this->traj_descr_mov.clear();
                 this->traj_descr_mov = h_results->trajectory_descriptions;
 
+
+//                HUMotion::objectPtr obj;
+                for(size_t i=0; i<h_results->obstacles_scenario.size(); ++i)
+                {
+                    this->obstacles_mov.push_back(h_results->obstacles_scenario.at(i));
+//                    obj = h_results->obstacles_scenario.at(i);
+
+//                    std::string name = obj->getName();
+//                    std::vector <double> pos;
+//                    obj->getPos(pos);
+//                    std::vector <double> ori;
+//                    obj->getOr(ori);
+//                    std::vector <double> size;
+//                    obj->getSize(size);
+
+//                    std::cout << "Name: " << name << std::endl ;
+//                    std::cout << "Position: X=" << pos.at(0) << " Y=" << pos.at(1) << " Z=" << pos.at(2) << std::endl ;
+//                    std::cout << "Orientation: Row=" << ori.at(0) << " Pitch=" << ori.at(1) << " Yaw=" << ori.at(2) << std::endl ;
+//                    std::cout << "Size: X=" << size.at(0) << " Y=" << size.at(1) << " Z=" << size.at(2) << std::endl ;
+//                    std::cout <<"---------------------------------------------------------------" << std::endl;
+                }
+
                 std::vector<double> timesteps_stage_aux;
 
                 for(size_t i=0; i<h_results->trajectory_stages.size();++i)
@@ -2089,8 +2111,8 @@ void MainWindow::on_pushButton_execMov_moveit_pressed()
 
 
 void MainWindow::on_pushButton_execMov_clicked()
-{
-    qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+{   
+    qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene, this->obstacles_mov);
 }
 
 
@@ -2755,6 +2777,9 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     // Challengingscenario with ARoS
     string path_vrep_challenge_aros = PATH_SCENARIOS+string("/vrep/NarrowShelf_aros.ttt");
 
+    // Toy vehicle scenario with Sawyer
+    string path_vrep_toyscene_sawyer = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_bill.ttt");
+
     switch(scene_id){
 
     case 0:
@@ -2800,7 +2825,12 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         failure = string("Challenging scenario: picking a cup from a shelf with ARoS HAS NOT BEEN LOADED");
         break;
     case 6:
-        // TO DO
+        // Assembly scenario: the Toy vehicle with Sawyer
+        path = path_vrep_toyscene_sawyer;
+        title = string("Assembly scenario: the Toy vehicle with Sawyer");
+        success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
+        failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
+        break;
         break;
     case 7:
         //TO DO

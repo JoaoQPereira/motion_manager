@@ -49,6 +49,8 @@ using namespace logging::trivial;
 
 typedef boost::shared_ptr<Scenario> scenarioPtr;/**< shared pointer to the current scenario */
 typedef boost::shared_ptr<Task> taskPtr; /**< shared pointer to the current task */
+typedef boost::shared_ptr<Object> objectPtr;/**< shared pointer to an object in the scenario */
+
 
 //! The QNode class
 /**
@@ -131,6 +133,7 @@ public:
         bool getArmsHandles(int humanoid); // get the handles of both arms
 
 
+
         /**
          * @brief execMovement
          * @param traj_mov
@@ -140,9 +143,10 @@ public:
          * @param traj_descr
          * @param mov
          * @param scene
+         * @param obs
          * @return
          */
-        bool execMovement(vector<MatrixXd>& traj_mov, vector<MatrixXd>& vel_mov, std::vector<std::vector<double> > timesteps,vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene);
+        bool execMovement(vector<MatrixXd>& traj_mov, vector<MatrixXd>& vel_mov, std::vector<std::vector<double> > timesteps,vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene, vector<HUMotion::objectPtr>& obs);
 
         /**
          * @brief execTask
@@ -253,6 +257,7 @@ private:
         int init_argc; /**< initial argc */
         char** init_argv; /**< initial argv */
         ros::ServiceClient add_client;/**<  ROS client */
+        ros::ServiceServer add_server;/**< ROS Server */
         ros::Subscriber subInfo; /**< ROS subscriber for information about the simulation */
         ros::Subscriber subJoints_state; /**< ROS subscriber to the topic /vrep/joint_state */
         ros::Subscriber subRightProxSensor;/**< ROS subscriber to the topic /vrep/right_prox_sensor */
@@ -322,6 +327,8 @@ private:
         std::vector<int> needFullOpening;
         std::vector<bool> closed;
 #endif
+
+        vector<objectPtr> obstacles; /**< obstacles in the scenario */
 
 
         //methods
