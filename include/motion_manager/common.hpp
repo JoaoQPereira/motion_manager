@@ -103,10 +103,11 @@ typedef struct{
 
 /** this struct defines the Denavit-Hartenberg kinematic parameters */
 typedef struct{
-    vector<double> d; /**< distances between consecutive frames along the y axes in [mm] */
+    vector<double> d; /**< distances between consecutive frames along the x axes in [mm] */
     vector<double> a; /**< distances between concecutive frames along the z axes in [mm] */
     vector<double> alpha; /**< angle around the x axes between consecutive z axes in [rad] */
     vector<double> theta; /**< angle around the z axes between consecutive x axes in [rad] */
+    vector<double> theta_offset; /**< in [rad]*/
 } DHparams;
 
 /** this struct defines the arm */

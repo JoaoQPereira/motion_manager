@@ -1073,27 +1073,6 @@ void MainWindow::on_pushButton_plan_clicked()
                 this->traj_descr_mov = h_results->trajectory_descriptions;
 
 
-//                HUMotion::objectPtr obj;
-                for(size_t i=0; i<h_results->obstacles_scenario.size(); ++i)
-                {
-                    this->obstacles_mov.push_back(h_results->obstacles_scenario.at(i));
-//                    obj = h_results->obstacles_scenario.at(i);
-
-//                    std::string name = obj->getName();
-//                    std::vector <double> pos;
-//                    obj->getPos(pos);
-//                    std::vector <double> ori;
-//                    obj->getOr(ori);
-//                    std::vector <double> size;
-//                    obj->getSize(size);
-
-//                    std::cout << "Name: " << name << std::endl ;
-//                    std::cout << "Position: X=" << pos.at(0) << " Y=" << pos.at(1) << " Z=" << pos.at(2) << std::endl ;
-//                    std::cout << "Orientation: Row=" << ori.at(0) << " Pitch=" << ori.at(1) << " Yaw=" << ori.at(2) << std::endl ;
-//                    std::cout << "Size: X=" << size.at(0) << " Y=" << size.at(1) << " Z=" << size.at(2) << std::endl ;
-//                    std::cout <<"---------------------------------------------------------------" << std::endl;
-                }
-
                 std::vector<double> timesteps_stage_aux;
 
                 for(size_t i=0; i<h_results->trajectory_stages.size();++i)
@@ -2112,7 +2091,7 @@ void MainWindow::on_pushButton_execMov_moveit_pressed()
 
 void MainWindow::on_pushButton_execMov_clicked()
 {   
-    qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene, this->obstacles_mov);
+    qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
 }
 
 

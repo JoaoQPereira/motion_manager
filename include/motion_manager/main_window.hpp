@@ -452,7 +452,6 @@ private:
         vector< MatrixXd > jointsVelocity_mov; /**< trajectory of the joint velocity of the movement */
         vector< MatrixXd > jointsPosition_mov; /**< trajectory of the joint position of the movement */
         vector< string > traj_descr_mov; /**< description of the trajectories */
-        vector<HUMotion::objectPtr> obstacles_mov; /** obstacles in the scenario*/
         vector<double> jointsEndPosition_mov; /**< end joint position of the movement */
         vector<double> jointsEndVelocity_mov; /**< end joint velocity of the movement */
         vector<double> jointsEndAcceleration_mov; /**< end joint acceleration of the movement */

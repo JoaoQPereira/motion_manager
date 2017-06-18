@@ -18,6 +18,7 @@
 #include <QStringListModel>
 #include <vrep_common/VrepInfo.h>
 #include <vrep_common/ProximitySensorData.h>
+#include <vrep_common/simRosSetStringSignal.h>
 #include <algorithm>
 
 #include <boost/log/core.hpp>
@@ -133,7 +134,6 @@ public:
         bool getArmsHandles(int humanoid); // get the handles of both arms
 
 
-
         /**
          * @brief execMovement
          * @param traj_mov
@@ -143,10 +143,11 @@ public:
          * @param traj_descr
          * @param mov
          * @param scene
-         * @param obs
          * @return
          */
-        bool execMovement(vector<MatrixXd>& traj_mov, vector<MatrixXd>& vel_mov, std::vector<std::vector<double> > timesteps,vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene, vector<HUMotion::objectPtr>& obs);
+
+
+        bool execMovement(vector<MatrixXd>& traj_mov, vector<MatrixXd>& vel_mov, std::vector<std::vector<double> > timesteps,vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene);
 
         /**
          * @brief execTask
@@ -257,7 +258,6 @@ private:
         int init_argc; /**< initial argc */
         char** init_argv; /**< initial argv */
         ros::ServiceClient add_client;/**<  ROS client */
-        ros::ServiceServer add_server;/**< ROS Server */
         ros::Subscriber subInfo; /**< ROS subscriber for information about the simulation */
         ros::Subscriber subJoints_state; /**< ROS subscriber to the topic /vrep/joint_state */
         ros::Subscriber subRightProxSensor;/**< ROS subscriber to the topic /vrep/right_prox_sensor */
@@ -327,8 +327,6 @@ private:
         std::vector<int> needFullOpening;
         std::vector<bool> closed;
 #endif
-
-        vector<objectPtr> obstacles; /**< obstacles in the scenario */
 
 
         //methods

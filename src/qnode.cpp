@@ -428,6 +428,7 @@ bool QNode::getElements(scenarioPtr scene)
     Matrix4d mat_r_hand;
     Matrix4d mat_l_hand;
 
+
     int rows;
 
     const string NOBJECTS = string("n_objects");
@@ -677,10 +678,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        for(int i=0;i<7;++i){
+        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
+
+        for(int i=0;i<7;++i)
+        {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
         }
 
 
@@ -1099,10 +1104,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        for(int i=0;i<7;++i){
+        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
+
+        for(int i=0;i<7;++i)
+        {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
         }
 
 #if HAND==0
@@ -1598,10 +1607,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        for(int i=0;i<7;++i){
+        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
+
+        for(int i=0;i<7;++i)
+        {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
         }
 
 
@@ -2054,10 +2067,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        for(int i=0;i<7;++i){
+        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
+
+        for(int i=0;i<7;++i)
+        {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
         }
 #if HAND==1
 
@@ -2487,10 +2504,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        for(int i=0;i<7;++i){
+        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
+
+        for(int i=0;i<7;++i)
+        {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
         }
 #if HAND==1
 
@@ -2889,6 +2910,7 @@ bool QNode::getElements(scenarioPtr scene)
         }
 
 
+
         // DH_params
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("DH_params_arm");
@@ -2917,12 +2939,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
         }
 
 
@@ -3689,7 +3713,8 @@ void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
 }
 
 
-bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene, vector<HUMotion::objectPtr>& obs)
+
+bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene)
 {    
     this->curr_scene = scene;
     int scenarioID = scene->getID();
@@ -3716,6 +3741,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     }
 
     ros::NodeHandle node;
+
     double ta;
     double tb = 0.0;
     double tx;
@@ -3772,36 +3798,11 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 
 
-
-    // set position, orientation and size of elipses in scenario(obstacles)
-
-    HUMotion::objectPtr object;
-    for(size_t i=0; i<obs.size(); ++i)
-    {
-        object = obs.at(i);
-
-        std::string name = object->getName();
-
-        std::vector <double> position;
-        object->getPos(position);
-
-        std::vector <double> orientation;
-        object->getOr(orientation);
-
-        std::vector <double> size;
-        object->getSize(size);
-
-        std::string obstacle_info_str;
-        obstacle_info_str = {position.at(0), position.at(1), position.at(2), orientation.at(0), orientation.at(1), orientation.at(2), size.at(0), size.at(1), size.at(2)};
-    }
-
-
     // start the simulation
     add_client = node.serviceClient<vrep_common::simRosStartSimulation>("/vrep/simRosStartSimulation");
     vrep_common::simRosStartSimulation srvstart;
     add_client.call(srvstart);
     ros::spinOnce(); // first handle ROS messages
-
 
 
     for (size_t k=0; k< traj_mov.size();++k)

@@ -1009,7 +1009,7 @@ private:
      * @param theta
      * @param T
      */
-    void transfMatrix(double alpha, double a, double d, double theta, Matrix4d& T);
+    void transfMatrix(double alpha, double a, double d, double theta, double theta_offset, Matrix4d& T);
 
 };
 
