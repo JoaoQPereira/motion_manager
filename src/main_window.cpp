@@ -2810,7 +2810,6 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
         failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
         break;
-        break;
     case 7:
         //TO DO
         break;

@@ -125,6 +125,11 @@ bool  QNode::loadScenario(const std::string& path,int id)
 
     ros::NodeHandle n;
 
+    // pause simulations
+    add_client = n.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
+    vrep_common::simRosStopSimulation srvstop;
+    add_client.call(srvstop);
+
     // close the old scene
     add_client = n.serviceClient<vrep_common::simRosCloseScene>("/vrep/simRosCloseScene");
     vrep_common::simRosCloseScene srvc;
