@@ -209,11 +209,11 @@ public:
 
 
         /**
-         * @brief addJointOffset
+         * @brief This method subtracts the offset of the joints to their position
          * @param traj_mov
          * @return
          */
-        vector<MatrixXd> addJointOffset(std::vector<MatrixXd>& traj_mov);
+        vector<MatrixXd> realJointsPosition(std::vector<MatrixXd>& traj_mov);
 
 
 

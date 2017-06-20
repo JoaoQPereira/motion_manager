@@ -1064,7 +1064,8 @@ void MainWindow::on_pushButton_plan_clicked()
 
                 this->jointsPosition_mov.clear();
                 this->jointsPosition_mov = h_results->trajectory_stages;
-                this->jointsPosition_mov = qnode.addJointOffset(this->jointsPosition_mov);
+                //substract the offset of the joints to their position
+                this->jointsPosition_mov = qnode.realJointsPosition(this->jointsPosition_mov);
 
                 this->jointsVelocity_mov.clear();
                 this->jointsVelocity_mov = h_results->velocity_stages;

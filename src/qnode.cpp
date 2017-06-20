@@ -3769,7 +3769,7 @@ void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
 }
 
 
-vector<MatrixXd> QNode::addJointOffset(std::vector<MatrixXd>& traj_mov)
+vector<MatrixXd> QNode::realJointsPosition(std::vector<MatrixXd>& traj_mov)
 {
     for (size_t k=0; k< traj_mov.size();++k)
     {
