@@ -675,7 +675,11 @@ bool QNode::getElements(scenarioPtr scene)
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
 
         floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty()){DH_params_vec.clear();}
+        if (!DH_params_vec.empty())
+        {
+            DH_params_vec.clear();
+            theta_offset.clear();
+        }
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
@@ -683,14 +687,13 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
+            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
 
@@ -856,18 +859,25 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi3 = phi3;
 
 #if HAND==1
+            //add the joint's offset
+            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
+
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
             hptr->setMatRight(mat_right);
             hptr->setMatLeft(mat_left);
-
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
             hptr->getRightPosture(rightp);
             hptr->getLeftPosture(leftp);
+
+            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
+            std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
+
             std::vector<string> rj = std::vector<string>(rightp.size());
             for (size_t i=0; i<rightp.size(); i++ ){
                 rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
@@ -1101,7 +1111,11 @@ bool QNode::getElements(scenarioPtr scene)
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
 
         floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty()){DH_params_vec.clear();}
+        if (!DH_params_vec.empty())
+        {
+            DH_params_vec.clear();
+            theta_offset.clear();
+        }
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
@@ -1109,14 +1123,13 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
+            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
 #if HAND==0
@@ -1604,7 +1617,11 @@ bool QNode::getElements(scenarioPtr scene)
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
 
         floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty()){DH_params_vec.clear();}
+        if (!DH_params_vec.empty())
+        {
+            DH_params_vec.clear();
+            theta_offset.clear();
+        }
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
@@ -1612,16 +1629,14 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
+            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
-
 
 #if HAND==1
 
@@ -1798,21 +1813,24 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi3 = phi3;
 
 #if HAND==1
+            //add the joint's offset
+            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
+
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
-
-
             hptr->setMatRight(mat_right);
             hptr->setMatLeft(mat_left);
-
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
-
             hptr->getRightPosture(rightp);
             hptr->getLeftPosture(leftp);
+
+            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
+            std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
 
             std::vector<string> rj = std::vector<string>(rightp.size());
             for (size_t i=0; i<rightp.size(); i++ ){
@@ -2065,21 +2083,25 @@ bool QNode::getElements(scenarioPtr scene)
              DH_params_str = srvs.response.signalValue;
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
         floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty()){DH_params_vec.clear();}
+        if (!DH_params_vec.empty())
+        {
+            DH_params_vec.clear();
+            theta_offset.clear();
+        }
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
         humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
+            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 #if HAND==1
 
@@ -2238,6 +2260,10 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi3 = phi3;
 
 #if HAND==1
+            //add the joint's offset
+            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
+
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
@@ -2249,6 +2275,10 @@ bool QNode::getElements(scenarioPtr scene)
             std::vector<double> leftp;
             hptr->getRightPosture(rightp);
             hptr->getLeftPosture(leftp);
+
+            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
+            std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
+
             std::vector<string> rj = std::vector<string>(rightp.size());
             for (size_t i=0; i<rightp.size(); i++ ){
                 rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
@@ -2502,21 +2532,25 @@ bool QNode::getElements(scenarioPtr scene)
              DH_params_str = srvs.response.signalValue;
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
         floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty()){DH_params_vec.clear();}
+        if (!DH_params_vec.empty())
+        {
+            DH_params_vec.clear();
+            theta_offset.clear();
+        }
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
         humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
+            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 #if HAND==1
 
@@ -2675,6 +2709,10 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi3 = phi3;
 
 #if HAND==1
+            //add the joint's offset
+            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
+
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
@@ -2686,6 +2724,10 @@ bool QNode::getElements(scenarioPtr scene)
             std::vector<double> leftp;
             hptr->getRightPosture(rightp);
             hptr->getLeftPosture(leftp);
+
+            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
+            std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
+
             std::vector<string> rj = std::vector<string>(rightp.size());
             for (size_t i=0; i<rightp.size(); i++ ){
                 rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
@@ -2698,6 +2740,7 @@ bool QNode::getElements(scenarioPtr scene)
                                        QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(lj.at(i));
             }
+
             // display info of the humanoid
             infoLine = hptr->getInfoLine();
             Q_EMIT newElement(infoLine);
@@ -2935,8 +2978,8 @@ bool QNode::getElements(scenarioPtr scene)
         if (!DH_params_vec.empty())
         {
             DH_params_vec.clear();
+            theta_offset.clear();
         }
-
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
@@ -2944,14 +2987,13 @@ bool QNode::getElements(scenarioPtr scene)
         humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
         humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta_offset = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
             humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
             humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.theta_offset.at(i) = DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180; // [rad]
+            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
 
@@ -3183,6 +3225,9 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi3 = phi3;
 
 #if HAND==1
+            //add the joint's offset
+            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
@@ -3193,6 +3238,8 @@ bool QNode::getElements(scenarioPtr scene)
             hptr->getRightPosture(rightp);
 
             std::vector<string> rj = std::vector<string>(rightp.size());
+            //add the joint's offset
+            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
 
             for (size_t i=0; i<rightp.size(); i++ )
             {
@@ -3906,11 +3953,19 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             break;
         }
 
+        //substract the joint's offset
         MatrixXd traj = traj_mov.at(k);
+        RowVectorXd aux_theta_off = VectorXd::Map(theta_offset.data(), traj.cols());
+        MatrixXd theta_off(traj.rows(), traj.cols());
+        for(int i=0; i<traj.rows(); ++i)
+        {
+            theta_off.row(i) << aux_theta_off;
+        }
+        traj = traj - theta_off;
+
         MatrixXd vel = vel_mov.at(k);
         tol_stop_stage = tols_stop.at(k);
         timesteps_stage = timesteps.at(k);
-
         f_posture = traj.row(traj.rows()-1);
         f_reached=false;
 
@@ -4365,7 +4420,16 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                   break;
               }
 
+              //substract the joint's offset
               MatrixXd traj = traj_mov.at(j);
+              RowVectorXd aux_theta_off = VectorXd::Map(theta_offset.data(), traj.cols());
+              MatrixXd theta_off(traj.rows(), traj.cols());
+              for(int i=0; i<traj.rows(); ++i)
+              {
+                  theta_off.row(i) << aux_theta_off;
+              }
+              traj = traj - theta_off;
+
               MatrixXd vel = vel_mov.at(j);
 
               f_posture = traj.row(traj.rows()-1);

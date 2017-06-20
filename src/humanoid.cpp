@@ -1291,7 +1291,7 @@ void Humanoid::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
     T = mat_world;
 
     for (size_t i = 0; i < posture.size(); ++i){
-        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), m_DH_arm.theta_offset.at(i), T_aux);
+        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), T_aux);
         T = T * T_aux;
         Vector3d v;
         if (i==0){
@@ -1488,7 +1488,6 @@ void Humanoid::computeRightArmDHparams()
     this->m_DH_rightArm.d.clear();
     this->m_DH_rightArm.alpha.clear();
     this->m_DH_rightArm.theta.clear();
-    this->m_DH_rightArm.theta_offset.clear();
 
     for (int i = 0; i < JOINTS_ARM; ++i){
 
@@ -1503,9 +1502,6 @@ void Humanoid::computeRightArmDHparams()
 
     //theta [rad]
     m_DH_rightArm.theta.push_back(rightPosture.at(i));
-
-    //theta_offset [rad]
-    m_DH_rightArm.theta_offset.push_back(m_arm_specs.arm_specs.theta_offset.at(i));
     }
 }
 
@@ -1516,7 +1512,6 @@ void Humanoid::computeLeftArmDHparams()
     this->m_DH_leftArm.d.clear();
     this->m_DH_leftArm.alpha.clear();
     this->m_DH_leftArm.theta.clear();
-    this->m_DH_leftArm.theta_offset.clear();
 
     for (int i = 0; i < JOINTS_ARM; ++i){
 
@@ -1536,8 +1531,6 @@ void Humanoid::computeLeftArmDHparams()
     //theta [rad]
     m_DH_leftArm.theta.push_back(leftPosture.at(i));
 
-    //theta [rad]
-    m_DH_leftArm.theta_offset.push_back(m_arm_specs.arm_specs.theta_offset.at(i));
     }
 }
 
@@ -1915,7 +1908,7 @@ void Humanoid::directKinematicsSingleArm(int arm, std::vector<double>& posture)
 
     for (int i = 0; i < posture.size(); ++i)
     {
-        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), m_DH_arm.theta_offset.at(i), T_aux);
+        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), T_aux);
 
         T = T * T_aux;
         Vector3d v;
@@ -2096,7 +2089,7 @@ void Humanoid::directDiffKinematicsSingleArm(int arm,vector<double> posture, vec
     joint_velocities.resize(velocities.size());
 
     for (int i = 0; i < posture.size(); ++i){
-        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), m_DH_arm.theta_offset.at(i),T_aux);
+        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i),T_aux);
         T = T * T_aux;
         Vector3d diff;
         Vector3d cross;
@@ -2255,7 +2248,7 @@ void Humanoid::inverseDiffKinematicsSingleArm(int arm, vector<double> posture, v
 
 
     for (int i = 0; i < posture.size(); ++i){
-        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), m_DH_arm.theta_offset.at(i), T_aux);
+        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), T_aux);
         T = T * T_aux;
         Vector3d diff;
         Vector3d cross;
@@ -2334,13 +2327,13 @@ void Humanoid::inverseDiffKinematicsSingleArm(int arm, vector<double> posture, v
 }
 
 
-void Humanoid::transfMatrix(double alpha, double a, double d, double theta, double theta_offset, Matrix4d &T)
+void Humanoid::transfMatrix(double alpha, double a, double d, double theta, Matrix4d &T)
 {
     T = Matrix4d::Zero();
 
-    T(0,0) = cos(theta + theta_offset);            T(0,1) = -sin(theta + theta_offset);            T(0,2) = 0.0;         T(0,3) = a;
-    T(1,0) = sin(theta + theta_offset)*cos(alpha); T(1,1) = -cos(theta + theta_offset)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
-    T(2,0) = sin(theta + theta_offset)*sin(alpha); T(2,1) = cos(theta + theta_offset)*sin(alpha);  T(2,2) = cos(alpha);  T(2,3) = cos(alpha)*d;
+    T(0,0) = cos(theta);            T(0,1) = -sin(theta);            T(0,2) = 0.0;         T(0,3) = a;
+    T(1,0) = sin(theta)*cos(alpha); T(1,1) = -cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
+    T(2,0) = sin(theta)*sin(alpha); T(2,1) = cos(theta)*sin(alpha);  T(2,2) = cos(alpha);  T(2,3) = cos(alpha)*d;
     T(3,0) = 0.0;                   T(3,1) = 0.0;                    T(3,2) = 0.0;         T(3,3) = 1.0;
 }
 

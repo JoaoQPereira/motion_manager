@@ -321,6 +321,7 @@ private:
         std::vector<double> left_2hand_pos; /**< position of the left hand 2 phalanx */
         std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
         std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
+        vector<double> theta_offset; /**< theta offset*/
 
 #if HAND ==1
         std::vector<bool> firstPartLocked;

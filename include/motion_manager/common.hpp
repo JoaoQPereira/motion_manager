@@ -80,6 +80,7 @@ const int JOINTS_ARM = 7; /**< number of joints per arm */
 const int JOINTS_HAND = 4; /**< number of joints per hand */
 const int N_PHALANGE = 3; /**< number of phalanges per finger */
 
+
 /** this struct defines the position in the Cartesian space*/
 typedef struct{
     double Xpos; /**< position along the x axis in [mm] */
@@ -107,7 +108,6 @@ typedef struct{
     vector<double> a; /**< distances between concecutive frames along the z axes in [mm] */
     vector<double> alpha; /**< angle around the x axes between consecutive z axes in [rad] */
     vector<double> theta; /**< angle around the z axes between consecutive x axes in [rad] */
-    vector<double> theta_offset; /**< in [rad]*/
 } DHparams;
 
 /** this struct defines the arm */

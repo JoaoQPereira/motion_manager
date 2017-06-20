@@ -145,12 +145,10 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         right_arm_DH.alpha = rDH.alpha;
         right_arm_DH.d = rDH.d;
         right_arm_DH.theta = rDH.theta;
-        right_arm_DH.theta_offset = rDH.theta_offset;
         left_arm_DH.a = lDH.a;
         left_arm_DH.alpha = lDH.alpha;
         left_arm_DH.d = lDH.d;
         left_arm_DH.theta = lDH.theta;
-        left_arm_DH.theta_offset = lDH.theta_offset;
 
         h_planner->setDH_rightArm(right_arm_DH);
         h_planner->setDH_leftArm(left_arm_DH);
