@@ -208,6 +208,14 @@ public:
         void log( const LogLevel &level, const string &msg);
 
 
+        /**
+         * @brief addJointOffset
+         * @param traj_mov
+         * @return
+         */
+        vector<MatrixXd> addJointOffset(std::vector<MatrixXd>& traj_mov);
+
+
 
 Q_SIGNALS:
         /**
@@ -321,7 +329,7 @@ private:
         std::vector<double> left_2hand_pos; /**< position of the left hand 2 phalanx */
         std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
         std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
-        vector<double> theta_offset; /**< theta offset*/
+        std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
 
 #if HAND ==1
         std::vector<bool> firstPartLocked;

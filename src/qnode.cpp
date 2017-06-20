@@ -875,7 +875,7 @@ bool QNode::getElements(scenarioPtr scene)
             hptr->getRightPosture(rightp);
             hptr->getLeftPosture(leftp);
 
-            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
+            std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
 
             std::vector<string> rj = std::vector<string>(rightp.size());
@@ -2082,6 +2082,7 @@ bool QNode::getElements(scenarioPtr scene)
         if (srvs.response.result == 1){
              DH_params_str = srvs.response.signalValue;
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
+
         floatCount = DH_params_str.size()/sizeof(float);
         if (!DH_params_vec.empty())
         {
@@ -2103,6 +2104,7 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
+
 #if HAND==1
 
         // Barrett Hand
@@ -2531,6 +2533,7 @@ bool QNode::getElements(scenarioPtr scene)
         if (srvs.response.result == 1){
              DH_params_str = srvs.response.signalValue;
         }else{succ = false; throw string("Error: Couldn't get the DH parameters of the arm");}
+
         floatCount = DH_params_str.size()/sizeof(float);
         if (!DH_params_vec.empty())
         {
@@ -2552,6 +2555,7 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
+
 #if HAND==1
 
         // Barrett Hand
@@ -2740,6 +2744,7 @@ bool QNode::getElements(scenarioPtr scene)
                                        QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(lj.at(i));
             }
+
 
             // display info of the humanoid
             infoLine = hptr->getInfoLine();
@@ -2995,7 +3000,6 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
-
 
 
 #if HAND==1
@@ -3765,6 +3769,25 @@ void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
 }
 
 
+vector<MatrixXd> QNode::addJointOffset(std::vector<MatrixXd>& traj_mov)
+{
+    for (size_t k=0; k< traj_mov.size();++k)
+    {
+        MatrixXd traj = traj_mov.at(k);
+        RowVectorXd aux_theta_off = VectorXd::Map(theta_offset.data(), traj.cols());
+
+        MatrixXd theta_off(traj.rows(), traj.cols());
+        for(int i=0; i<traj.rows(); ++i)
+        {
+            theta_off.row(i) << aux_theta_off;
+        }
+        traj = traj - theta_off;
+        traj_mov.at(k) = traj;
+    }
+
+    return traj_mov;
+}
+
 
 bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene)
 {    
@@ -3779,6 +3802,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     bool approach;
     bool retreat;
     bool hand_closed;
+
 
     switch (mov_type)
     {
@@ -3953,16 +3977,8 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             break;
         }
 
-        //substract the joint's offset
-        MatrixXd traj = traj_mov.at(k);
-        RowVectorXd aux_theta_off = VectorXd::Map(theta_offset.data(), traj.cols());
-        MatrixXd theta_off(traj.rows(), traj.cols());
-        for(int i=0; i<traj.rows(); ++i)
-        {
-            theta_off.row(i) << aux_theta_off;
-        }
-        traj = traj - theta_off;
 
+        MatrixXd traj = traj_mov.at(k);
         MatrixXd vel = vel_mov.at(k);
         tol_stop_stage = tols_stop.at(k);
         timesteps_stage = timesteps.at(k);
@@ -4420,16 +4436,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                   break;
               }
 
-              //substract the joint's offset
-              MatrixXd traj = traj_mov.at(j);
-              RowVectorXd aux_theta_off = VectorXd::Map(theta_offset.data(), traj.cols());
-              MatrixXd theta_off(traj.rows(), traj.cols());
-              for(int i=0; i<traj.rows(); ++i)
-              {
-                  theta_off.row(i) << aux_theta_off;
-              }
-              traj = traj - theta_off;
 
+              MatrixXd traj = traj_mov.at(j);
               MatrixXd vel = vel_mov.at(j);
 
               f_posture = traj.row(traj.rows()-1);

@@ -972,6 +972,8 @@ void MainWindow::on_pushButton_plan_clicked()
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
 
+    arm humanoid_arm_specs; // specifications of the arm
+
     bool use_final;
 
 #if MOVEIT==1
@@ -1062,6 +1064,7 @@ void MainWindow::on_pushButton_plan_clicked()
 
                 this->jointsPosition_mov.clear();
                 this->jointsPosition_mov = h_results->trajectory_stages;
+                this->jointsPosition_mov = qnode.addJointOffset(this->jointsPosition_mov);
 
                 this->jointsVelocity_mov.clear();
                 this->jointsVelocity_mov = h_results->velocity_stages;
