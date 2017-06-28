@@ -964,15 +964,13 @@ void MainWindow::on_pushButton_addMov_clicked()
 void MainWindow::on_pushButton_plan_clicked()
 {
     ui.tabWidget_sol->setCurrentIndex(0);
-    problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());   
+    problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
 
     HUMotion::hump_params  tols;
     std::vector<double> move_target;
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
-
-    arm humanoid_arm_specs; // specifications of the arm
 
     bool use_final;
 
@@ -1740,7 +1738,7 @@ if(solved){
 
             step++;
         }
-    }    
+    }
 
 
 
