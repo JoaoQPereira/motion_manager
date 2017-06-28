@@ -163,6 +163,18 @@ public:
         bool execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
 
         /**
+         * @brief execTask_complete
+         * @param traj_task
+         * @param vel_task
+         * @param timesteps_task
+         * @param tols_stop_task
+         * @param traj_descr_task
+         * @param task
+         * @param scene
+         * @return
+         */
+        bool execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
+        /**
          * @brief This method sets to zero the time of simulation
          */
         void resetSimTime();
@@ -548,6 +560,22 @@ private:
          * @return
          */
         bool openBarrettHand(int hand);
+
+        /**
+         * @brief openBarrettHand_to_pos
+         * @param hand
+         * @param hand_posture
+         * @return
+         */
+        bool openBarrettHand_to_pos(int hand, std::vector<double>& hand_posture);
+
+        /**
+         * @brief closeBarrettHand_to_pos
+         * @param hand
+         * @param hand_posture
+         * @return
+         */
+        bool closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture);
 #endif
         /**
          * @brief This method return the RPY values starting from the transformation matrix

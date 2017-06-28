@@ -32,7 +32,6 @@ TolDialogHUMP::TolDialogHUMP(QWidget *parent) :
     }
 }
 
-
 TolDialogHUMP::~TolDialogHUMP()
 {
     delete ui;
@@ -300,6 +299,7 @@ double TolDialogHUMP::getW_red_app()
     return ui->lineEdit_w_red_app->text().toDouble();
 }
 
+
 double TolDialogHUMP::getW_red_ret()
 {
     return ui->lineEdit_w_red_ret->text().toDouble();
@@ -352,6 +352,7 @@ void TolDialogHUMP::getFinalHand(std::vector<double> &finalHand)
 }
 
 
+
 void TolDialogHUMP::setPlaneParameters(std::vector<double> &point1,std::vector<double> &point2,std::vector<double> &point3)
 {
     if(!point1.empty() && !point2.empty() && !point3.empty()){
@@ -386,7 +387,6 @@ void TolDialogHUMP::setInitJointsVel(std::vector<double>& init_vel)
     }
 }
 
-
 void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
 {
     if(!init_acc.empty())
@@ -404,7 +404,6 @@ void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
         ui->lineEdit_init_acc_11->setText(QString::number(init_acc.at(10)));
     }
 }
-
 
 void TolDialogHUMP::getPlaneParameters(std::vector<double> &params)
 {
@@ -460,7 +459,6 @@ void TolDialogHUMP::getPlaneParameters(std::vector<double> &params)
         params.push_back(d);
     }
 }
-
 
 // Q_SLOTS
 
@@ -1076,6 +1074,8 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                     }
                 }else if(QString::compare(fields.at(0),QString("max_velocity"),Qt::CaseInsensitive)==0){
                     ui->lineEdit_w_max->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("max_acceleration"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_alpha_max->setText(fields.at(1));
                 }else if(QString::compare(fields.at(0),QString("tar_av"),Qt::CaseInsensitive)==0){
                     if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
                         ui->checkBox_tar_av->setChecked(true);
@@ -1127,18 +1127,14 @@ void TolDialogHUMP::on_pushButton_load_clicked()
     }
 }
 
-
 void TolDialogHUMP::checkApproach(int state)
 {
-    if(state==0)
-    {
+    if(state==0){
         // unchecked
         ui->groupBox_pre_grasp->setEnabled(true);
         ui->groupBox_pre_place->setEnabled(true);
         ui->label_pick->setEnabled(true);
-    }
-    else
-    {
+    }else{
         //checked
         ui->groupBox_pre_grasp->setEnabled(false);
         ui->groupBox_pre_place->setEnabled(false);
@@ -1146,18 +1142,14 @@ void TolDialogHUMP::checkApproach(int state)
     }
 }
 
-
 void TolDialogHUMP::checkRetreat(int state)
 {
-    if(state==0)
-    {
+    if(state==0){
         // unchecked
         ui->groupBox_post_grasp->setEnabled(true);
         ui->groupBox_post_place->setEnabled(true);
         ui->label_pick->setEnabled(true);
-    }
-    else
-    {
+    }else{
         //checked
         ui->groupBox_post_grasp->setEnabled(false);
         ui->groupBox_post_place->setEnabled(false);
@@ -1165,33 +1157,25 @@ void TolDialogHUMP::checkRetreat(int state)
     }
 }
 
-
 void TolDialogHUMP::checkFinalPosture(int state)
 {
-    if(state==0)
-    {
+    if(state==0){
         // unchecked
         ui->groupBox_target->setEnabled(true);
         ui->groupBox_final_arm->setEnabled(false);
-    }
-    else
-    {
+    }else{
         //checked
         ui->groupBox_target->setEnabled(false);
         ui->groupBox_final_arm->setEnabled(true);
     }
 }
 
-
 void TolDialogHUMP::checkAddPlane(int state)
 {
-    if(state==0)
-    {
+    if(state==0){
         //unchecked
         ui->groupBox_plane->setEnabled(false);
-    }
-    else
-    {
+    }else{
         //checked
         ui->groupBox_plane->setEnabled(true);
     }
@@ -1257,42 +1241,35 @@ void TolDialogHUMP::checkSetHandCondApproach(int state)
 }
 */
 
-
 bool TolDialogHUMP::getRandInit()
 {
     return ui->checkBox_rand_init->isChecked();
 }
-
 
 void TolDialogHUMP::setRandInit(bool rand)
 {
     ui->checkBox_rand_init->setChecked(rand);
 }
 
-
 bool TolDialogHUMP::getColl()
 {
     return !ui->checkBox_coll->isChecked();
 }
-
 
 void TolDialogHUMP::setColl(bool coll)
 {
     ui->checkBox_coll->setChecked(!coll);
 }
 
-
 bool TolDialogHUMP::get_use_final_posture()
 {
     return ui->checkBox_sel_final_posture->isChecked();
 }
 
-
 bool TolDialogHUMP::get_add_plane()
 {
     return ui->checkBox_add_plane->isChecked();
 }
-
 
 bool TolDialogHUMP::get_straight_line()
 {
@@ -1303,7 +1280,6 @@ void TolDialogHUMP::setStraightLine(bool straight)
 {
     ui->checkBox_straight_line->setChecked(straight);
 }
-
 
 void TolDialogHUMP::set_add_plane(bool plane)
 {
