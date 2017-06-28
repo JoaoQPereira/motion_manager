@@ -74,8 +74,8 @@ QNode::QNode(int argc, char** argv ) :
     // logging
     init();
     logging::add_common_attributes();
-}
 
+}
 
 QNode::~QNode()
 {
@@ -84,7 +84,6 @@ QNode::~QNode()
     }
     wait();
 }
-
 
 bool QNode::on_init()
 {
@@ -96,7 +95,6 @@ bool QNode::on_init()
     start();
 	return true;
 }
-
 
 bool QNode::on_init_url(const std::string &master_url, const std::string &host_url)
 {
@@ -112,13 +110,11 @@ bool QNode::on_init_url(const std::string &master_url, const std::string &host_u
 	return true;
 }
 
-
 void QNode::on_end()
 {
 
 
 }
-
 
 bool  QNode::loadScenario(const std::string& path,int id)
 {
@@ -221,6 +217,7 @@ bool  QNode::loadScenario(const std::string& path,int id)
             subShelf_4_d = n.subscribe("/vrep/Shelf_4_d_pose",1,&QNode::Shelf_4_dCallback,this);
 
             break;
+
         }
 #if MOVEIT==1
         // planning scene of RViZ
@@ -233,6 +230,8 @@ bool  QNode::loadScenario(const std::string& path,int id)
     {
         return false;
     }
+
+
 }
 
 #if MOVEIT==1
@@ -3301,6 +3300,7 @@ bool QNode::getElements(scenarioPtr scene)
 
 void QNode::BlueColumnCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "blue_callback"  ;
 
     int obj_id = 0;
@@ -3310,42 +3310,48 @@ void QNode::BlueColumnCallback(const geometry_msgs::PoseStamped &data)
 
 }
 
-
 void QNode::GreenColumnCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "green_callback"  ;
 
     int obj_id = 1;
     string name = string("GreenColumn");
 
     this->updateObjectInfo(obj_id,name,data);
+
  }
 
 
 void QNode::RedColumnCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "red_callback"  ;
 
     int obj_id = 2;
     string name = string("RedColumn");
 
     this->updateObjectInfo(obj_id,name,data);
+
 }
 
 
 void QNode::MagentaColumnCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "magenta_callback"  ;
 
     int obj_id = 3;
     string name = string("MagentaColumn");
 
     this->updateObjectInfo(obj_id,name,data);
+
 }
 
 
 void QNode::Nut1Callback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "nut1_callback"  ;
 
 
@@ -3353,11 +3359,13 @@ void QNode::Nut1Callback(const geometry_msgs::PoseStamped &data)
     string name = string("Nut1");
 
     this->updateObjectInfo(obj_id,name,data);
+
 }
 
 
 void QNode::Nut2Callback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "nut2_callback"  ;
 
 
@@ -3370,28 +3378,32 @@ void QNode::Nut2Callback(const geometry_msgs::PoseStamped &data)
 
 void QNode::Wheel1Callback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "wheel1_callback"  ;
 
     int obj_id = 6;
     string name = string("Wheel1");
 
     this->updateObjectInfo(obj_id,name,data);
+
 }
 
 
 void QNode::Wheel2Callback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "wheel2_callback"  ;
 
     int obj_id = 7;
     string name = string("Wheel2");
 
     this->updateObjectInfo(obj_id,name,data);
-}
 
+}
 
 void QNode::BaseCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "base_callback"  ;
 
     int obj_id = 8;
@@ -3412,11 +3424,13 @@ void QNode::TableCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 
 }
+
 */
 
 
 void QNode::BottleTeaCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "bottle_tea_callback"  ;
 
     int obj_id = 0;
@@ -3425,9 +3439,9 @@ void QNode::BottleTeaCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::BottleCoffeeCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "bottle_coffee_callback"  ;
 
     int obj_id = 1;
@@ -3436,9 +3450,9 @@ void QNode::BottleCoffeeCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::BottleJuiceCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "bottle_juice_callback"  ;
 
     int obj_id = 2;
@@ -3447,9 +3461,9 @@ void QNode::BottleJuiceCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::CupCallback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "cup_callback"  ;
 
     int obj_id = 3;
@@ -3458,9 +3472,9 @@ void QNode::CupCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::Cup1Callback(const geometry_msgs::PoseStamped &data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "cup_1_callback"  ;
 
     int obj_id = 4;
@@ -3468,7 +3482,6 @@ void QNode::Cup1Callback(const geometry_msgs::PoseStamped &data)
 
     this->updateObjectInfo(obj_id,name,data);
 }
-
 
 void QNode::Cup_shelfCallback(const geometry_msgs::PoseStamped& data)
 {
@@ -3480,7 +3493,6 @@ void QNode::Cup_shelfCallback(const geometry_msgs::PoseStamped& data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::ShelfCallback(const geometry_msgs::PoseStamped &data)
 {
     //BOOST_LOG_SEV(lg, info) << "shelf_callback"  ;
@@ -3490,7 +3502,6 @@ void QNode::ShelfCallback(const geometry_msgs::PoseStamped &data)
 
     this->updateObjectInfo(obj_id,name,data);
 }
-
 
 void QNode::Shelf_1_bCallback(const geometry_msgs::PoseStamped &data)
 {
@@ -3502,7 +3513,6 @@ void QNode::Shelf_1_bCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::Shelf_2_aCallback(const geometry_msgs::PoseStamped &data)
 {
     //BOOST_LOG_SEV(lg, info) << "shelf_2_acallback"  ;
@@ -3512,7 +3522,6 @@ void QNode::Shelf_2_aCallback(const geometry_msgs::PoseStamped &data)
 
     this->updateObjectInfo(obj_id,name,data);
 }
-
 
 void QNode::Shelf_2_bCallback(const geometry_msgs::PoseStamped &data)
 {
@@ -3524,7 +3533,6 @@ void QNode::Shelf_2_bCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::Shelf_3Callback(const geometry_msgs::PoseStamped &data)
 {
     //BOOST_LOG_SEV(lg, info) << "shelf_3callback"  ;
@@ -3534,7 +3542,6 @@ void QNode::Shelf_3Callback(const geometry_msgs::PoseStamped &data)
 
     this->updateObjectInfo(obj_id,name,data);
 }
-
 
 void QNode::Shelf_4_aCallback(const geometry_msgs::PoseStamped &data)
 {
@@ -3546,7 +3553,6 @@ void QNode::Shelf_4_aCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::Shelf_4_bCallback(const geometry_msgs::PoseStamped &data)
 {
     //BOOST_LOG_SEV(lg, info) << "shelf_4_bcallback"  ;
@@ -3556,7 +3562,6 @@ void QNode::Shelf_4_bCallback(const geometry_msgs::PoseStamped &data)
 
     this->updateObjectInfo(obj_id,name,data);
 }
-
 
 void QNode::Shelf_4_cCallback(const geometry_msgs::PoseStamped &data)
 {
@@ -3568,7 +3573,6 @@ void QNode::Shelf_4_cCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::Shelf_4_dCallback(const geometry_msgs::PoseStamped &data)
 {
     //BOOST_LOG_SEV(lg, info) << "shelf_4_dcallback"  ;
@@ -3579,9 +3583,10 @@ void QNode::Shelf_4_dCallback(const geometry_msgs::PoseStamped &data)
     this->updateObjectInfo(obj_id,name,data);
 }
 
-
 void QNode::updateObjectInfo(int obj_id, string name, const geometry_msgs::PoseStamped &data)
 {
+
+
     std::vector<double> rpy;
     objectPtr obj = this->curr_scene->getObject(name);
 
@@ -3667,11 +3672,12 @@ void QNode::updateObjectInfo(int obj_id, string name, const geometry_msgs::PoseS
     if(this->curr_scene){
         this->curr_scene->setObject(obj_id,obj);
     }
-}
 
+}
 
 bool QNode::getRPY(Matrix4d Trans, std::vector<double> &rpy)
 {
+
     rpy = std::vector<double>(3);
 
 
@@ -3693,8 +3699,9 @@ bool QNode::getRPY(Matrix4d Trans, std::vector<double> &rpy)
 
         return true;
     }
-}
 
+
+}
 
 void QNode::RPY_matrix(std::vector<double> rpy, Matrix3d &Rot)
 {
@@ -3710,6 +3717,7 @@ void QNode::RPY_matrix(std::vector<double> rpy, Matrix3d &Rot)
         Rot(0,0) = cos(roll)*cos(pitch);  Rot(0,1) = cos(roll)*sin(pitch)*sin(yaw)-sin(roll)*cos(yaw); Rot(0,2) = sin(roll)*sin(yaw)+cos(roll)*sin(pitch)*cos(yaw);
         Rot(1,0) = sin(roll)*cos(pitch);  Rot(1,1) = cos(roll)*cos(yaw)+sin(roll)*sin(pitch)*sin(yaw); Rot(1,2) = sin(roll)*sin(pitch)*cos(yaw)-cos(roll)*sin(yaw);
         Rot(2,0) = -sin(pitch);           Rot(2,1) = cos(pitch)*sin(yaw);                              Rot(2,2) = cos(pitch)*cos(yaw);
+
     }
 }
 
@@ -3723,9 +3731,9 @@ void QNode::infoCallback(const vrep_common::VrepInfoConstPtr& info)
     //printf("simulation time: %f [sec]\n",simulationTime);
 }
 
-
 void QNode::rightProxCallback(const vrep_common::ProximitySensorData& data)
 {
+
     //ros::NodeHandle node;
     //BOOST_LOG_SEV(lg, info) << "right_prox_callback"  ;
 
@@ -3765,9 +3773,9 @@ void QNode::rightProxCallback(const vrep_common::ProximitySensorData& data)
     }
 }
 
-
 void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
 {
+
     //BOOST_LOG_SEV(lg, info) << "left_prox_callback"  ;
 
     if (this->curr_mov){
@@ -3775,9 +3783,6 @@ void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
         int arm_code = this->curr_mov->getArm();
 
         if (arm_code == 2){
-        }
-    }
-}
 
 
 vector<MatrixXd> QNode::realJointsPosition(std::vector<MatrixXd>& traj_mov)
@@ -3792,16 +3797,14 @@ vector<MatrixXd> QNode::realJointsPosition(std::vector<MatrixXd>& traj_mov)
         {
             theta_off.row(i) << aux_theta_off;
         }
-        traj = traj - theta_off;
-        traj_mov.at(k) = traj;
     }
 
-    return traj_mov;
 }
 
 
 bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene)
 {
+
     this->curr_scene = scene;
     int scenarioID = scene->getID();
     this->curr_mov = mov; int mov_type = mov->getType();  int arm_code = mov->getArm();
@@ -3952,7 +3955,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             break;
         case 2: case 3: // transport, engage
             if(retreat){
-                //
+                closed.at(0)=false; closed.at(1)=false; closed.at(2)=false;
                 //ros::spinOnce();// handle ROS messages
                 if(std::strcmp(mov->getObject()->getName().c_str(),"")!=0){
                     add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
@@ -4242,7 +4245,10 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     bool plan; bool approach; bool retreat;
     double pre_time;
 
+
     //BOOST_LOG_SEV(lg, info) << "TotalTime = " << TotalTime;
+
+
 
     // set joints position or velocity (it depends on the scenario)
     ros::ServiceClient client_enableSubscriber=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
@@ -4277,6 +4283,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
           vector<vector<double>> timesteps_mov = timesteps_task.at(ii);
           vector<double> tols_stop_mov = tols_stop_task.at(ii);
           double tol_stop_stage;
+          MatrixXd traj;
+          MatrixXd vel;
           std::vector<double> timesteps_stage;
           movementPtr mov = task->getProblem(kk)->getMovement();
           vector<string> traj_descr_mov = traj_descr_task.at(ii);
@@ -4284,6 +4292,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
           this->curr_mov = mov;
           arm_code = mov->getArm();
           mov_type = mov->getType();
+
           switch (mov_type){
           case 0: case 1: case 5: // reach-to-grasp, reaching, go-park
               closed.at(0)=false; closed.at(1)=false; closed.at(2)=false;
@@ -4292,6 +4301,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
               closed.at(0)=true; closed.at(1)=true; closed.at(2)=true;
               break;
           }
+
+
           switch (arm_code) {
           case 0: // dual arm
               // TODO
@@ -4309,6 +4320,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
               h_attach = left_attach;
               break;
           }
+
+
 
           for(size_t j=0; j <traj_mov.size();++j){ //for loop stages
 
@@ -4389,7 +4402,6 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
               timesteps_stage = timesteps_mov.at(j);
               f_posture = traj.row(traj.rows()-1);
               f_reached=false;
-              timesteps_stage = timesteps_mov.at(j);
               tol_stop_stage = tols_stop_mov.at(j);
 
               ros::spinOnce(); // handle ROS messages
@@ -4617,8 +4629,11 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
       TotalTime=simulationTime;
 
       return true;
-}
 
+
+
+
+}
 
 bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene)
 {
@@ -5138,6 +5153,10 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
       TotalTime=simulationTime;
 
       return true;
+
+
+
+
 }
 
 
@@ -5158,11 +5177,14 @@ void QNode::stopSim()
     add_client = node.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
     vrep_common::simRosStopSimulation srvstop;
     add_client.call(srvstop);
+
+
 }
 
 
 bool QNode::checkRViz()
 {
+
     FILE *fp;
     const int length=1000;
     char result[length]; // line to read
@@ -5191,11 +5213,12 @@ bool QNode::checkRViz()
 
     }
     return online;
-}
 
+}
 
 bool QNode::checkVrep()
 {
+
     FILE *fp;
     const int length=1000;
     char result[length]; // line to read
@@ -5224,7 +5247,10 @@ bool QNode::checkVrep()
 
     }
     return online;
+
 }
+
+
 
 
 void QNode::run()
@@ -5813,7 +5839,6 @@ bool QNode::getArmsHandles(int humanoid)
                 }
             }
 
-            if (k == 0){
 
             if (k == 0)
             {
@@ -5868,7 +5893,6 @@ bool QNode::getArmsHandles(int humanoid)
                 }
             }
 
-            if (k == 1){
 
             if (k == 1)
             {
@@ -5924,7 +5948,6 @@ bool QNode::getArmsHandles(int humanoid)
                 }
             }
 
-            if (k == 2){
 
             if (k == 2)
             {
@@ -5980,7 +6003,7 @@ bool QNode::getArmsHandles(int humanoid)
                 }
             }
         }
-    break;
+            break;
 
     case 1: // Jarde
         for (int k = 0; k < HAND_FINGERS; ++k)
@@ -6422,8 +6445,6 @@ bool QNode::getArmsHandles(int humanoid)
         break;
 
 case 1: // Jarde
-
-    case 1: // Jarde
         // get the object handle of the sensors
         add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
         srvgetHandle.request.objectName = string("right_hand_attachProxSensor");
@@ -6466,8 +6487,6 @@ case 1: // Jarde
         {
             succ=false;
         }
-
-}
 
         add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
         srvgetHandle.request.objectName = string("left_hand_attachPoint");
@@ -6883,6 +6902,8 @@ while (ros::ok() && simulationRunning && (closed[0] || closed[1] || closed[2]) &
                 srv_setTarVel.request.targetVelocity = openingVel;
                 client_setTarVel.call(srv_setTarVel);
 
+
+
                 firstPartLocked[i] = false;
 
                 //BOOST_LOG_SEV(lg, info) << " First part unlocked: " << i;
@@ -6928,6 +6949,7 @@ while (ros::ok() && simulationRunning && (closed[0] || closed[1] || closed[2]) &
                 srv_setTarVel.request.targetVelocity = openingVel;
                 client_setTarVel.call(srv_setTarVel);
 
+    
 
                 //BOOST_LOG_SEV(lg, info) << "hand posture " << i << hand_posture.at(i+1) <<" Full opening NOT needed ";
 

@@ -18,13 +18,11 @@ TolDialogHUMP::TolDialogHUMP(QWidget *parent) :
      //QObject::connect(ui->checkBox_hand_cond, SIGNAL(stateChanged(int)), this, SLOT(checkHandCond(int)));
      //QObject::connect(ui->checkBox_hand_cond_approach, SIGNAL(stateChanged(int)), this, SLOT(checkHandCondApproach(int)));
 
-    if(ui->checkBox_approach->isChecked())
-    {
+    if(ui->checkBox_approach->isChecked()){
         ui->groupBox_pre_grasp->setEnabled(false);
         ui->groupBox_pre_place->setEnabled(false);
         ui->label_pick->setEnabled(false);
     }
-
     if(ui->checkBox_retreat->isChecked()){
         ui->groupBox_post_grasp->setEnabled(false);
         ui->groupBox_post_place->setEnabled(false);
@@ -36,6 +34,9 @@ TolDialogHUMP::~TolDialogHUMP()
 {
     delete ui;
 }
+
+
+
 
 
 void TolDialogHUMP::getTolsArm(vector<double> &tols)
@@ -50,6 +51,7 @@ void TolDialogHUMP::getTolsArm(vector<double> &tols)
 
 void TolDialogHUMP::getTolsHand(MatrixXd &tols)
 {
+
    tols = MatrixXd::Constant(4,3,1);
 
     tols(0,0) = ui->lineEdit_hand_1_1->text().toDouble(); tols(0,1) = ui->lineEdit_hand_1_2->text().toDouble(); tols(0,2) = ui->lineEdit_hand_1_3->text().toDouble();
@@ -59,8 +61,10 @@ void TolDialogHUMP::getTolsHand(MatrixXd &tols)
 }
 
 
+
 void TolDialogHUMP::getLambda(std::vector<double> &lambda)
 {
+
    lambda.clear();
    lambda.push_back(ui->lineEdit_lambda_1->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_2->text().toDouble());
@@ -73,82 +77,97 @@ void TolDialogHUMP::getLambda(std::vector<double> &lambda)
    lambda.push_back(ui->lineEdit_lambda_9->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_10->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_11->text().toDouble());
+
 }
 
 
 void TolDialogHUMP::getTolsObstacles(MatrixXd &tols)
 {
+
     tols = MatrixXd::Constant(3,6,1);
 
     tols(0,0)=ui->lineEdit_obs_xx_1->text().toDouble(); tols(0,1)=ui->lineEdit_obs_yy_1->text().toDouble(); tols(0,2)=ui->lineEdit_obs_zz_1->text().toDouble(); tols(0,3)=ui->lineEdit_obs_xy_1->text().toDouble(); tols(0,4)=ui->lineEdit_obs_xz_1->text().toDouble(); tols(0,5)=ui->lineEdit_obs_yz_1->text().toDouble();
     tols(1,0)=ui->lineEdit_obs_xx_2->text().toDouble(); tols(1,1)=ui->lineEdit_obs_yy_2->text().toDouble(); tols(1,2)=ui->lineEdit_obs_zz_2->text().toDouble(); tols(1,3)=ui->lineEdit_obs_xy_2->text().toDouble(); tols(1,4)=ui->lineEdit_obs_xz_2->text().toDouble(); tols(1,5)=ui->lineEdit_obs_yz_2->text().toDouble();
     tols(2,0)=ui->lineEdit_obs_xx_3->text().toDouble(); tols(2,1)=ui->lineEdit_obs_yy_3->text().toDouble(); tols(2,2)=ui->lineEdit_obs_zz_3->text().toDouble(); tols(2,3)=ui->lineEdit_obs_xy_3->text().toDouble(); tols(2,4)=ui->lineEdit_obs_xz_3->text().toDouble(); tols(2,5)=ui->lineEdit_obs_yz_3->text().toDouble();
+
 }
 
 
 void TolDialogHUMP::getTolsTarget(MatrixXd &tols)
 {
+
     tols = MatrixXd::Constant(3,6,1);
 
     tols(0,0)=ui->lineEdit_tar_xx_1->text().toDouble(); tols(0,1)=ui->lineEdit_tar_yy_1->text().toDouble(); tols(0,2)=ui->lineEdit_tar_zz_1->text().toDouble(); tols(0,3)=ui->lineEdit_tar_xy_1->text().toDouble(); tols(0,4)=ui->lineEdit_tar_xz_1->text().toDouble(); tols(0,5)=ui->lineEdit_tar_yz_1->text().toDouble();
     tols(1,0)=ui->lineEdit_tar_xx_2->text().toDouble(); tols(1,1)=ui->lineEdit_tar_yy_2->text().toDouble(); tols(1,2)=ui->lineEdit_tar_zz_2->text().toDouble(); tols(1,3)=ui->lineEdit_tar_xy_2->text().toDouble(); tols(1,4)=ui->lineEdit_tar_xz_2->text().toDouble(); tols(1,5)=ui->lineEdit_tar_yz_2->text().toDouble();
     tols(2,0)=ui->lineEdit_tar_xx_3->text().toDouble(); tols(2,1)=ui->lineEdit_tar_yy_3->text().toDouble(); tols(2,2)=ui->lineEdit_tar_zz_3->text().toDouble(); tols(2,3)=ui->lineEdit_tar_xy_3->text().toDouble(); tols(2,4)=ui->lineEdit_tar_xz_3->text().toDouble(); tols(2,5)=ui->lineEdit_tar_yz_3->text().toDouble();
+
+
 }
+
 
 
 double TolDialogHUMP::getWMax()
 {
+
     return ui->lineEdit_w_max->text().toDouble();
 }
 
+double TolDialogHUMP::getAlphaMax()
+{
+
+    return ui->lineEdit_alpha_max->text().toDouble();
+}
 
 void TolDialogHUMP::setWMax(double w)
 {
+
     ui->lineEdit_w_max->setText(QString::number(w));
 }
 
 
+
+
 double TolDialogHUMP::getTolTarPos()
 {
+
     return ui->lineEdit_tar_pos->text().toDouble();
 }
 
 
 double TolDialogHUMP::getTolTarOr()
 {
+
     return ui->lineEdit_tar_or->text().toDouble();
 }
 
-
 void TolDialogHUMP::setInfo(string info)
 {
+
     this->infoLine = info;
 }
 
-
 bool TolDialogHUMP::getTargetAvoidance()
 {
+
    return !ui->checkBox_tar_av->isChecked();
 }
 
-
 bool TolDialogHUMP::getObstacleAvoidance()
 {
+
     return !ui->checkBox_ob_av->isChecked();
 }
-
 
 bool TolDialogHUMP::getApproach()
 {
     return !ui->checkBox_approach->isChecked();
 }
 
-
 bool TolDialogHUMP::getRetreat()
 {
     return !ui->checkBox_retreat->isChecked();
 }
-
 
 void TolDialogHUMP::getInitVel(std::vector<double> &init_vel)
 {
@@ -166,7 +185,6 @@ void TolDialogHUMP::getInitVel(std::vector<double> &init_vel)
     init_vel.push_back(ui->lineEdit_init_vel_11->text().toDouble());
 }
 
-
 void TolDialogHUMP::getFinalVel(std::vector<double> &final_vel)
 {
     final_vel.clear();
@@ -183,7 +201,6 @@ void TolDialogHUMP::getFinalVel(std::vector<double> &final_vel)
     final_vel.push_back(ui->lineEdit_final_vel_11->text().toDouble());
 }
 
-
 void TolDialogHUMP::getInitAcc(std::vector<double> &init_acc)
 {
     init_acc.clear();
@@ -199,7 +216,6 @@ void TolDialogHUMP::getInitAcc(std::vector<double> &init_acc)
     init_acc.push_back(ui->lineEdit_init_acc_10->text().toDouble());
     init_acc.push_back(ui->lineEdit_init_acc_11->text().toDouble());
 }
-
 
 void TolDialogHUMP::getFinalAcc(std::vector<double> &final_acc)
 {
@@ -252,7 +268,6 @@ void TolDialogHUMP::getAccApproach(std::vector<double> &acc_approach)
 }
 
 */
-
 void TolDialogHUMP::getPreGraspApproach(std::vector<double> &pre_grasp)
 {
     pre_grasp.clear();
@@ -262,7 +277,6 @@ void TolDialogHUMP::getPreGraspApproach(std::vector<double> &pre_grasp)
     pre_grasp.push_back(ui->lineEdit_pre_grasp_dist->text().toDouble());
 }
 
-
 void TolDialogHUMP::getPostGraspRetreat(std::vector<double> &post_grasp)
 {
     post_grasp.clear();
@@ -271,7 +285,6 @@ void TolDialogHUMP::getPostGraspRetreat(std::vector<double> &post_grasp)
     post_grasp.push_back(ui->lineEdit_post_grasp_z->text().toDouble());
     post_grasp.push_back(ui->lineEdit_post_grasp_dist->text().toDouble());
 }
-
 
 void TolDialogHUMP::getPrePlaceApproach(std::vector<double> &pre_place)
 {
@@ -283,7 +296,6 @@ void TolDialogHUMP::getPrePlaceApproach(std::vector<double> &pre_place)
 
 }
 
-
 void TolDialogHUMP::getPostPlaceRetreat(std::vector<double> &post_place)
 {
     post_place.clear();
@@ -293,18 +305,15 @@ void TolDialogHUMP::getPostPlaceRetreat(std::vector<double> &post_place)
     post_place.push_back(ui->lineEdit_post_place_dist->text().toDouble());
 }
 
-
 double TolDialogHUMP::getW_red_app()
 {
     return ui->lineEdit_w_red_app->text().toDouble();
 }
 
-
 double TolDialogHUMP::getW_red_ret()
 {
     return ui->lineEdit_w_red_ret->text().toDouble();
 }
-
 
 void TolDialogHUMP::getTargetMove(std::vector<double> &target)
 {
@@ -317,7 +326,6 @@ void TolDialogHUMP::getTargetMove(std::vector<double> &target)
     target.push_back((ui->lineEdit_target_yaw->text().toDouble()*M_PI)/180);
 }
 
-
 void TolDialogHUMP::setTargetMove(std::vector<double> &target)
 {
     ui->lineEdit_target_x->setText(QString::number(target.at(0)));
@@ -327,7 +335,6 @@ void TolDialogHUMP::setTargetMove(std::vector<double> &target)
     ui->lineEdit_target_pitch->setText(QString::number(target.at(4)));
     ui->lineEdit_target_yaw->setText(QString::number(target.at(5)));
 }
-
 
 void TolDialogHUMP::getFinalArm(std::vector<double> &finalArm)
 {
@@ -340,7 +347,6 @@ void TolDialogHUMP::getFinalArm(std::vector<double> &finalArm)
     finalArm.push_back((ui->lineEdit_final_arm_6->text().toDouble()*M_PI)/180);
     finalArm.push_back((ui->lineEdit_final_arm_7->text().toDouble()*M_PI)/180);
 }
-
 
 void TolDialogHUMP::getFinalHand(std::vector<double> &finalHand)
 {
@@ -367,7 +373,6 @@ void TolDialogHUMP::setPlaneParameters(std::vector<double> &point1,std::vector<d
         ui->lineEdit_point_3_z->setText(QString::number(point3.at(2)));
     }
 }
-
 
 void TolDialogHUMP::setInitJointsVel(std::vector<double>& init_vel)
 {
@@ -458,6 +463,9 @@ void TolDialogHUMP::getPlaneParameters(std::vector<double> &params)
         params.push_back(c);
         params.push_back(d);
     }
+
+
+
 }
 
 // Q_SLOTS
@@ -679,10 +687,14 @@ void TolDialogHUMP::on_pushButton_save_clicked()
        if(ui->checkBox_straight_line->isChecked()){stream << "straight_line=true"<<endl;}else{stream << "straight_line=false"<<endl;}
        //stream << "# END" << endl;
 
+
        f.close();
    }
-}
 
+
+
+
+}
 
 void TolDialogHUMP::on_pushButton_load_clicked()
 {
@@ -1074,8 +1086,6 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                     }
                 }else if(QString::compare(fields.at(0),QString("max_velocity"),Qt::CaseInsensitive)==0){
                     ui->lineEdit_w_max->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("max_acceleration"),Qt::CaseInsensitive)==0){
-                    ui->lineEdit_alpha_max->setText(fields.at(1));
                 }else if(QString::compare(fields.at(0),QString("tar_av"),Qt::CaseInsensitive)==0){
                     if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
                         ui->checkBox_tar_av->setChecked(true);
@@ -1121,10 +1131,15 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                     }
 
                 }
+
             }
+
         }
+
         f.close();
+
     }
+
 }
 
 void TolDialogHUMP::checkApproach(int state)
