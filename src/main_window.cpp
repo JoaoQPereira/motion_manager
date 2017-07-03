@@ -330,6 +330,7 @@ void MainWindow::on_pushButton_tuning_clicked()
     case 0: // HUMP
         mTolHumpdlg->setInitJointsVel(this->jointsEndVelocity_mov);
         mTolHumpdlg->setInitJointsAcc(this->jointsEndAcceleration_mov);
+        mTolHumpdlg->setPointsOfArm(this->curr_scene->getHumanoid()->getDH_rightArm(), this->curr_scene->getHumanoid()->getName());
         mTolHumpdlg->show();
         break;
     case 1: // RRT

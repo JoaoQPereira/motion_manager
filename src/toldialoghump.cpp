@@ -28,6 +28,8 @@ TolDialogHUMP::TolDialogHUMP(QWidget *parent) :
         ui->groupBox_post_place->setEnabled(false);
         ui->label_pick->setEnabled(false);
     }
+
+    //ui->label_points_arm->setText();
 }
 
 TolDialogHUMP::~TolDialogHUMP()
@@ -35,18 +37,6 @@ TolDialogHUMP::~TolDialogHUMP()
     delete ui;
 }
 
-
-
-
-
-void TolDialogHUMP::getTolsArm(vector<double> &tols)
-{
-    tols.clear();
-    tols.push_back(ui->lineEdit_shoulder_r->text().toDouble());
-    tols.push_back(ui->lineEdit_elbow_r->text().toDouble());
-    tols.push_back(ui->lineEdit_wrist_r->text().toDouble());
-    tols.push_back(ui->lineEdit_hand_r->text().toDouble());
-}
 
 
 void TolDialogHUMP::getTolsHand(MatrixXd &tols)
@@ -60,11 +50,28 @@ void TolDialogHUMP::getTolsHand(MatrixXd &tols)
     tols(3,0) = ui->lineEdit_hand_tip_1->text().toDouble(); tols(3,1) = ui->lineEdit_hand_tip_2->text().toDouble(); tols(3,2) = ui->lineEdit_hand_tip_3->text().toDouble();
 }
 
+void TolDialogHUMP::getTolsArm(vector<double> &tols)
+{
+    tols.clear();
+    tols.push_back(ui->lineEdit_sphere1_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere2_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere3_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere4_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere5_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere6_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere7_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere8_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere9_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere10_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere11_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere12_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere13_r->text().toDouble());
+    tols.push_back(ui->lineEdit_sphere14_r->text().toDouble());
+}
 
 
 void TolDialogHUMP::getLambda(std::vector<double> &lambda)
 {
-
    lambda.clear();
    lambda.push_back(ui->lineEdit_lambda_1->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_2->text().toDouble());
@@ -351,10 +358,10 @@ void TolDialogHUMP::getFinalArm(std::vector<double> &finalArm)
 void TolDialogHUMP::getFinalHand(std::vector<double> &finalHand)
 {
     finalHand.clear();
-    finalHand.push_back(ui->lineEdit_final_hand_1->text().toDouble());
-    finalHand.push_back(ui->lineEdit_final_hand_2->text().toDouble());
-    finalHand.push_back(ui->lineEdit_final_hand_3->text().toDouble());
-    finalHand.push_back(ui->lineEdit_final_hand_4->text().toDouble());
+    finalHand.push_back((ui->lineEdit_final_hand_1->text().toDouble()*M_PI)/180);
+    finalHand.push_back((ui->lineEdit_final_hand_2->text().toDouble()*M_PI)/180);
+    finalHand.push_back((ui->lineEdit_final_hand_3->text().toDouble()*M_PI)/180);
+    finalHand.push_back((ui->lineEdit_final_hand_4->text().toDouble()*M_PI)/180);
 }
 
 
@@ -409,6 +416,348 @@ void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
         ui->lineEdit_init_acc_11->setText(QString::number(init_acc.at(10)));
     }
 }
+
+void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
+{
+    int points_number;
+    double tol = 350; //Length of the link
+
+    //Arm without offsets in its links
+    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)==0)
+    {
+        points_number = 6 + 9;
+
+        ui->lineEdit_sphere1_r->setText(QString::number(0));
+        ui->lineEdit_sphere1_r->setEnabled(false);
+        ui->lineEdit_sphere2_r->setText(QString::number(0));
+        ui->lineEdit_sphere2_r->setEnabled(false);
+        ui->lineEdit_sphere3_r->setText(QString::number(0));
+        ui->lineEdit_sphere3_r->setEnabled(false);
+        ui->lineEdit_sphere4_r->setText(QString::number(0));
+        ui->lineEdit_sphere4_r->setEnabled(false);
+        ui->lineEdit_sphere6_r->setText(QString::number(0));
+        ui->lineEdit_sphere6_r->setEnabled(false);
+        ui->lineEdit_sphere7_r->setText(QString::number(0));
+        ui->lineEdit_sphere7_r->setEnabled(false);
+        ui->lineEdit_sphere10_r->setText(QString::number(0));
+        ui->lineEdit_sphere10_r->setEnabled(false);
+        ui->lineEdit_sphere11_r->setText(QString::number(0));
+        ui->lineEdit_sphere11_r->setEnabled(false);
+
+
+        if(!name.compare("ARoS"))
+        {
+            ui->lineEdit_sphere5_r->setText(QString::number(80.00));
+            ui->lineEdit_sphere8_r->setText(QString::number(80.00));
+            ui->lineEdit_sphere9_r->setText(QString::number(70.00));
+            ui->lineEdit_sphere12_r->setText(QString::number(90.00));
+            ui->lineEdit_sphere13_r->setText(QString::number(90.00));
+            ui->lineEdit_sphere14_r->setText(QString::number(60.00));
+        }
+    }
+
+
+    //Arm with offset in shoulder
+    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)==0)
+    {
+        points_number = 8 + 9;
+
+        ui->lineEdit_sphere6_r->setText(QString::number(0));
+        ui->lineEdit_sphere6_r->setEnabled(false);
+        ui->lineEdit_sphere7_r->setText(QString::number(0));
+        ui->lineEdit_sphere7_r->setEnabled(false);
+        ui->lineEdit_sphere10_r->setText(QString::number(0));
+        ui->lineEdit_sphere10_r->setEnabled(false);
+        ui->lineEdit_sphere11_r->setText(QString::number(0));
+        ui->lineEdit_sphere11_r->setEnabled(false);
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(1)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere3_r->setText(QString::number(0));
+            ui->lineEdit_sphere3_r->setEnabled(false);
+        }
+    }
+
+
+    //Arm with offset in elbow
+    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)==0)
+    {
+        points_number = 8 + 9;
+
+        ui->lineEdit_sphere2_r->setText(QString::number(0));
+        ui->lineEdit_sphere2_r->setEnabled(false);
+        ui->lineEdit_sphere3_r->setText(QString::number(0));
+        ui->lineEdit_sphere3_r->setEnabled(false);
+        ui->lineEdit_sphere10_r->setText(QString::number(0));
+        ui->lineEdit_sphere10_r->setEnabled(false);
+        ui->lineEdit_sphere11_r->setText(QString::number(0));
+        ui->lineEdit_sphere11_r->setEnabled(false);
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(3)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere7_r->setText(QString::number(0));
+            ui->lineEdit_sphere7_r->setEnabled(false);
+        }
+    }
+
+
+    //Arm with offset in wrist
+    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)!=0)
+    {
+        points_number = 8 + 9;
+
+        ui->lineEdit_sphere2_r->setText(QString::number(0));
+        ui->lineEdit_sphere2_r->setEnabled(false);
+        ui->lineEdit_sphere3_r->setText(QString::number(0));
+        ui->lineEdit_sphere3_r->setEnabled(false);
+        ui->lineEdit_sphere6_r->setText(QString::number(0));
+        ui->lineEdit_sphere6_r->setEnabled(false);
+        ui->lineEdit_sphere7_r->setText(QString::number(0));
+        ui->lineEdit_sphere7_r->setEnabled(false);
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(5)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere11_r->setText(QString::number(0));
+            ui->lineEdit_sphere11_r->setEnabled(false);
+        }
+    }
+
+
+    //Arm with offset in shoulder and elbow
+    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)==0)
+    {
+        points_number = 9 + 9;
+
+        ui->lineEdit_sphere10_r->setText(QString::number(0));
+        ui->lineEdit_sphere10_r->setEnabled(false);
+        ui->lineEdit_sphere11_r->setText(QString::number(0));
+        ui->lineEdit_sphere11_r->setEnabled(false);
+
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(1)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere3_r->setText(QString::number(0));
+            ui->lineEdit_sphere3_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(3)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere7_r->setText(QString::number(0));
+            ui->lineEdit_sphere7_r->setEnabled(false);
+        }
+    }
+
+
+    //Arm with offset in shoulder and wrist
+    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)!=0)
+    {
+        points_number = 9 + 9;
+
+        ui->lineEdit_sphere6_r->setText(QString::number(0));
+        ui->lineEdit_sphere6_r->setEnabled(false);
+        ui->lineEdit_sphere7_r->setText(QString::number(0));
+        ui->lineEdit_sphere7_r->setEnabled(false);
+
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(1)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere3_r->setText(QString::number(0));
+            ui->lineEdit_sphere3_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(5)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere11_r->setText(QString::number(0));
+            ui->lineEdit_sphere11_r->setEnabled(false);
+        }
+    }
+
+
+    //Arm with offset in elbow and wrist
+    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)!=0)
+    {
+        points_number = 9 + 9;
+
+        ui->lineEdit_sphere2_r->setText(QString::number(0));
+        ui->lineEdit_sphere2_r->setEnabled(false);
+        ui->lineEdit_sphere3_r->setText(QString::number(0));
+        ui->lineEdit_sphere3_r->setEnabled(false);
+
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(3)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere7_r->setText(QString::number(0));
+            ui->lineEdit_sphere7_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(5)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere11_r->setText(QString::number(0));
+            ui->lineEdit_sphere11_r->setEnabled(false);
+        }
+    }
+
+
+    //Arm with offsets in all links
+    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)!=0)
+    {
+        points_number = 10 + 9;
+
+        if(m_DH_rightArm.d.at(0)>= tol)
+        {
+           ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere1_r->setText(QString::number(0));
+            ui->lineEdit_sphere1_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(1)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere3_r->setText(QString::number(0));
+            ui->lineEdit_sphere3_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(3)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere7_r->setText(QString::number(0));
+            ui->lineEdit_sphere7_r->setEnabled(false);
+        }
+
+        if(m_DH_rightArm.d.at(5)>= tol)
+        {
+            ++points_number;
+        }
+        else
+        {
+            ui->lineEdit_sphere11_r->setText(QString::number(0));
+            ui->lineEdit_sphere11_r->setEnabled(false);
+        }
+
+
+        if(!name.compare("Sawyer"))
+        {
+            ui->lineEdit_sphere2_r->setText(QString::number(105.00));
+            ui->lineEdit_sphere4_r->setText(QString::number(85.00));
+            ui->lineEdit_sphere5_r->setText(QString::number(80.00));
+            ui->lineEdit_sphere6_r->setText(QString::number(70.00));
+            ui->lineEdit_sphere8_r->setText(QString::number(70.00));
+            ui->lineEdit_sphere9_r->setText(QString::number(70.00));
+            ui->lineEdit_sphere10_r->setText(QString::number(60.00));
+            ui->lineEdit_sphere12_r->setText(QString::number(60.00));
+            ui->lineEdit_sphere13_r->setText(QString::number(75.00));
+            ui->lineEdit_sphere14_r->setText(QString::number(45.00));
+       }
+    }
+
+    ui->label_points_arm->setText(QString::number(points_number));
+}
+
 
 void TolDialogHUMP::getPlaneParameters(std::vector<double> &params)
 {
@@ -483,11 +832,21 @@ void TolDialogHUMP::on_pushButton_save_clicked()
        QTextStream stream( &f );
        stream << "### Parameters of the Human-like Upper-limbs Motion Library ###" << endl;
        stream << "# "<< this->infoLine.c_str() << endl;
-       stream << "# Geometric Dimensions of the arms and of the fingers" << endl;
-       stream << "Shoulder_radius=" << ui->lineEdit_shoulder_r->text().toStdString().c_str() << endl;
-       stream << "Elbow_radius=" << ui->lineEdit_elbow_r->text().toStdString().c_str() << endl;
-       stream << "Wrist_radius=" << ui->lineEdit_wrist_r->text().toStdString().c_str() << endl;
-       stream << "Hand_radius=" << ui->lineEdit_hand_r->text().toStdString().c_str() << endl;
+       stream << "# Geometric Dimensions of the arms and of the fingers" << endl;     
+       stream << "Sphere1_radius=" << ui->lineEdit_sphere1_r->text().toStdString().c_str() << endl;
+       stream << "Sphere2_radius=" << ui->lineEdit_sphere2_r->text().toStdString().c_str() << endl;
+       stream << "Sphere3_radius=" << ui->lineEdit_sphere3_r->text().toStdString().c_str() << endl;
+       stream << "Sphere4_radius=" << ui->lineEdit_sphere4_r->text().toStdString().c_str() << endl;
+       stream << "Sphere5_radius=" << ui->lineEdit_sphere5_r->text().toStdString().c_str() << endl;
+       stream << "Sphere6_radius=" << ui->lineEdit_sphere6_r->text().toStdString().c_str() << endl;
+       stream << "Sphere7_radius=" << ui->lineEdit_sphere7_r->text().toStdString().c_str() << endl;
+       stream << "Sphere8_radius=" << ui->lineEdit_sphere8_r->text().toStdString().c_str() << endl;
+       stream << "Sphere9_radius=" << ui->lineEdit_sphere9_r->text().toStdString().c_str() << endl;
+       stream << "Sphere10_radius=" << ui->lineEdit_sphere10_r->text().toStdString().c_str() << endl;
+       stream << "Sphere11_radius=" << ui->lineEdit_sphere11_r->text().toStdString().c_str() << endl;
+       stream << "Sphere12_radius=" << ui->lineEdit_sphere12_r->text().toStdString().c_str() << endl;
+       stream << "Sphere13_radius=" << ui->lineEdit_sphere13_r->text().toStdString().c_str() << endl;
+       stream << "Sphere14_radius=" << ui->lineEdit_sphere14_r->text().toStdString().c_str() << endl;
        stream << "Hand_1_1=" << ui->lineEdit_hand_1_1->text().toStdString().c_str() << endl;
        stream << "Hand_1_2=" << ui->lineEdit_hand_1_2->text().toStdString().c_str() << endl;
        stream << "Hand_1_3=" << ui->lineEdit_hand_1_3->text().toStdString().c_str() << endl;
@@ -720,14 +1079,49 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                 //std::cout << fields.at(0).toStdString().c_str() << "\n";
                 //std::cout << fields.at(1).toStdString().c_str() << "\n";
 
-                if (QString::compare(fields.at(0),QString("Shoulder_radius"),Qt::CaseInsensitive)==0){
-                    ui->lineEdit_shoulder_r->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("Elbow_radius"),Qt::CaseInsensitive)==0){
-                    ui->lineEdit_elbow_r->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("Wrist_radius"),Qt::CaseInsensitive)==0){
-                    ui->lineEdit_wrist_r->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("Hand_radius"),Qt::CaseInsensitive)==0){
-                    ui->lineEdit_hand_r->setText(fields.at(1));
+                stream << "Sphere1_radius=" << ui->lineEdit_sphere1_r->text().toStdString().c_str() << endl;
+                stream << "Sphere2_radius=" << ui->lineEdit_sphere2_r->text().toStdString().c_str() << endl;
+                stream << "Sphere3_radius=" << ui->lineEdit_sphere3_r->text().toStdString().c_str() << endl;
+                stream << "Sphere4_radius=" << ui->lineEdit_sphere4_r->text().toStdString().c_str() << endl;
+                stream << "Sphere5_radius=" << ui->lineEdit_sphere5_r->text().toStdString().c_str() << endl;
+                stream << "Sphere6_radius=" << ui->lineEdit_sphere6_r->text().toStdString().c_str() << endl;
+                stream << "Sphere7_radius=" << ui->lineEdit_sphere7_r->text().toStdString().c_str() << endl;
+                stream << "Sphere8_radius=" << ui->lineEdit_sphere8_r->text().toStdString().c_str() << endl;
+                stream << "Sphere9_radius=" << ui->lineEdit_sphere9_r->text().toStdString().c_str() << endl;
+                stream << "Sphere10_radius=" << ui->lineEdit_sphere10_r->text().toStdString().c_str() << endl;
+                stream << "Sphere11_radius=" << ui->lineEdit_sphere11_r->text().toStdString().c_str() << endl;
+                stream << "Sphere12_radius=" << ui->lineEdit_sphere12_r->text().toStdString().c_str() << endl;
+                stream << "Sphere13_radius=" << ui->lineEdit_sphere13_r->text().toStdString().c_str() << endl;
+                stream << "Sphere14_radius=" << ui->lineEdit_sphere14_r->text().toStdString().c_str() << endl;
+
+                if (QString::compare(fields.at(0),QString("Sphere1_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere1_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere2_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere2_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere3_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere3_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere4_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere4_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere5_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere5_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere6_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere6_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere7_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere7_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere8_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere8_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere9_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere9_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere10_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere10_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere11_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere11_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere12_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere12_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere13_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere13_r->setText(fields.at(1));
+                }else if(QString::compare(fields.at(0),QString("Sphere14_radius"),Qt::CaseInsensitive)==0){
+                    ui->lineEdit_sphere14_r->setText(fields.at(1));
                 }else if(QString::compare(fields.at(0),QString("Hand_1_1"),Qt::CaseInsensitive)==0){
                     ui->lineEdit_hand_1_1->setText(fields.at(1));
                 }else if(QString::compare(fields.at(0),QString("Hand_1_2"),Qt::CaseInsensitive)==0){

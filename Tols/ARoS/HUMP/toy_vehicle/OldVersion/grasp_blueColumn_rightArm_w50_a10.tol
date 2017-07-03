@@ -1,34 +1,38 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: BlueColumn, Object Engaged: , Pose: , Grip Type: Precision Side thumb left
+# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: BlueColumn, Object Engaged: , Pose: , Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
-Sphere1_radius=0
-Sphere2_radius=0
-Sphere3_radius=0
-Sphere4_radius=0
-Sphere5_radius=80
-Sphere6_radius=0
-Sphere7_radius=0
-Sphere8_radius=80
-Sphere9_radius=70
-Sphere10_radius=0
-Sphere11_radius=0
-Sphere12_radius=90
-Sphere13_radius=90
-Sphere14_radius=60
-Hand_1_1=25
-Hand_1_2=25
+Shoulder_radius=80.0
 
-Hand_1_3=25
-Hand_2_1=20
-Hand_2_2=20
-Hand_2_3=20
+Elbow_radius=70.0
 
-Hand_3_1=15
-Hand_3_2=15
-Hand_3_3=15
-Hand_tip_1=10
-Hand_tip_2=10
-Hand_tip_3=10
+Wrist_radius=60.0
+
+Hand_radius=50
+
+Hand_1_1=5
+
+Hand_1_2=5
+
+Hand_1_3=5
+
+Hand_2_1=5
+
+Hand_2_2=5
+
+Hand_2_3=5
+
+Hand_3_1=5
+
+Hand_3_2=5
+
+Hand_3_3=5
+
+Hand_tip_1=0
+
+Hand_tip_2=0
+
+Hand_tip_3=0
+
 # Joint Expanse factors
 lambda_1=0.99
 
@@ -268,9 +272,9 @@ target_y=0
 
 target_z=1000
 
-target_roll=90
+target_roll=1.57
 
-target_pitch=-180
+target_pitch=-3.14
 
 target_yaw=0.0
 
@@ -290,11 +294,11 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=69.95
+final_hand_2=1.22
 
-final_hand_3=69.95
+final_hand_3=1.22
 
-final_hand_4=69.95
+final_hand_4=1.22
 
 sel_final=false
 plane_point1_x=0.0
@@ -319,6 +323,7 @@ add_plane=false
 # Others
 max_velocity=50
 
+max_acceleration=10.0
 tar_av=true
 ob_av=true
 approach=true

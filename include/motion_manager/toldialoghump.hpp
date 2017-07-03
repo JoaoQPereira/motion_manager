@@ -8,6 +8,7 @@
 #include <ui_toldialoghump.h>
 #include <eigen3/Eigen/Dense>
 #include "config.hpp"
+#include "common.hpp"
 
 namespace motion_manager{
 
@@ -254,6 +255,12 @@ public:
      * @param init_acc
      */
     void setInitJointsAcc(std::vector<double>& init_acc);
+
+    /**
+     * @brief setPointsOfArm
+     * @param m_DH_rightArm
+     */
+    void setPointsOfArm(DHparams m_DH_rightArm, string name);
 
     /**
      * @brief This method sets the information about the tuning of the planner
