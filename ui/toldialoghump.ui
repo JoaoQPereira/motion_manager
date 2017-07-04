@@ -88,7 +88,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>4</number>
    </property>
    <widget class="QWidget" name="tab_huml_params">
     <attribute name="title">
@@ -1353,7 +1353,7 @@
       <rect>
        <x>30</x>
        <y>10</y>
-       <width>141</width>
+       <width>151</width>
        <height>361</height>
       </rect>
      </property>
@@ -1540,7 +1540,7 @@
       <rect>
        <x>390</x>
        <y>10</y>
-       <width>201</width>
+       <width>211</width>
        <height>361</height>
       </rect>
      </property>
@@ -1727,7 +1727,7 @@
       <rect>
        <x>210</x>
        <y>10</y>
-       <width>141</width>
+       <width>151</width>
        <height>361</height>
       </rect>
      </property>
@@ -1914,7 +1914,7 @@
       <rect>
        <x>610</x>
        <y>10</y>
-       <width>201</width>
+       <width>211</width>
        <height>361</height>
       </rect>
      </property>
@@ -2118,7 +2118,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>141</width>
+        <width>151</width>
         <height>27</height>
        </rect>
       </property>
@@ -2126,7 +2126,7 @@
        <item>
         <widget class="QLabel" name="label_31">
          <property name="text">
-          <string>distance [mm]</string>
+          <string>distance [mm]  </string>
          </property>
         </widget>
        </item>
@@ -2149,7 +2149,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Direction of approaching</string>
+       <string>Direction of approaching </string>
       </property>
       <widget class="QWidget" name="layoutWidget_12">
        <property name="geometry">
@@ -2248,7 +2248,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>141</width>
+        <width>151</width>
         <height>27</height>
        </rect>
       </property>
@@ -2256,7 +2256,7 @@
        <item>
         <widget class="QLabel" name="label_33">
          <property name="text">
-          <string>distance [mm]</string>
+          <string>distance [mm]  </string>
          </property>
         </widget>
        </item>
@@ -2274,12 +2274,12 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>141</width>
+        <width>151</width>
         <height>111</height>
        </rect>
       </property>
       <property name="title">
-       <string>Direction of retreating</string>
+       <string>Direction of retreating </string>
       </property>
       <widget class="QWidget" name="layoutWidget_14">
        <property name="geometry">
@@ -2398,7 +2398,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>141</width>
+        <width>151</width>
         <height>27</height>
        </rect>
       </property>
@@ -2406,7 +2406,7 @@
        <item>
         <widget class="QLabel" name="label_186">
          <property name="text">
-          <string>distance [mm]</string>
+          <string>distance [mm]  </string>
          </property>
         </widget>
        </item>
@@ -2548,7 +2548,7 @@
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>141</width>
+        <width>151</width>
         <height>27</height>
        </rect>
       </property>
@@ -2556,7 +2556,7 @@
        <item>
         <widget class="QLabel" name="label_190">
          <property name="text">
-          <string>distance [mm]</string>
+          <string>distance [mm]  </string>
          </property>
         </widget>
        </item>
@@ -2574,12 +2574,12 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>141</width>
+        <width>151</width>
         <height>111</height>
        </rect>
       </property>
       <property name="title">
-       <string>Direction of retreating</string>
+       <string>Direction of retreating  </string>
       </property>
       <widget class="QWidget" name="layoutWidget_26">
        <property name="geometry">
@@ -2757,7 +2757,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>position [mm]</string>
+       <string>position [mm]  </string>
       </property>
       <widget class="QWidget" name="layoutWidget_20">
        <property name="geometry">
@@ -2848,7 +2848,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>orientation [deg]</string>
+       <string>orientation [deg]  </string>
       </property>
       <widget class="QWidget" name="layoutWidget_22">
        <property name="geometry">
@@ -2938,12 +2938,12 @@
       <rect>
        <x>340</x>
        <y>20</y>
-       <width>141</width>
+       <width>161</width>
        <height>241</height>
       </rect>
      </property>
      <property name="title">
-      <string>Final arm posture [deg]</string>
+      <string>Final arm posture [deg]     </string>
      </property>
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
@@ -3089,12 +3089,12 @@
       <rect>
        <x>10</x>
        <y>360</y>
-       <width>151</width>
+       <width>181</width>
        <height>151</height>
       </rect>
      </property>
      <property name="title">
-      <string>Final hand posture [deg]</string>
+      <string>Final hand posture [deg]      </string>
      </property>
      <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
@@ -3207,7 +3207,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Definition of the plane where the hand lies </string>
+      <string>Definition of the plane where the hand lies   </string>
      </property>
      <widget class="QGroupBox" name="groupBox_plane_point_1">
       <property name="geometry">
@@ -3219,7 +3219,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Point 1: position [mm]</string>
+       <string>Point 1: position [mm]  </string>
       </property>
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
@@ -3298,7 +3298,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Point 2: position [mm]</string>
+       <string>Point 2: position [mm]  </string>
       </property>
       <widget class="QWidget" name="layoutWidget_8">
        <property name="geometry">
@@ -3377,7 +3377,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Point 3: position [mm]</string>
+       <string>Point 3: position [mm]  </string>
       </property>
       <widget class="QWidget" name="layoutWidget_9">
        <property name="geometry">
