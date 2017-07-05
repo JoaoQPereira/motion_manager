@@ -42,7 +42,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     // create Vrep Communication dialog
     mvrepCommdlg = new VrepCommDialog(&qnode, this);
     mvrepCommdlg->setModal(true);
-
 #if MOVEIT==1
     // create RViz Communication dialog
     mrvizCommdlg = new RVizCommDialog(&qnode, this);
@@ -134,7 +133,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     **********************/    
     ui.tabWidget_main->setCurrentIndex(0);
     ui.tabWidget_sol->setCurrentIndex(0);
-
 #if MOVEIT==0
     ui.pushButton_execMov_moveit->setEnabled(false);
     ui.comboBox_planner->clear();
@@ -143,11 +141,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     // scenarios
     scenarios.clear();
-
 #if HAND == 0
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Jarde"));
 
 #elif HAND == 1
+
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with ARoS and Bill"));
     scenarios.push_back(QString("Empty scenario: empty scenario with ARoS"));
     scenarios.push_back(QString("Empty scenario: empty scenario with ARoS and NO collisions"));
@@ -156,12 +154,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
 #endif
 
-
     for (size_t i=0; i< scenarios.size();++i){
         ui.listWidget_scenario->addItem(scenarios.at(i));
     }
-}
 
+
+
+}
 
 MainWindow::~MainWindow()
 {
@@ -169,37 +168,38 @@ MainWindow::~MainWindow()
 
 }
 
-
-
-
 /*****************************************************************************
 ** Implementation [Slots]
 *****************************************************************************/
+
 
 void MainWindow::updateLoggingView()
 {
         ui.view_logging->scrollToBottom();
 }
 
-
 void MainWindow::updateRosStatus(bool c)
 {
+
     if (c){
         ui.labelRosComm->setText(QString("connected"));
         ui.actionVrep_Communication->setEnabled(true);
         ui.labelStatusVrep->setEnabled(true);
         ui.labelVrepComm->setEnabled(true);
     }else{
+
         ui.labelRosComm->setText(QString("disconnected"));
         ui.actionVrep_Communication->setEnabled(false);
         ui.labelStatusVrep->setEnabled(false);
         ui.labelVrepComm->setEnabled(false);
     }
-}
 
+
+}
 
 void MainWindow::updateVrepStatus(bool c)
 {
+
     if (c){
         ui.labelVrepComm->setText(QString("on-line"));
 #if MOVEIT==1
@@ -209,6 +209,7 @@ void MainWindow::updateVrepStatus(bool c)
 #elif MOVEIT==0
         ui.tab_scenario->setEnabled(true);
         ui.groupBox_selectScenario->setEnabled(true);
+
 #endif
         //ui.tab_scenario->setEnabled(true);
         //ui.groupBox_selectScenario->setEnabled(true);
@@ -225,7 +226,6 @@ void MainWindow::updateVrepStatus(bool c)
     ui.pushButton_loadScenario->setEnabled(false);
     ui.groupBox_getElements->setEnabled(false);
 }
-
 
 void MainWindow::updateRVizStatus(bool c)
 {
@@ -244,48 +244,50 @@ void MainWindow::updateRVizStatus(bool c)
     ui.groupBox_getElements->setEnabled(false);
 }
 
-
 void MainWindow::addElement(string value)
 {
 
     ui.listWidget_elements->addItem(QString(value.c_str()));
     ui.listWidget_elements->setCurrentRow(0);
-}
 
+}
 
 void MainWindow::updateElement(int id, string value)
 {
+
     QListWidgetItem* curr_item = ui.listWidget_elements->takeItem(id);
     delete curr_item;
     ui.listWidget_elements->insertItem(id,QString(value.c_str()));
+
 }
 
 
 void MainWindow::addObject(string value)
 {
+
    ui.comboBox_objects->addItem(QString(value.c_str()));
    ui.comboBox_objects_eng->addItem(QString(value.c_str()));
 }
 
-
 void MainWindow::addPose(string value)
 {
+
    ui.comboBox_poses->addItem(QString(value.c_str()));
 }
 
 
 void MainWindow::updateHomePosture(string value)
 {
-   ui.listWidget_homePosture->addItem(QString(value.c_str()));
-   ui.listWidget_homePosture->setCurrentRow(0);
+
+    ui.listWidget_homePosture->addItem(QString(value.c_str()));
+    ui.listWidget_homePosture->setCurrentRow(0);
+
 }
-
-
-
 
 /*****************************************************************************
 ** Implementation [Menu]
 *****************************************************************************/
+
 
 void MainWindow::on_actionAbout_triggered()
 {
@@ -293,19 +295,18 @@ void MainWindow::on_actionAbout_triggered()
                                                            "This software is designed to plan the movements of the arms for any humanoid robot</p>"));
 }
 
-
 void MainWindow::on_actionRos_Communication_triggered()
 {
-    mrosCommdlg->show();
-}
 
+    mrosCommdlg->show();
+
+}
 
 void MainWindow::on_actionVrep_Communication_triggered()
 {
+
     mvrepCommdlg->show();
 }
-
-
 #if MOVEIT==1
 void MainWindow::on_actionRViz_Communication_triggered()
 {
@@ -314,18 +315,15 @@ void MainWindow::on_actionRViz_Communication_triggered()
 }
 #endif
 
-
-
-
 /*****************************************************************************
 ** Implementation [Configuration]
 *****************************************************************************/
+
 void MainWindow::on_pushButton_tuning_clicked()
 {
+
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
-
     int planner_id = prob->getPlannerID();
-
     switch(planner_id){
     case 0: // HUMP
         mTolHumpdlg->setInitJointsVel(this->jointsEndVelocity_mov);
@@ -349,6 +347,7 @@ void MainWindow::on_pushButton_tuning_clicked()
         mPRMstardlg->show();
         break;
     }
+
 }
 
 
@@ -627,17 +626,19 @@ void MainWindow::on_pushButton_loadScenario_clicked()
     }
 }
 
-
 void MainWindow::on_pushButton_getElements_pressed()
 {
+
     qnode.log(QNode::Info,string("getting the elements of the scenario . . ."));
     ui.pushButton_getElements->setCheckable(true);
     ui.pushButton_loadScenario->setEnabled(false);
-}
 
+
+}
 
 void MainWindow::on_pushButton_plan_pressed()
 {
+
     qnode.log(QNode::Info,string("planning the selected movement. . ."));
     ui.pushButton_plan->setCheckable(true);
     ui.tableWidget_sol_mov->clear();
@@ -645,18 +646,18 @@ void MainWindow::on_pushButton_plan_pressed()
 }
 
 
+
 void MainWindow::on_pushButton_getElements_clicked()
 {
 
     ui.listWidget_elements->clear();
-
     try{
-        if (qnode.getElements(this->curr_scene))
-        {
+        if (qnode.getElements(this->curr_scene)){
+
             this->init_scene = scenarioPtr(new Scenario(*(this->curr_scene.get()))); //set the init scenario
             this->curr_task = taskPtr(new Task());
             ui.pushButton_getElements->setEnabled(false);
-            ui.tab_plan->setEnabled(true);            
+            ui.tab_plan->setEnabled(true);
             ui.tab_results->setEnabled(true);
             ui.groupBox_specs->setEnabled(true);
             ui.groupBox_task->setEnabled(false);
@@ -681,20 +682,23 @@ void MainWindow::on_pushButton_getElements_clicked()
             qnode.loadRVizScenario(objs);
 #endif
             qnode.log(QNode::Info,string("The elements of the scenario are now available"));
-        }
-        else
-        {
+
+        }else{
+
             ui.pushButton_getElements->setEnabled(true);
             //ui.tab_plan->setEnabled(false);
             qnode.log(QNode::Error,string("Error in getting the elements of the scenario"));
         }
 
          ui.comboBox_objects_eng->setEnabled(false);
+
     }catch(std::string str){
         qnode.log(QNode::Error,str);
     }catch(std::exception e){
         qnode.log(QNode::Error,e.what());
     }
+
+
 }
 
 
@@ -964,33 +968,27 @@ void MainWindow::on_pushButton_addMov_clicked()
 
 void MainWindow::on_pushButton_plan_clicked()
 {
-    ui.tabWidget_sol->setCurrentIndex(0);
+
+    ui.tabWidget_sol->setCurrentIndex(0);    
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
-
     HUMotion::hump_params  tols;
     std::vector<double> move_target;
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
-
     bool use_final;
-
 #if MOVEIT==1
     moveit_planning::moveit_params m_params;
 #endif
-
     bool moveit_plan = false;
 
     bool solved = false;
+ try{
+    switch(planner_id){
 
- try
- {
-    switch(planner_id)
-    {
     case 0: // HUMP
         moveit_plan = false;
         mTolHumpdlg->setInfo(prob->getInfoLine());
-
         // --- Tolerances for the final posture selection ---- //
         tols.tolTarPos = mTolHumpdlg->getTolTarPos(); // target position tolerances
         tols.tolTarOr = mTolHumpdlg->getTolTarOr(); // target orientation tolerances
@@ -1000,7 +998,6 @@ void MainWindow::on_pushButton_plan_clicked()
         tols.obstacle_avoidance = mTolHumpdlg->getObstacleAvoidance(); //obstacle avoidance
         mTolHumpdlg->getLambda(tols.lambda_final); // joint expense factors
         mTolHumpdlg->getLambda(tols.lambda_bounce); // joint expense factors
-
         // --- Tolerances for the bounce posture selection ---- //
         tols.w_max = std::vector<double>(tols.lambda_final.size(),(mTolHumpdlg->getWMax()*M_PI/180)); // max joint velocity
         tols.alpha_max = std::vector<double>(tols.lambda_final.size(),(mTolHumpdlg->getAlphaMax()*M_PI/180)); // max joint acceleration
@@ -1010,14 +1007,12 @@ void MainWindow::on_pushButton_plan_clicked()
         mTolHumpdlg->getFinalAcc(tols.bounds.acc_f); // final acceleration
         //mTolHumpdlg->getVelApproach(tols.vel_approach); // velocity approach
         //mTolHumpdlg->getAccApproach(tols.acc_approach); // acceleration approach
-
         // tolerances for the obstacles
         mTolHumpdlg->getTolsObstacles(tols.final_tolsObstacles); // final posture tols
         tols.singleArm_tolsObstacles.push_back(MatrixXd::Constant(3,6,1)); // bounce posture tols
         tols.singleArm_tolsObstacles.push_back(MatrixXd::Constant(3,6,1));
         mTolHumpdlg->getTolsObstacles(tols.singleArm_tolsObstacles.at(0));
         mTolHumpdlg->getTolsObstacles(tols.singleArm_tolsObstacles.at(1));
-
         // tolerances for the target
         tols.singleArm_tolsTarget.push_back(MatrixXd::Constant(3,6,1)); // bounce posture tols
         tols.singleArm_tolsTarget.push_back(MatrixXd::Constant(3,6,1));
@@ -1027,7 +1022,6 @@ void MainWindow::on_pushButton_plan_clicked()
         tols.singleArm_tolsTarget.at(2) = 0*tols.singleArm_tolsTarget.at(0);
         //mTolHumpdlg->getTolsTarget(tols.singleArm_tolsTarget.at(1));
         //mTolHumpdlg->getTolsTarget(tols.singleArm_tolsTarget.at(2));
-
         // pick / place settings
         tols.mov_specs.approach = mTolHumpdlg->getApproach();
         tols.mov_specs.retreat = mTolHumpdlg->getRetreat();
@@ -1049,15 +1043,11 @@ void MainWindow::on_pushButton_plan_clicked()
         tols.mov_specs.use_move_plane = mTolHumpdlg->get_add_plane();
         mTolHumpdlg->getPlaneParameters(tols.mov_specs.plane_params);
 
-        // plan the movement
-        h_results = prob->solve(tols);
+        h_results = prob->solve(tols); // plan the movement
 
         ui.pushButton_plan->setCheckable(false);
-
-        if(h_results!=nullptr)
-        {
-            if(h_results->status==0)
-            {
+        if(h_results!=nullptr){
+            if(h_results->status==0){
                 qnode.log(QNode::Info,std::string("The movement has been planned successfully"));
                 this->curr_mov = prob->getMovement();
                 this->timesteps_mov.clear();
@@ -1242,8 +1232,7 @@ void MainWindow::on_pushButton_plan_clicked()
 #endif
         break;
 
-    }
-    // switch planners
+    } // switch planners
 
 }catch (const std::string message){qnode.log(QNode::Error,std::string("Plan failure: ")+message);
 }catch(const std::exception exc){qnode.log(QNode::Error,std::string("Plan failure: ")+exc.what());}
@@ -1739,7 +1728,7 @@ if(solved){
 
             step++;
         }
-    }
+    }    
 
 
 
@@ -1942,6 +1931,7 @@ void MainWindow::on_pushButton_plan_3d_power_law_clicked()
 
         }
     }
+
 }
 
 
@@ -2104,7 +2094,7 @@ void MainWindow::on_pushButton_execMov_moveit_pressed()
 
 void MainWindow::on_pushButton_execMov_clicked()
 {   
-    qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+     qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene,this->moveit_mov);
 }
 
 
@@ -2132,7 +2122,6 @@ void MainWindow::on_pushButton_stop_task_clicked()
     qnode.resetSimTime();
     qnode.resetGlobals();
 }
-
 
 void MainWindow::on_pushButton_save_end_posture_clicked()
 {
@@ -2166,7 +2155,7 @@ void MainWindow::on_pushButton_execTask_pressed(){
 void MainWindow::on_pushButton_execTask_clicked()
 {
     if(ui.checkBox_comp_exec->isChecked()){
-        qnode.execTask_complete(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
+        qnode.execTask_complete(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene,this->moveit_task);
     }else{
         qnode.execTask(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
     }
@@ -2286,18 +2275,19 @@ void MainWindow::on_pushButton_load_task_clicked()
                 }
 
                 //get the planner id
+                this->moveit_task = false;
                 if(QString::compare(plan_type,QString("HUMP"),Qt::CaseInsensitive)==0){
                     plan_id=0;
                 }else if(QString::compare(plan_type,QString("RRT"),Qt::CaseInsensitive)==0){
-                    plan_id=1;
+                    plan_id=1; this->moveit_task = true;
                 }else if(QString::compare(plan_type,QString("RRTConnect"),Qt::CaseInsensitive)==0){
-                    plan_id=2;
+                    plan_id=2; this->moveit_task = true;
                 }else if(QString::compare(plan_type,QString("RRTstar"),Qt::CaseInsensitive)==0){
-                    plan_id=3;
+                    plan_id=3; this->moveit_task = true;
                 }else if(QString::compare(plan_type,QString("PRM"),Qt::CaseInsensitive)==0){
-                    plan_id=4;
+                    plan_id=4; this->moveit_task = true;
                 }else if(QString::compare(plan_type,QString("PRMstar"),Qt::CaseInsensitive)==0){
-                    plan_id=5;
+                    plan_id=5; this->moveit_task = true;
                 }
 
                 // get the grip type
@@ -2853,8 +2843,10 @@ void MainWindow::on_pushButton_append_mov_clicked()
 {
     ui.tableWidget_sol_task->clear();
     ui.pushButton_save_task->setEnabled(true);
+    this->moveit_task = false;
 
     if(curr_task->getProblem(ui.listWidget_movs->currentRow())->getSolved()){
+        if(curr_task->getProblem(ui.listWidget_movs->currentRow())->getPlannerID()!=0){this->moveit_task = true;}
         this->jointsPosition_task.push_back(this->jointsPosition_mov);
         this->jointsVelocity_task.push_back(this->jointsVelocity_mov);
         this->jointsAcceleration_task.push_back(this->jointsAcceleration_mov);
@@ -3031,10 +3023,11 @@ void MainWindow::on_pushButton_clear_task_clicked()
 
 void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
 {
+
    switch (i){
 
        case 0:
-       // Single- arm task
+           // Single- arm task
        ui.radioButton_right->setEnabled(true);
        ui.radioButton_left->setEnabled(true);
 
@@ -3047,9 +3040,11 @@ void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
        break;
 
        case 1:
-       //Dual-arm task
-       ui.radioButton_right->setEnabled(false);
-       ui.radioButton_left->setEnabled(false);
+           //Dual-arm task
+
+        ui.radioButton_right->setEnabled(false);
+        ui.radioButton_left->setEnabled(false);
+
 
        break;
 
@@ -3118,7 +3113,6 @@ void MainWindow::on_comboBox_mov_currentIndexChanged(int i)
             break;
     }
 }
-
 
 void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
 {
@@ -3201,6 +3195,7 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
 
     }
 #endif
+
 }
 
 
@@ -3333,7 +3328,6 @@ void MainWindow::on_pushButton_power_law_3D_clicked()
         this->mPowerLaw3Ddlg->setupPlots(this->handPosition_task,this->timesteps_task);
     this->mPowerLaw3Ddlg->show();
 }
-
 
 void MainWindow::on_pushButton_comp_vel_mov_clicked()
 {
@@ -3677,6 +3671,7 @@ void MainWindow::on_pushButton_save_res_task_clicked()
 }
 
 
+
 void MainWindow::ReadSettings()
 {
     QSettings settings("Qt-Ros Package", "motion_manager");
@@ -3709,7 +3704,6 @@ void MainWindow::WriteSettings()
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
 }
-
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -3844,7 +3838,6 @@ int MainWindow::getNumberMovementUnits(vector<double> &function, QVector<double>
     return nmu;
 }
 
-
 double MainWindow::getMedian(vector<double> v)
 {
     double median;
@@ -3864,7 +3857,6 @@ double MainWindow::getMedian(vector<double> v)
     return median;
 }
 
-
 double MainWindow::getFirstQuartile(vector<double> v)
 {
     double first_quartile;
@@ -3883,7 +3875,6 @@ double MainWindow::getFirstQuartile(vector<double> v)
 
     return first_quartile;
 }
-
 
 double MainWindow::getThirdQuartile(vector<double> v)
 {
@@ -3905,7 +3896,6 @@ double MainWindow::getThirdQuartile(vector<double> v)
     return third_quartile;
 }
 
-
 double MainWindow::getMedian(vector<int> v)
 {
     double median;
@@ -3924,7 +3914,6 @@ double MainWindow::getMedian(vector<int> v)
 
     return median;
 }
-
 
 double MainWindow::getFirstQuartile(vector<int> v)
 {
@@ -3964,4 +3953,8 @@ double MainWindow::getThirdQuartile(vector<int> v)
 
     return third_quartile;
 }
+
+
+
 }  // namespace motion_manager
+

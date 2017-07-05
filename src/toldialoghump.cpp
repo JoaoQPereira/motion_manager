@@ -832,7 +832,7 @@ void TolDialogHUMP::on_pushButton_save_clicked()
        QTextStream stream( &f );
        stream << "### Parameters of the Human-like Upper-limbs Motion Library ###" << endl;
        stream << "# "<< this->infoLine.c_str() << endl;
-       stream << "# Geometric Dimensions of the arms and of the fingers" << endl;     
+       stream << "# Geometric Dimensions of the arms and of the fingers" << endl;
        stream << "Sphere1_radius=" << ui->lineEdit_sphere1_r->text().toStdString().c_str() << endl;
        stream << "Sphere2_radius=" << ui->lineEdit_sphere2_r->text().toStdString().c_str() << endl;
        stream << "Sphere3_radius=" << ui->lineEdit_sphere3_r->text().toStdString().c_str() << endl;
@@ -1034,7 +1034,7 @@ void TolDialogHUMP::on_pushButton_save_clicked()
        stream << "plane_point3_x=" << ui->lineEdit_point_3_x->text().toStdString().c_str() << endl;
        stream << "plane_point3_y=" << ui->lineEdit_point_3_y->text().toStdString().c_str() << endl;
        stream << "plane_point3_z=" << ui->lineEdit_point_3_z->text().toStdString().c_str() << endl;
-       if (ui->checkBox_add_plane->isChecked()){ stream << "add_plane=true"<< endl;}else{stream << "add_plane=false"<< endl;}       
+       if (ui->checkBox_add_plane->isChecked()){ stream << "add_plane=true"<< endl;}else{stream << "add_plane=false"<< endl;}
        stream << "# Others" << endl;
        stream << "max_velocity="<< ui->lineEdit_w_max->text().toStdString().c_str() <<endl;
        if (ui->checkBox_tar_av->isChecked()){ stream << "tar_av=false"<< endl;}else{stream << "tar_av=true"<< endl;}
@@ -1453,7 +1453,7 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                         ui->checkBox_sel_final_posture->setChecked(false);
                     }else{
                         ui->checkBox_sel_final_posture->setChecked(true);
-                    }                    
+                    }
                 }else if(QString::compare(fields.at(0),QString("plane_point1_x"),Qt::CaseInsensitive)==0){
                     ui->lineEdit_point_1_x->setText(fields.at(1));
                 }else if(QString::compare(fields.at(0),QString("plane_point1_y"),Qt::CaseInsensitive)==0){
