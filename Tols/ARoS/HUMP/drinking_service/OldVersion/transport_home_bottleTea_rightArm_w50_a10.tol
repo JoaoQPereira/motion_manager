@@ -1,5 +1,5 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Transport, Arm: right, Object: BottleTea, Object Engaged: , Pose: BottleTea_pose2, Grip Type: Full Side thumb left
+# Planner: HUMP ,Movement: Transport, Arm: right, Object: BottleJuice, Object Engaged: , Pose: BottleJuice_home, Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
 Shoulder_radius=80.0
 
@@ -263,7 +263,8 @@ post_place_dist=120
 
 w_red_app=5
 
-w_red_ret=10
+w_red_ret=5
+
 # Move settings
 target_x=-400
 
@@ -321,7 +322,6 @@ plane_point3_z=0.0
 add_plane=false
 # Others
 max_velocity=50
-
 max_acceleration=10.0
 
 tar_av=true
