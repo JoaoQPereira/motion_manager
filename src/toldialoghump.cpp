@@ -750,8 +750,8 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
             ui->lineEdit_sphere9_r->setText(QString::number(70.00));
             ui->lineEdit_sphere10_r->setText(QString::number(60.00));
             ui->lineEdit_sphere12_r->setText(QString::number(60.00));
-            ui->lineEdit_sphere13_r->setText(QString::number(75.00));
-            ui->lineEdit_sphere14_r->setText(QString::number(45.00));
+            ui->lineEdit_sphere13_r->setText(QString::number(80.00));
+            ui->lineEdit_sphere14_r->setText(QString::number(70.00));
        }
     }
 

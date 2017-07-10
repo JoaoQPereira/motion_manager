@@ -152,6 +152,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with ARoS"));
     scenarios.push_back(QString("Challenging scenario: picking a cup from a shelf with ARoS"));
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
+    scenarios.push_back(QString("Human assistance scenario: Serving a drink with Sawyer"));
 #endif
 
     for (size_t i=0; i< scenarios.size();++i){
@@ -415,6 +416,9 @@ void MainWindow::on_pushButton_loadScenario_clicked()
              // Toy vehicle scenario with Sawyer
              string path_vrep_toyscene_sawyer = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_bill.ttt");
 
+             // Drinking Service task with Sawyer
+             string path_vrep_drinking_sawyer = PATH_SCENARIOS+string("/vrep/DrinkingServiceTask_sawyer_bill.ttt");
+
 
              switch(i){
 
@@ -621,6 +625,29 @@ void MainWindow::on_pushButton_loadScenario_clicked()
 
                  break;
 #endif
+             case 6:// Human assistance with Sawyer
+#if HAND==1
+                this->scenario_id = 7;
+                 if (qnode.loadScenario(path_vrep_drinking_sawyer,this->scenario_id))
+                 {
+                     qnode.log(QNode::Info,string("Human assistance scenario: Serving a drink with Sawyer HAS BEEN LOADED"));
+                     ui.pushButton_getElements->setEnabled(true);
+                     ui.groupBox_getElements->setEnabled(true);
+                     ui.groupBox_homePosture->setEnabled(true);
+
+                     string title = string("Human assistance scenario: Serving a drink with Sawyer");
+                     init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                     curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                 }
+                 else
+                 {
+                     qnode.log(QNode::Error,std::string("Human assistance scenario: Serving a drink with Sawyer HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
+                     ui.groupBox_getElements->setEnabled(false);
+                     ui.groupBox_homePosture->setEnabled(false);
+                     ui.pushButton_loadScenario->setEnabled(true);
+                 }
+#endif
+                 break;
              }
          }
     }
@@ -663,7 +690,7 @@ void MainWindow::on_pushButton_getElements_clicked()
             ui.groupBox_task->setEnabled(false);
             ui.tabWidget_sol->setEnabled(false);
 
-            if(scenario_id == 6)
+            if(scenario_id == 6 || scenario_id == 7)
             {
                 ui.pushButton_plan_2d_power_law->setEnabled(false);
                 ui.pushButton_plan_3d_power_law->setEnabled(false);
@@ -2766,6 +2793,9 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     // Toy vehicle scenario with Sawyer
     string path_vrep_toyscene_sawyer = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_bill.ttt");
 
+    // Drinking Service task with ARoS
+    string path_vrep_drinking_sawyer = PATH_SCENARIOS+string("/vrep/DrinkingServiceTask_sawyer_bill.ttt");
+
     switch(scene_id){
 
     case 0:
@@ -2818,7 +2848,11 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
         break;
     case 7:
-        //TO DO
+        // Assistive scenario: beverages with Sawyer
+        path = path_vrep_drinking_sawyer;
+        title = string("Human assistance scenario: Serving a drink with Sawyer");
+        success = string("Human assistance scenario: Serving a drink with Sawyer HAS BEEN LOADED");
+        failure = string("Human assistance scenario: Serving a drink with Sawyer HAS NOT BEEN LOADED");
         break;
     }
 
@@ -3189,6 +3223,12 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
                                                          "Sawyer has to assemble a toy vehicle on a table in front of him"));
                 break;
 
+
+            case 6:
+                //Human assistance scenario: beverages with Sawyer
+                ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
+                                                         "Sawyer serves a drink to a human patient"));
+                break;
             }
 
         }

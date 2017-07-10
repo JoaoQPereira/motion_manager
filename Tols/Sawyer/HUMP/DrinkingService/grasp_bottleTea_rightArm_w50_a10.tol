@@ -1,62 +1,48 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# 
+# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: BottleTea, Object Engaged: , Pose: , Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
-
 Sphere2_radius=105
-
 Sphere3_radius=0
-
 Sphere4_radius=85
-
 Sphere5_radius=80
-
 Sphere6_radius=70
-
 Sphere7_radius=0
-
 Sphere8_radius=70
-
 Sphere9_radius=70
-
 Sphere10_radius=60
-
 Sphere11_radius=0
-
 Sphere12_radius=60
-
 Sphere13_radius=80
-
 Sphere14_radius=70
+Hand_1_1=25.0
 
-Hand_1_1=25
+Hand_1_2=25.0
 
-Hand_1_2=25
+Hand_1_3=25.0
 
-Hand_1_3=25
+Hand_2_1=20.0
 
-Hand_2_1=20
+Hand_2_2=20.0
 
-Hand_2_2=20
+Hand_2_3=20.0
 
-Hand_2_3=20
+Hand_3_1=15.0
 
-Hand_3_1=15
+Hand_3_2=15.0
 
-Hand_3_2=15
+Hand_3_3=15.0
 
-Hand_3_3=15
+Hand_tip_1=10.0
 
-Hand_tip_1=10
+Hand_tip_2=10.0
 
-Hand_tip_2=10
-
-Hand_tip_3=10
+Hand_tip_3=10.0
 
 # Joint Expanse factors
-lambda_1=0.99
+lambda_1=1
 
-lambda_2=1.0
+lambda_2=1
 
 lambda_3=1.0
 
@@ -169,11 +155,11 @@ final_acc_10=0.0
 final_acc_11=0.0
 
 # Tolerances with the target [mm]
-tar_xx_1=10
+tar_xx_1=0
 
-tar_xx_2=10
+tar_xx_2=0
 
-tar_xx_3=10
+tar_xx_3=0
 
 tar_yy_1=0
 
@@ -250,19 +236,19 @@ tar_or=0.001
 # Pick settings
 pre_grasp_x=0
 
-pre_grasp_y=1
+pre_grasp_y=0.707106781
 
-pre_grasp_z=0
+pre_grasp_z=0.707106781
 
-pre_grasp_dist=120
+pre_grasp_dist=150
 
 post_grasp_x=0
 
-post_grasp_y=1
+post_grasp_y=0
 
-post_grasp_z=0
+post_grasp_z=1
 
-post_grasp_dist=120
+post_grasp_dist=100
 
 # Place settings
 pre_place_x=0
@@ -281,9 +267,9 @@ post_place_z=0
 
 post_place_dist=0
 
-w_red_app=2
+w_red_app=5
 
-w_red_ret=5
+w_red_ret=10
 
 # Move settings
 target_x=-400
@@ -341,7 +327,7 @@ plane_point3_z=0.0
 
 add_plane=false
 # Others
-max_velocity=20.0
+max_velocity=35.0
 tar_av=true
 ob_av=true
 approach=true

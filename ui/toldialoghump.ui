@@ -88,7 +88,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>4</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="tab_huml_params">
     <attribute name="title">
@@ -2144,7 +2144,7 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>151</width>
+        <width>171</width>
         <height>111</height>
        </rect>
       </property>
@@ -2274,7 +2274,7 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>151</width>
+        <width>171</width>
         <height>111</height>
        </rect>
       </property>
@@ -2424,7 +2424,7 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>151</width>
+        <width>181</width>
         <height>111</height>
        </rect>
       </property>
@@ -2574,7 +2574,7 @@
        <rect>
         <x>10</x>
         <y>60</y>
-        <width>151</width>
+        <width>171</width>
         <height>111</height>
        </rect>
       </property>
