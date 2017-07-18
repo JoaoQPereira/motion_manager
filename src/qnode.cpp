@@ -2810,6 +2810,7 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Wheel2");         // obj_id = 7
         objs_prefix.push_back("Base");           // obj_id = 8
         objs_prefix.push_back("Table");          // obj_id = 9
+        objs_prefix.push_back("SawyerHead");           // obj_id = 10
 
 
         while(cnt_obj < n_objs){
@@ -2863,36 +2864,28 @@ bool QNode::getElements(scenarioPtr scene)
                 tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
                 tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
 
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-
                 // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
+                engage_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
+                engage_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
+                engage_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
 
                 // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
 
 
                 Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
                                     new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                    new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
+                                    new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
                                     new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
 
                 infoLine = ob->getInfoLine();
                 Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
+
+                if(cnt_obj!=n_objs-1)
+                    Q_EMIT newObject(ob->getName());
 
                 // get the handles  of the object
                 //handle of the object
@@ -3323,6 +3316,7 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Cup");            // obj_id = 3
         objs_prefix.push_back("Cup1");           // obj_id = 4
         objs_prefix.push_back("Table");          // obj_id = 5
+        objs_prefix.push_back("SawyerHead");     // obj_id = 6
 
         while(cnt_obj < n_objs)
         {
@@ -3376,30 +3370,20 @@ bool QNode::getElements(scenarioPtr scene)
                 tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
                 tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
 
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-
                 // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
+                engage_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
+                engage_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
+                engage_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
 
                 // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
 
 
                 Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
                                     new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                    new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
+                                    new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
                                     new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
                 Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
@@ -3407,8 +3391,10 @@ bool QNode::getElements(scenarioPtr scene)
 
                 infoLine = ob->getInfoLine();
                 Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
+                if(cnt_obj!=n_objs-1)
+                    Q_EMIT newObject(ob->getName());
                 Q_EMIT newPose(ps->getName());
+
 
                 // get the handles  of the object
                 //handle of the object

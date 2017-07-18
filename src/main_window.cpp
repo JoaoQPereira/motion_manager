@@ -265,7 +265,6 @@ void MainWindow::updateElement(int id, string value)
 
 void MainWindow::addObject(string value)
 {
-
    ui.comboBox_objects->addItem(QString(value.c_str()));
    ui.comboBox_objects_eng->addItem(QString(value.c_str()));
 }

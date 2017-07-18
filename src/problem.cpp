@@ -135,6 +135,14 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         std::vector<double> tsize = {torso_dim.Xsize,torso_dim.Ysize,torso_dim.Zsize};
         h_planner->setTorsoSize(tsize);
 
+        pos torso_pos = this->scene->getHumanoid()->getPos();
+        std::vector<double> tpos = {torso_pos.Xpos,torso_pos.Ypos,torso_pos.Zpos};
+        h_planner->setTorsoPosition(tpos);
+
+        orient torso_or = this->scene->getHumanoid()->getOr();
+        std::vector<double> tor = {torso_or.roll, torso_or.pitch, torso_or.yaw};
+        h_planner->setTorsoOrientation(tor);
+
         DHparams rDH = this->scene->getHumanoid()->getDH_rightArm();
         DHparams lDH = this->scene->getHumanoid()->getDH_leftArm();
 

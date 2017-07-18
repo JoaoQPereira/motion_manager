@@ -742,7 +742,7 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
 
         if(!name.compare("Sawyer"))
         {
-            ui->lineEdit_sphere2_r->setText(QString::number(105.00));
+            ui->lineEdit_sphere2_r->setText(QString::number(61.00));
             ui->lineEdit_sphere4_r->setText(QString::number(85.00));
             ui->lineEdit_sphere5_r->setText(QString::number(80.00));
             ui->lineEdit_sphere6_r->setText(QString::number(70.00));

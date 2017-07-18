@@ -119,7 +119,6 @@ bool Scenario::getPoses(vector<posePtr> &pts)
 
 void Scenario::addObject(objectPtr obj_ptr)
 {
-
     this->objs_list.push_back(objectPtr(new Object(*obj_ptr.get())));
 }
 
