@@ -129,10 +129,10 @@ public:
 
         /**
          * @brief getArmsHandles
-         * @param humanoid
+         * @param robot
          * @return
          */
-        bool getArmsHandles(int humanoid); // get the handles of both arms
+        bool getArmsHandles(int robot); // get the handles of both arms
 
 
         /**
@@ -265,7 +265,7 @@ Q_SIGNALS:
         void newPose(string value);
 
         /**
-         * @brief This method signals that a new joint is part of the humanoid
+         * @brief This method signals that a new joint is part of the robot
          * @param value
          */
         void newJoint(string value);

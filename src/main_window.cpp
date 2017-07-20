@@ -292,7 +292,7 @@ void MainWindow::updateHomePosture(string value)
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, tr("About the motion manager"),tr("<h2>motion_manager version 1.10</h2><p>Copyright: Gianpaolo Gulletta</p><p>The motion manager is a ROS package."
-                                                           "This software is designed to plan the movements of the arms for any humanoid robot</p>"));
+                                                           "This software is designed to plan the movements of the arms for any robot</p>"));
 }
 
 void MainWindow::on_actionRos_Communication_triggered()
@@ -328,7 +328,7 @@ void MainWindow::on_pushButton_tuning_clicked()
     case 0: // HUMP
         mTolHumpdlg->setInitJointsVel(this->jointsEndVelocity_mov);
         mTolHumpdlg->setInitJointsAcc(this->jointsEndAcceleration_mov);
-        mTolHumpdlg->setPointsOfArm(this->curr_scene->getHumanoid()->getDH_rightArm(), this->curr_scene->getHumanoid()->getName());
+        mTolHumpdlg->setPointsOfArm(this->curr_scene->getRobot()->getDH_rightArm(), this->curr_scene->getRobot()->getName());
         mTolHumpdlg->show();
         break;
     case 1: // RRT
@@ -1192,10 +1192,10 @@ void MainWindow::on_pushButton_plan_clicked()
                     // TO DO
                     break;
                 case 1:// right arm
-                    this->curr_scene->getHumanoid()->getRightHandPosture(init_hand_pos);
+                    this->curr_scene->getRobot()->getRightHandPosture(init_hand_pos);
                     break;
                 case 2: // left arm
-                    this->curr_scene->getHumanoid()->getLeftHandPosture(init_hand_pos);
+                    this->curr_scene->getRobot()->getLeftHandPosture(init_hand_pos);
                     break;
                 }
 
@@ -1634,29 +1634,29 @@ if(solved){
             VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
             vector<double> posture; posture.resize(pos_row.size());
             VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
-            this->curr_scene->getHumanoid()->getHandPos(arm_code,this->handPosition_mov.at(step),posture);
+            this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_mov.at(step),posture);
             // velocities
             VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
             vector<double> velocities; velocities.resize(vel_row.size());
             VectorXd::Map(&velocities[0], vel_row.size()) = vel_row;
             // hand velocity
-            this->handVelocityNorm_mov.at(step) = this->curr_scene->getHumanoid()->getHandVelNorm(arm_code,posture,velocities);
-            vector<double> hand_vel; this->curr_scene->getHumanoid()->getHandVel(arm_code,hand_vel,posture,velocities);
+            this->handVelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getHandVelNorm(arm_code,posture,velocities);
+            vector<double> hand_vel; this->curr_scene->getRobot()->getHandVel(arm_code,hand_vel,posture,velocities);
             this->handLinearVelocity_mov.at(step) = {hand_vel.at(0),hand_vel.at(1),hand_vel.at(2)};
             this->handAngularVelocity_mov.at(step) = {hand_vel.at(3),hand_vel.at(4),hand_vel.at(5)};
             // wrist velocity
-            this->wristVelocityNorm_mov.at(step) = this->curr_scene->getHumanoid()->getWristVelNorm(arm_code,posture,velocities);
-            vector<double> wrist_vel; this->curr_scene->getHumanoid()->getWristVel(arm_code,wrist_vel,posture,velocities);
+            this->wristVelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getWristVelNorm(arm_code,posture,velocities);
+            vector<double> wrist_vel; this->curr_scene->getRobot()->getWristVel(arm_code,wrist_vel,posture,velocities);
             this->wristLinearVelocity_mov.at(step) = {wrist_vel.at(0),wrist_vel.at(1),wrist_vel.at(2)};
             this->wristAngularVelocity_mov.at(step) = {wrist_vel.at(3),wrist_vel.at(4),wrist_vel.at(5)};
             // elbow velocity
-            this->elbowVelocityNorm_mov.at(step) = this->curr_scene->getHumanoid()->getElbowVelNorm(arm_code,posture,velocities);
-            vector<double> elbow_vel; this->curr_scene->getHumanoid()->getElbowVel(arm_code,elbow_vel,posture,velocities);
+            this->elbowVelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getElbowVelNorm(arm_code,posture,velocities);
+            vector<double> elbow_vel; this->curr_scene->getRobot()->getElbowVel(arm_code,elbow_vel,posture,velocities);
             this->elbowLinearVelocity_mov.at(step) = {elbow_vel.at(0),elbow_vel.at(1),elbow_vel.at(2)};
             this->elbowAngularVelocity_mov.at(step) = {elbow_vel.at(3),elbow_vel.at(4),elbow_vel.at(5)};
             // shoulder velocity
-            this->shoulderVelocityNorm_mov.at(step) = this->curr_scene->getHumanoid()->getShoulderVelNorm(arm_code,posture,velocities);
-            vector<double> shoulder_vel; this->curr_scene->getHumanoid()->getShoulderVel(arm_code,shoulder_vel,posture,velocities);
+            this->shoulderVelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getShoulderVelNorm(arm_code,posture,velocities);
+            vector<double> shoulder_vel; this->curr_scene->getRobot()->getShoulderVel(arm_code,shoulder_vel,posture,velocities);
             this->shoulderLinearVelocity_mov.at(step) = {shoulder_vel.at(0),shoulder_vel.at(1),shoulder_vel.at(2)};
             this->shoulderAngularVelocity_mov.at(step) = {shoulder_vel.at(3),shoulder_vel.at(4),shoulder_vel.at(5)};
 
@@ -1737,7 +1737,7 @@ void MainWindow::on_pushButton_plan_3d_power_law_clicked()
     double wmax = 50.0; // max joint velocity [deg/sec]
     std::vector<double> move_target;
 
-    //humanoidPtr hh = this->curr_scene->getHumanoid();
+    //robotPtr hh = this->curr_scene->getRobot();
     //Matrix4d T_hand; Matrix3d R_hand; vector<double> pos_hand;
 
     // see Brami et al. 2003
@@ -2535,12 +2535,12 @@ void MainWindow::on_pushButton_load_task_clicked()
                     VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
                     vector<double> posture; posture.resize(pos_row.size());
                     VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
-                    this->curr_scene->getHumanoid()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
+                    this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
                     // velocity norm
                     VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
                     vector<double> velocities; velocities.resize(vel_row.size());
                     VectorXd::Map(&velocities[0], vel_row.size()) = vel_row;
-                    this->handVelocityNorm_task.at(step) = this->curr_scene->getHumanoid()->getHandVelNorm(arm_code,posture,velocities);
+                    this->handVelocityNorm_task.at(step) = this->curr_scene->getRobot()->getHandVelNorm(arm_code,posture,velocities);
                     step++;
                 }
             }
@@ -2890,12 +2890,12 @@ void MainWindow::on_pushButton_append_mov_clicked()
                      VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
                      vector<double> posture; posture.resize(pos_row.size());
                      VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
-                     this->curr_scene->getHumanoid()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
+                     this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
                      // velocity norm
                      VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
                      vector<double> velocities; velocities.resize(vel_row.size());
                      VectorXd::Map(&velocities[0], vel_row.size()) = vel_row;
-                     this->handVelocityNorm_task.at(step) = this->curr_scene->getHumanoid()->getHandVelNorm(arm_code,posture,velocities);
+                     this->handVelocityNorm_task.at(step) = this->curr_scene->getRobot()->getHandVelNorm(arm_code,posture,velocities);
                      step++;
                  }
              }

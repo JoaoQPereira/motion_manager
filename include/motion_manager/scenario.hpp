@@ -1,13 +1,13 @@
 #ifndef SCENARIO_HPP
 #define SCENARIO_HPP
 
-#include "humanoid.hpp"
+#include "robot.hpp"
 #include "object.hpp"
 #include "pose.hpp"
 
 namespace motion_manager{
 
-typedef boost::shared_ptr<Humanoid> humanoidPtr; /**< shared pointer to a humanoid */
+typedef boost::shared_ptr<Robot> robotPtr; /**< shared pointer to a robot */
 typedef boost::shared_ptr<Object> objectPtr; /**< shared pointer to an object*/
 typedef boost::shared_ptr<Pose> posePtr; /**< shared pointer to a pose*/
 
@@ -79,10 +79,10 @@ public:
     int getID();
 
     /**
-     * @brief This method gets a pointer to the humanoid robot in the scenario
+     * @brief This method gets a pointer to the robot in the scenario
      * @return
      */
-    humanoidPtr getHumanoid();
+    robotPtr getRobot();
 
     /**
      * @brief This method get the list of the objects in the scenario
@@ -139,10 +139,10 @@ public:
     posePtr getPose(string pose_name);
 
     /**
-     * @brief This method adds the humanoid robot to the scenario
+     * @brief This method adds the robot to the scenario
      * @param hh_ptr
      */
-    void addHumanoid(humanoidPtr hh_ptr);
+    void addRobot(robotPtr hh_ptr);
 
 
 private:
@@ -151,7 +151,7 @@ private:
     int m_scenarioID; /**< the ID of the scenario*/
     vector<objectPtr> objs_list; /**< the objects in the scenario */
     vector<posePtr> poses_list; /**< the poses in the scenario */
-    humanoidPtr hPtr; /**< the humanoid robot in the scenario */
+    robotPtr rPtr; /**< the robot in the scenario */
 
 
 

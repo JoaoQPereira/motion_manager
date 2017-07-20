@@ -150,7 +150,7 @@ typedef struct{
   double maxAperture; /**< max aperture of the hand in [mm] */
 } human_hand;
 
-/** this struct defines a generic part of a humanoid body */
+/** this struct defines a generic part of a robot body */
 typedef struct{
     double Xpos; /**< position of the part along the x axis in [mm] */
     double Ypos; /**< position of the part along the y axis in [mm] */
@@ -161,7 +161,7 @@ typedef struct{
     double Xsize; /**< size of the part along the x axis in [mm] */
     double Ysize; /**< size of the part along the y axis in [mm] */
     double Zsize; /**< size of the part along the z axis in [mm] */
-} humanoid_part;
+} robot_part;
 
 
 

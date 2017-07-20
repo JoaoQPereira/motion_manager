@@ -379,14 +379,11 @@ bool QNode::getElements(scenarioPtr scene)
     pos engage_pos; // engage point position
     orient engage_or;// engage point orientation
 
-//    pos humanoid_pos; // position of the humanoid
-//    orient humanoid_or; // orientation of the humanoid
-//    dim humanoid_size; // size of the humanoid
 
-    humanoid_part humanoid_torso_specs;
-    arm humanoid_arm_specs; // specs of the arms
-    barrett_hand humanoid_hand_specs; // specs of the barret hand
-    humanoid_part humanoid_head_specs; // specs of the head
+    robot_part robot_torso_specs;
+    arm robot_arm_specs; // specs of the arms
+    barrett_hand robot_hand_specs; // specs of the barret hand
+    robot_part robot_head_specs; // specs of the head
 
 
     // **** object info **** //
@@ -410,7 +407,7 @@ bool QNode::getElements(scenarioPtr scene)
     vrep_common::simRosGetObjectHandle srv_get_handle;
     ros::ServiceClient client_getHandle;
 
-    // name of the humanoid
+    // name of the robot
     std::string Hname;
 
     int floatCount;
@@ -462,32 +459,32 @@ bool QNode::getElements(scenarioPtr scene)
     human_thumb thumb = jarde_hand.thumb;
 
     // torso
-    humanoid_part torso;  // parameters of the torso (ARoS, Jarde and Sawyer)
+    robot_part torso;  // parameters of the torso (ARoS, Jarde and Sawyer)
     std::string torso_str;
     std::vector<double> torso_vec;
 
     //HEAD
-    humanoid_part head; // parameters of the head(ARoS and Sawyer)
+    robot_part head; // parameters of the head(ARoS and Sawyer)
     std::string head_str;
     std::vector<double> head_vec;
     /*
     // pelvis
-    humanoid_part pelvis; // parameters of the pelvis (Jarde)
+    robot_part pelvis; // parameters of the pelvis (Jarde)
     std::string pelvis_str;
     std::vector<double> pelvis_vec;
     //right_upper_leg
-    humanoid_part right_upper_leg; // parameters of the right upper leg (Jarde)
+    robot_part right_upper_leg; // parameters of the right upper leg (Jarde)
     std::string r_upper_leg_str;
     std::vector<double> r_upper_leg_vec;
-    humanoid_part left_upper_leg; // parameters of the left upper leg (Jarde)
+    robot_part left_upper_leg; // parameters of the left upper leg (Jarde)
     std::string l_upper_leg_str;
     std::vector<double> l_upper_leg_vec;
     */
-    // postures of the humanoid
+    // postures of the robot
     std::vector<double> rposture = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // right
     std::vector<double> lposture = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // left
 
-    // joint limits of the humanoid
+    // joint limits of the robot
     std::vector<double> min_rlimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // minimum right limits
     std::vector<double> max_rlimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // maximum right limits
     std::vector<double> min_llimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // minimum left limits
@@ -616,7 +613,7 @@ bool QNode::getElements(scenarioPtr scene)
             }
         } // while loop objects
 
-        // get the info of the Humanoid
+        // get the info of the robot
 
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
 
@@ -690,16 +687,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -846,41 +843,41 @@ bool QNode::getElements(scenarioPtr scene)
 
 
         if (succ){
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
 #if HAND==1
-            humanoid_hand_specs.maxAperture = maxAp;
-            humanoid_hand_specs.Aw = Aw;
-            humanoid_hand_specs.A1 = A1;
-            humanoid_hand_specs.A2 = A2;
-            humanoid_hand_specs.A3 = A3;
-            humanoid_hand_specs.D3 = D3 ;
-            humanoid_hand_specs.phi2 = phi2;
-            humanoid_hand_specs.phi3 = phi3;
+            robot_hand_specs.maxAperture = maxAp;
+            robot_hand_specs.Aw = Aw;
+            robot_hand_specs.A1 = A1;
+            robot_hand_specs.A2 = A2;
+            robot_hand_specs.A3 = A3;
+            robot_hand_specs.D3 = D3 ;
+            robot_hand_specs.phi2 = phi2;
+            robot_hand_specs.phi3 = phi3;
 
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
-            hptr->setMatRight(mat_right);
-            hptr->setMatLeft(mat_left);
+            rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_left);
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
-            hptr->getRightPosture(rightp);
-            hptr->getLeftPosture(leftp);
+            rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(leftp);
 
             std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
@@ -897,10 +894,10 @@ bool QNode::getElements(scenarioPtr scene)
                                        QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(lj.at(i));
             }
-            // display info of the humanoid
-            infoLine = hptr->getInfoLine();
+            // display info of the robot
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
-            scene->addHumanoid(humanoidPtr(hptr));
+            scene->addRobot(robotPtr(rptr));
 #else
             throw("You have probably chosen the wrong hand type");
 
@@ -1028,7 +1025,7 @@ bool QNode::getElements(scenarioPtr scene)
         } // while loop objects
 
 
-        // get the info of the Humanoid
+        // get the info of the robot
 
         // name
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
@@ -1126,16 +1123,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -1485,43 +1482,43 @@ bool QNode::getElements(scenarioPtr scene)
 
         if(succ){
 
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
 #if HAND==0
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, jarde_hand,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, jarde_hand,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
 
-            hptr->setMatRight(mat_right);
-            hptr->setMatLeft(mat_left);
-            hptr->setMatRightHand(mat_r_hand);
-            hptr->setMatLeftHand(mat_l_hand);
-            //hptr->setPelvis(pelvis);
-            //hptr->setRight_Upper_leg(right_upper_leg);
-            //hptr->setLeft_Upper_leg(left_upper_leg);
+            rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_left);
+            rptr->setMatRightHand(mat_r_hand);
+            rptr->setMatLeftHand(mat_l_hand);
+            //rptr->setPelvis(pelvis);
+            //rptr->setRight_Upper_leg(right_upper_leg);
+            //rptr->setLeft_Upper_leg(left_upper_leg);
 
-            scene->addHumanoid(hptr);
+            scene->addRobot(rptr);
 
 
-            // display info of the humanoid
-            infoLine = hptr->getInfoLine();
+            // display info of the robot
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
 
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
 
-            hptr->getRightPosture(rightp);
-            hptr->getLeftPosture(leftp);
+            rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(leftp);
 
             std::vector<string> rj = std::vector<string>(rightp.size());
             for (int i=0; i<rightp.size(); i++ ){
@@ -1559,7 +1556,7 @@ bool QNode::getElements(scenarioPtr scene)
              n_objs= srvi.response.signalValue;
         }else{succ = false; throw string("Communication error");}
 
-        // get the info of the Humanoid
+        // get the info of the robot
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("HumanoidName");
         add_client.call(srvs);
@@ -1631,16 +1628,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -1798,41 +1795,41 @@ bool QNode::getElements(scenarioPtr scene)
 
 
         if (succ){
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
 #if HAND==1
-            humanoid_hand_specs.maxAperture = maxAp;
-            humanoid_hand_specs.Aw = Aw;
-            humanoid_hand_specs.A1 = A1;
-            humanoid_hand_specs.A2 = A2;
-            humanoid_hand_specs.A3 = A3;
-            humanoid_hand_specs.D3 = D3 ;
-            humanoid_hand_specs.phi2 = phi2;
-            humanoid_hand_specs.phi3 = phi3;
+            robot_hand_specs.maxAperture = maxAp;
+            robot_hand_specs.Aw = Aw;
+            robot_hand_specs.A1 = A1;
+            robot_hand_specs.A2 = A2;
+            robot_hand_specs.A3 = A3;
+            robot_hand_specs.D3 = D3 ;
+            robot_hand_specs.phi2 = phi2;
+            robot_hand_specs.phi3 = phi3;
 
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
-            hptr->setMatRight(mat_right);
-            hptr->setMatLeft(mat_left);
+            rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_left);
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
-            hptr->getRightPosture(rightp);
-            hptr->getLeftPosture(leftp);
+            rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(leftp);
 
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
@@ -1849,11 +1846,11 @@ bool QNode::getElements(scenarioPtr scene)
                                        QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(lj.at(i));
             }
-            // display info of the humanoid
-            infoLine = hptr->getInfoLine();
+            // display info of the robot
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
 
-            scene->addHumanoid(humanoidPtr(hptr));
+            scene->addRobot(robotPtr(rptr));
 #else
             throw("You have probably chosen the wrong hand type");
 
@@ -2041,7 +2038,7 @@ bool QNode::getElements(scenarioPtr scene)
 
         }// while loop poses
 
-        // get the info of the Humanoid
+        // get the info of the robot
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("HumanoidName");
         add_client.call(srvs);
@@ -2110,16 +2107,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -2260,41 +2257,41 @@ bool QNode::getElements(scenarioPtr scene)
             }else{succ = false;}
         }
         if (succ){
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
  #if HAND==1
-            humanoid_hand_specs.maxAperture = maxAp;
-            humanoid_hand_specs.Aw = Aw;
-            humanoid_hand_specs.A1 = A1;
-            humanoid_hand_specs.A2 = A2;
-            humanoid_hand_specs.A3 = A3;
-            humanoid_hand_specs.D3 = D3 ;
-            humanoid_hand_specs.phi2 = phi2;
-            humanoid_hand_specs.phi3 = phi3;
+            robot_hand_specs.maxAperture = maxAp;
+            robot_hand_specs.Aw = Aw;
+            robot_hand_specs.A1 = A1;
+            robot_hand_specs.A2 = A2;
+            robot_hand_specs.A3 = A3;
+            robot_hand_specs.D3 = D3 ;
+            robot_hand_specs.phi2 = phi2;
+            robot_hand_specs.phi3 = phi3;
 
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
-            hptr->setMatRight(mat_right);
-            hptr->setMatLeft(mat_left);
+            rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_left);
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
-            hptr->getRightPosture(rightp);
-            hptr->getLeftPosture(leftp);
+            rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(leftp);
 
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
@@ -2311,11 +2308,11 @@ bool QNode::getElements(scenarioPtr scene)
                                        QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(lj.at(i));
             }
-            // display info of the humanoid
-            infoLine = hptr->getInfoLine();
+            // display info of the robot
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
 
-            scene->addHumanoid(humanoidPtr(hptr));
+            scene->addRobot(robotPtr(rptr));
 #else
             throw("You have probably chosen the wrong hand type");
 
@@ -2492,7 +2489,7 @@ bool QNode::getElements(scenarioPtr scene)
 
         }// while loop poses
 
-        // get the info of the Humanoid
+        // get the info of the robot
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("HumanoidName");
         add_client.call(srvs);
@@ -2561,16 +2558,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -2711,41 +2708,41 @@ bool QNode::getElements(scenarioPtr scene)
             }else{succ = false;}
         }
         if (succ){
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
 #if HAND==1
-            humanoid_hand_specs.maxAperture = maxAp;
-            humanoid_hand_specs.Aw = Aw;
-            humanoid_hand_specs.A1 = A1;
-            humanoid_hand_specs.A2 = A2;
-            humanoid_hand_specs.A3 = A3;
-            humanoid_hand_specs.D3 = D3 ;
-            humanoid_hand_specs.phi2 = phi2;
-            humanoid_hand_specs.phi3 = phi3;
+            robot_hand_specs.maxAperture = maxAp;
+            robot_hand_specs.Aw = Aw;
+            robot_hand_specs.A1 = A1;
+            robot_hand_specs.A2 = A2;
+            robot_hand_specs.A3 = A3;
+            robot_hand_specs.D3 = D3 ;
+            robot_hand_specs.phi2 = phi2;
+            robot_hand_specs.phi3 = phi3;
 
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
-            hptr->setMatRight(mat_right);
-            hptr->setMatLeft(mat_left);
+            rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_left);
             // get the postures
             std::vector<double> rightp;
             std::vector<double> leftp;
-            hptr->getRightPosture(rightp);
-            hptr->getLeftPosture(leftp);
+            rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(leftp);
 
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
@@ -2764,11 +2761,11 @@ bool QNode::getElements(scenarioPtr scene)
             }
 
 
-            // display info of the humanoid
-            infoLine = hptr->getInfoLine();
+            // display info of the robot
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
 
-            scene->addHumanoid(humanoidPtr(hptr));
+            scene->addRobot(robotPtr(rptr));
 #else
             throw("You have probably chosen the wrong hand type");
 
@@ -2996,16 +2993,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -3252,54 +3249,54 @@ bool QNode::getElements(scenarioPtr scene)
 
         if (succ)
         {
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
 #if HEAD == 1
-            humanoid_head_specs.Xpos = head.Xpos;
-            humanoid_head_specs.Ypos = head.Ypos;
-            humanoid_head_specs.Zpos = head.Zpos;
-            humanoid_head_specs.Roll =  head.Roll;
-            humanoid_head_specs.Pitch = head.Pitch;
-            humanoid_head_specs.Yaw = head.Yaw;
-            humanoid_head_specs.Xsize = head.Xsize;
-            humanoid_head_specs.Ysize = head.Ysize;
-            humanoid_head_specs.Zsize = head.Zsize;
+            robot_head_specs.Xpos = head.Xpos;
+            robot_head_specs.Ypos = head.Ypos;
+            robot_head_specs.Zpos = head.Zpos;
+            robot_head_specs.Roll =  head.Roll;
+            robot_head_specs.Pitch = head.Pitch;
+            robot_head_specs.Yaw = head.Yaw;
+            robot_head_specs.Xsize = head.Xsize;
+            robot_head_specs.Ysize = head.Ysize;
+            robot_head_specs.Zsize = head.Zsize;
 #endif
 #if HAND==1
-            humanoid_hand_specs.maxAperture = maxAp;
-            humanoid_hand_specs.Aw = Aw;
-            humanoid_hand_specs.A1 = A1;
-            humanoid_hand_specs.A2 = A2;
-            humanoid_hand_specs.A3 = A3;
-            humanoid_hand_specs.D3 = D3 ;
-            humanoid_hand_specs.phi2 = phi2;
-            humanoid_hand_specs.phi3 = phi3;
+            robot_hand_specs.maxAperture = maxAp;
+            robot_hand_specs.Aw = Aw;
+            robot_hand_specs.A1 = A1;
+            robot_hand_specs.A2 = A2;
+            robot_hand_specs.A3 = A3;
+            robot_hand_specs.D3 = D3 ;
+            robot_hand_specs.phi2 = phi2;
+            robot_hand_specs.phi3 = phi3;
 
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
 #if HEAD == 1
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
-                                          humanoid_head_specs, rposture, rposture,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
+                                          robot_head_specs, rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #else
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #endif
-            hptr->setMatRight(mat_right);
+            rptr->setMatRight(mat_right);
 
             // get the postures
             std::vector<double> rightp;
-            hptr->getRightPosture(rightp);
+            rptr->getRightPosture(rightp);
 
             std::vector<string> rj = std::vector<string>(rightp.size());
             //add the joint's offset
@@ -3314,9 +3311,9 @@ bool QNode::getElements(scenarioPtr scene)
 
 
             // display info of the robot
-            infoLine = hptr->getInfoLine();
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
-            scene->addHumanoid(humanoidPtr(hptr));
+            scene->addRobot(robotPtr(rptr));
 #else
             throw("You have probably chosen the wrong hand type");
 
@@ -3548,7 +3545,7 @@ bool QNode::getElements(scenarioPtr scene)
         }// while loop poses
 
 
-        // get the info of the Humanoid
+        // get the info of the robot
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("RobotName");
         add_client.call(srvs);
@@ -3630,16 +3627,16 @@ bool QNode::getElements(scenarioPtr scene)
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-        humanoid_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.a = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.d = std::vector<double>(7);
-        humanoid_arm_specs.arm_specs.theta = std::vector<double>(7);
+        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+        robot_arm_specs.arm_specs.a = std::vector<double>(7);
+        robot_arm_specs.arm_specs.d = std::vector<double>(7);
+        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
 
         for(int i=0;i<7;++i)
         {
-            humanoid_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            humanoid_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            humanoid_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
             theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
         }
 
@@ -3886,55 +3883,55 @@ bool QNode::getElements(scenarioPtr scene)
 
 
         if (succ){
-            // create the new humanoid and add it to the scenario.
-            humanoid_torso_specs.Xpos = torso.Xpos;
-            humanoid_torso_specs.Ypos = torso.Ypos;
-            humanoid_torso_specs.Zpos = torso.Zpos;
-            humanoid_torso_specs.Roll = torso.Roll;
-            humanoid_torso_specs.Pitch = torso.Pitch;
-            humanoid_torso_specs.Yaw = torso.Yaw;
-            humanoid_torso_specs.Xsize = torso.Xsize;
-            humanoid_torso_specs.Ysize = torso.Ysize;
-            humanoid_torso_specs.Zsize = torso.Zsize;
+            // create the new robot and add it to the scenario.
+            robot_torso_specs.Xpos = torso.Xpos;
+            robot_torso_specs.Ypos = torso.Ypos;
+            robot_torso_specs.Zpos = torso.Zpos;
+            robot_torso_specs.Roll = torso.Roll;
+            robot_torso_specs.Pitch = torso.Pitch;
+            robot_torso_specs.Yaw = torso.Yaw;
+            robot_torso_specs.Xsize = torso.Xsize;
+            robot_torso_specs.Ysize = torso.Ysize;
+            robot_torso_specs.Zsize = torso.Zsize;
 #if HEAD == 1
-            humanoid_head_specs.Xpos = head.Xpos;
-            humanoid_head_specs.Ypos = head.Ypos;
-            humanoid_head_specs.Zpos = head.Zpos;
-            humanoid_head_specs.Roll =  head.Roll;
-            humanoid_head_specs.Pitch = head.Pitch;
-            humanoid_head_specs.Yaw = head.Yaw;
-            humanoid_head_specs.Xsize = head.Xsize;
-            humanoid_head_specs.Ysize = head.Ysize;
-            humanoid_head_specs.Zsize = head.Zsize;
+            robot_head_specs.Xpos = head.Xpos;
+            robot_head_specs.Ypos = head.Ypos;
+            robot_head_specs.Zpos = head.Zpos;
+            robot_head_specs.Roll =  head.Roll;
+            robot_head_specs.Pitch = head.Pitch;
+            robot_head_specs.Yaw = head.Yaw;
+            robot_head_specs.Xsize = head.Xsize;
+            robot_head_specs.Ysize = head.Ysize;
+            robot_head_specs.Zsize = head.Zsize;
 #endif
 #if HAND==1
-            humanoid_hand_specs.maxAperture = maxAp;
-            humanoid_hand_specs.Aw = Aw;
-            humanoid_hand_specs.A1 = A1;
-            humanoid_hand_specs.A2 = A2;
-            humanoid_hand_specs.A3 = A3;
-            humanoid_hand_specs.D3 = D3 ;
-            humanoid_hand_specs.phi2 = phi2;
-            humanoid_hand_specs.phi3 = phi3;
+            robot_hand_specs.maxAperture = maxAp;
+            robot_hand_specs.Aw = Aw;
+            robot_hand_specs.A1 = A1;
+            robot_hand_specs.A2 = A2;
+            robot_hand_specs.A3 = A3;
+            robot_hand_specs.D3 = D3 ;
+            robot_hand_specs.phi2 = phi2;
+            robot_hand_specs.phi3 = phi3;
 
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
 
 #if HEAD == 1
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
-                                          humanoid_head_specs, rposture, rposture,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
+                                          robot_head_specs, rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #else
-            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #endif
-            hptr->setMatRight(mat_right);
+            rptr->setMatRight(mat_right);
 
             // get the postures
             std::vector<double> rightp;
-            hptr->getRightPosture(rightp);
+            rptr->getRightPosture(rightp);
 
             std::vector<string> rj = std::vector<string>(rightp.size());
             //add the joint's offset
@@ -3949,9 +3946,9 @@ bool QNode::getElements(scenarioPtr scene)
 
 
             // display info of the robot
-            infoLine = hptr->getInfoLine();
+            infoLine = rptr->getInfoLine();
             Q_EMIT newElement(infoLine);
-            scene->addHumanoid(humanoidPtr(hptr));
+            scene->addRobot(robotPtr(rptr));
 #else
             throw("You have probably chosen the wrong hand type");
 
@@ -4763,7 +4760,7 @@ if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.r
                     double m;
                     if((tb-ta)==0){m=1;}else{m = (tx-ta)/(tb-ta);}
                     std::vector<double> r_post;
-                    this->curr_scene->getHumanoid()->getRightPosture(r_post);
+                    this->curr_scene->getRobot()->getRightPosture(r_post);
                     double yx;
                     double yxt;
                      if(sqrt(pow((f_posture(0)-r_post.at(0)),2)+
@@ -5166,7 +5163,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                                 double m;
                                 if((tb-ta)==0){m=1;}else{m = (tx-ta)/(tb-ta);}
                                 std::vector<double> r_post;
-                                this->curr_scene->getHumanoid()->getRightPosture(r_post);
+                                this->curr_scene->getRobot()->getRightPosture(r_post);
                                 double yx;
                                 double yxt;
                                 if(sqrt(pow((f_posture(0)-r_post.at(0)),2)+
@@ -5709,7 +5706,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                                 double m;
                                 if((tb-ta)==0){m=1;}else{m = (tx-ta)/(tb-ta);}
                                 std::vector<double> r_post;
-                                this->curr_scene->getHumanoid()->getRightPosture(r_post);
+                                this->curr_scene->getRobot()->getRightPosture(r_post);
                                 double yx;
                                 double yxt;
                                 if(sqrt(pow((f_posture(0)-r_post.at(0)),2)+
@@ -6091,12 +6088,12 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
                         */
 
     if (this->curr_scene){
-        this->curr_scene->getHumanoid()->setRightPosture(right_posture);
-        this->curr_scene->getHumanoid()->setLeftPosture(left_posture);
-        this->curr_scene->getHumanoid()->setRightVelocities(right_vel);
-        this->curr_scene->getHumanoid()->setLeftVelocities(left_vel);
-        this->curr_scene->getHumanoid()->setRightForces(right_forces);
-        this->curr_scene->getHumanoid()->setLeftForces(left_forces);
+        this->curr_scene->getRobot()->setRightPosture(right_posture);
+        this->curr_scene->getRobot()->setLeftPosture(left_posture);
+        this->curr_scene->getRobot()->setRightVelocities(right_vel);
+        this->curr_scene->getRobot()->setLeftVelocities(left_vel);
+        this->curr_scene->getRobot()->setRightForces(right_forces);
+        this->curr_scene->getRobot()->setLeftForces(left_forces);
     }
 }
 
@@ -6177,7 +6174,7 @@ void QNode::init()
 }
 
 
-bool QNode::getArmsHandles(int humanoid)
+bool QNode::getArmsHandles(int robot)
 {
     bool succ = true;
 
@@ -6204,7 +6201,7 @@ bool QNode::getArmsHandles(int humanoid)
                 succ=false;
             }
 
-            if(humanoid != 2)
+            if(robot != 2)
             {
                 srvgetHandle.request.objectName = string("left_joint")+QString::number(k).toStdString();
                 add_client.call(srvgetHandle);
@@ -6221,7 +6218,7 @@ bool QNode::getArmsHandles(int humanoid)
         }
         else if (k == 7)
         {
-            switch(humanoid)
+            switch(robot)
             {
             case 0: // ARoS
                 srvgetHandle.request.objectName = string("right_BarrettHand_jointA_0");
@@ -6295,7 +6292,7 @@ bool QNode::getArmsHandles(int humanoid)
         }
         else if(k == 8)
         {
-            switch(humanoid)
+            switch(robot)
             {
             case 0: // ARoS
                 srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
@@ -6368,7 +6365,7 @@ bool QNode::getArmsHandles(int humanoid)
         }
         else if(k == 9)
         {
-            switch(humanoid)
+            switch(robot)
             {
             case 0: // ARoS
                 srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
@@ -6439,7 +6436,7 @@ bool QNode::getArmsHandles(int humanoid)
         }
         else if(k == 10)
         {
-            switch(humanoid)
+            switch(robot)
             {
             case 0: // ARoS
                 srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
@@ -6512,7 +6509,7 @@ bool QNode::getArmsHandles(int humanoid)
 
 
     // get the complete hand handles
-    switch(humanoid){
+    switch(robot){
     case 0: // ARoSr
         for (int k = 0; k < HAND_FINGERS; ++k)
         {
@@ -7089,7 +7086,7 @@ bool QNode::getArmsHandles(int humanoid)
     }
 
 
-    switch(humanoid)
+    switch(robot)
     {
     case 0: // ARos
         // get the object handle of the sensors
@@ -7291,16 +7288,16 @@ bool QNode::closeBarrettHand(int hand)
         case 1: // right hand
 
             hand_handles = right_hand_handles;
-            this->curr_scene->getHumanoid()->getRightHandForces(hand_forces);
-            this->curr_scene->getHumanoid()->getRightHandPosture(hand_posture);
+            this->curr_scene->getRobot()->getRightHandForces(hand_forces);
+            this->curr_scene->getRobot()->getRightHandPosture(hand_posture);
 
             break;
 
         case 2: // left hand
 
             hand_handles = left_hand_handles;
-            this->curr_scene->getHumanoid()->getLeftHandForces(hand_forces);
-            this->curr_scene->getHumanoid()->getLeftHandPosture(hand_posture);
+            this->curr_scene->getRobot()->getLeftHandForces(hand_forces);
+            this->curr_scene->getRobot()->getLeftHandPosture(hand_posture);
 
             break;
         }
@@ -7585,8 +7582,8 @@ bool QNode::openBarrettHand(int hand)
 
             hand_handles = right_hand_handles;
             hand2_pos = right_2hand_pos;
-            this->curr_scene->getHumanoid()->getRightHandForces(hand_forces);
-            this->curr_scene->getHumanoid()->getRightHandPosture(hand_posture);
+            this->curr_scene->getRobot()->getRightHandForces(hand_forces);
+            this->curr_scene->getRobot()->getRightHandPosture(hand_posture);
 
             break;
 
@@ -7594,8 +7591,8 @@ bool QNode::openBarrettHand(int hand)
 
             hand_handles = left_hand_handles;
             hand2_pos = left_2hand_pos;
-            this->curr_scene->getHumanoid()->getLeftHandForces(hand_forces);
-            this->curr_scene->getHumanoid()->getLeftHandPosture(hand_posture);
+            this->curr_scene->getRobot()->getLeftHandForces(hand_forces);
+            this->curr_scene->getRobot()->getLeftHandPosture(hand_posture);
 
             break;
         }

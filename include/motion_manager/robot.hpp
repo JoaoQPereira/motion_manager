@@ -1,31 +1,31 @@
-#ifndef HUMANOID_HPP
-#define HUMANOID_HPP
+#ifndef ROBOT_HPP
+#define ROBOT_HPP
 
 #include "common.hpp"
 
 namespace motion_manager{
 
-//! The Humanoid class
+//! The robot class
 /**
- * @brief This class defines the concept of a humanoid robot
+ * @brief This class defines the concept of a robot
  */
-class Humanoid
+class Robot
 {
 
 public:
 
 #if HAND==0
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
      * @param hspecs
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs);
+    Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs);
 
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
@@ -33,11 +33,11 @@ public:
      * @param r
      * @param l
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs,
+    Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
              vector<double>& r, vector<double>& l);
 
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
@@ -49,22 +49,22 @@ public:
      * @param min_ll
      * @param max_ll
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs,
+    Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
              vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
 #elif HAND==1
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
      * @param hspecs
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs);
+    Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs);
 
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
@@ -72,11 +72,11 @@ public:
      * @param r
      * @param l
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
+    Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
              vector<double>& r, vector<double>& l);
 
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
@@ -88,14 +88,14 @@ public:
      * @param min_ll
      * @param max_ll
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
+    Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
              vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
 
 #if HEAD == 1
     /**
-     * @brief Humanoid
+     * @brief Robot
      * @param name
      * @param torsospecs
      * @param aspecs
@@ -108,26 +108,26 @@ public:
      * @param min_ll
      * @param max_ll
      */
-    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
-             humanoid_part headspecs, vector<double>& r, vector<double>& l,
+    Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
+             robot_part headspecs, vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
 #endif
 #endif
 
     /**
-     * @brief Humanoid, a copy constructor
+     * @brief Robot, a copy constructor
      * @param hh
      */
-    Humanoid(const Humanoid& hh);
+    Robot(const Robot& hh);
 
     /**
-     * @brief ~Humanoid, a destructor
+     * @brief ~Robot, a destructor
      */
-    ~Humanoid();
+    ~Robot();
 
     /**
-     * @brief This method sets the name of the humanoid
+     * @brief This method sets the name of the robot
      * @param name
      */
     void setName(string& name);
@@ -136,7 +136,7 @@ public:
      * @brief setTorso
      * @param torso
      */
-    void setTorso(humanoid_part& torso);
+    void setTorso(robot_part& torso);
 
     /**
      * @brief This method sets the specifications of the arms
@@ -255,37 +255,37 @@ public:
      */
     void setMatLeftHand(Matrix4d& m);
 
-    // humanoid parts
+    // robot parts
 #if HEAD==1
-    void setHead(humanoid_part& head);
+    void setHead(robot_part& head);
 #endif
 //#if NECK==1
-  //  void setNeck(humanoid_part& neck);
+  //  void setNeck(robot_part& neck);
 //#endif
 //#if PELVIS==1
-  //  void setPelvis(humanoid_part& pelvis);
+  //  void setPelvis(robot_part& pelvis);
 //#endif
 //#if RIGHT_UPPER_LEG==1
-  //  void setRight_Upper_leg(humanoid_part& right_upper_leg);
+  //  void setRight_Upper_leg(robot_part& right_upper_leg);
 //#endif
 //#if RIGHT_LOWER_LEG==1
-  //  void setRight_Lower_leg(humanoid_part& right_lower_leg);
+  //  void setRight_Lower_leg(robot_part& right_lower_leg);
 //#endif
 //#if RIGHT_FOOT==1
-  //  void setRight_foot(humanoid_part& right_foot);
+  //  void setRight_foot(robot_part& right_foot);
 //#endif
 //#if LEFT_UPPER_LEG==1
-  //  void setLeft_Upper_leg(humanoid_part& left_upper_leg);
+  //  void setLeft_Upper_leg(robot_part& left_upper_leg);
 //#endif
 //#if LEFT_LOWER_LEG==1
-  //  void setLeft_Lower_leg(humanoid_part& left_lower_leg);
+  //  void setLeft_Lower_leg(robot_part& left_lower_leg);
 //#endif
 //#if LEFT_FOOT==1
-  //  void setLeft_foot(humanoid_part& left_foot);
+  //  void setLeft_foot(robot_part& left_foot);
 //#endif
 
     /**
-     * @brief This method gets the name of the humanoid
+     * @brief This method gets the name of the robot
      * @return
      */
     string getName();
@@ -294,35 +294,35 @@ public:
      * @brief getTorso
      * @return
      */
-    humanoid_part getTorso();
+    robot_part getTorso();
 
     /**
-     * @brief This method gets the arm specifications of the humanoid
+     * @brief This method gets the arm specifications of the robot
      * @return
      */
     arm getArm();
 #if HAND==0
 
     /**
-     * @brief This method gets hand specifications of the humanoid
+     * @brief This method gets hand specifications of the robot
      * @return
      */
     human_hand getHumanHand();
 #elif HAND==1
     /**
-     * @brief This method gets the hand specifications of the humanoid
+     * @brief This method gets the hand specifications of the robot
      * @return
      */
     barrett_hand getBarrettHand();
 
     /**
-     * @brief This method gets the r parameters of the hand of the humanoid
+     * @brief This method gets the r parameters of the hand of the robot
      * @param rk
      */
     void getRK(vector<int>& rk);
 
     /**
-     * @brief This method gets the j parameters of the hand of the humanoid
+     * @brief This method gets the j parameters of the hand of the robot
      * @param jk
      */
     void getJK(vector<int>& jk);
@@ -771,7 +771,7 @@ public:
     double getShoulderVelNorm(int arm, vector<double>& posture,vector<double>& velocities);
 
     /**
-     * @brief This method gets information about the humanoid
+     * @brief This method gets information about the robot
      * @return
      */
     string getInfoLine();
@@ -793,65 +793,65 @@ public:
      * @brief getHead
      * @return
      */
-    humanoid_part getHead();
+    robot_part getHead();
 #endif
 
 //#if NECK==1
-  //  humanoid_part getNeck();
+  //  robot_part getNeck();
 //#endif
 //#if PELVIS==1
-  //  humanoid_part getPelvis();
+  //  robot_part getPelvis();
 //#endif
 //#if RIGHT_UPPER_LEG==1
-  //  humanoid_part getRight_Upper_leg();
+  //  robot_part getRight_Upper_leg();
 //#endif
 //#if RIGHT_LOWER_LEG==1
-  //  humanoid_part getRight_Lower_leg();
+  //  robot_part getRight_Lower_leg();
 //#endif
 //#if RIGHT_FOOT==1
-  //  humanoid_part getRight_foot();
+  //  robot_part getRight_foot();
 //#endif
 //#if LEFT_UPPER_LEG==1
-  //  humanoid_part getLeft_Upper_leg();
+  //  robot_part getLeft_Upper_leg();
 //#endif
 //#if LEFT_LOWER_LEG==1
-  //  humanoid_part getLeft_Lower_leg();
+  //  robot_part getLeft_Lower_leg();
 //#endif
 //#if LEFT_FOOT==1
-  //  humanoid_part getLeft_foot();
+  //  robot_part getLeft_foot();
 //#endif
 
 
 private:
 
-    string m_name; /**< name of the humanoid */
-    humanoid_part m_torso;
+    string m_name; /**< name of the robot */
+    robot_part m_torso;
 #if HEAD==1
-    humanoid_part m_head;
+    robot_part m_head;
 #endif
 //#if NECK==1
-  //  humanoid_part neck;
+  //  robot_part neck;
 //#endif
 //#if PELVIS==1
-  //  humanoid_part pelvis;
+  //  robot_part pelvis;
 //#endif
 //#if RIGHT_UPPER_LEG==1
-  //  humanoid_part right_upper_leg;
+  //  robot_part right_upper_leg;
 //#endif
 //#if RIGHT_LOWER_LEG==1
-  //  humanoid_part right_lower_leg;
+  //  robot_part right_lower_leg;
 //#endif
 //#if RIGHT_FOOT==1
-  //  humanoid_part right_foot;
+  //  robot_part right_foot;
 //#endif
 //#if LEFT_UPPER_LEG==1
-  //  humanoid_part left_upper_leg;
+  //  robot_part left_upper_leg;
 //#endif
 //#if LEFT_LOWER_LEG==1
-  //  humanoid_part left_lower_leg;
+  //  robot_part left_lower_leg;
 //#endif
 //#if LEFT_FOOT==1
-  //  humanoid_part left_foot;
+  //  robot_part left_foot;
 //#endif
     arm m_arm_specs; /**< specifications of the arm */
 #if HAND==0
@@ -1003,4 +1003,4 @@ private:
 
 }// namespace motion_manager
 
-#endif // HUMANOID_HPP
+#endif // ROBOT_HPP

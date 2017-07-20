@@ -36,7 +36,7 @@ Scenario::Scenario(const Scenario &scene)
         }
     }
 
-    this->hPtr=humanoidPtr(new Humanoid(*scene.hPtr.get()));
+    this->rPtr=robotPtr(new Robot(*scene.rPtr.get()));
 }
 
 
@@ -84,10 +84,9 @@ int Scenario::getID()
     return this->m_scenarioID;
 }
 
-humanoidPtr Scenario::getHumanoid()
+robotPtr Scenario::getRobot()
 {
-
-    return hPtr;
+    return rPtr;
 }
 
 bool Scenario::getObjects(vector<objectPtr> &objs)
@@ -176,10 +175,10 @@ posePtr Scenario::getPose(string pose_name)
 }
 
 
-void Scenario::addHumanoid(humanoidPtr hh_ptr)
+void Scenario::addRobot(robotPtr hh_ptr)
 {
 
-    this->hPtr = humanoidPtr(new Humanoid(*hh_ptr.get()));
+    this->rPtr = robotPtr(new Robot(*hh_ptr.get()));
 }
 
 

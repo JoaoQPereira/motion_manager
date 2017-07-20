@@ -102,7 +102,7 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
             // the scene is empty of objects
         }
 
-        // set the humanoid
+        // set the robot
         Matrix4d mat_right_arm;
         Matrix4d mat_right_hand;
         vector<double> min_rlimits;
@@ -113,14 +113,14 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         vector<double> min_llimits;
         vector<double> max_llimits;
 
-        this->scene->getHumanoid()->getMatRight(mat_right_arm);
-        this->scene->getHumanoid()->getMatRightHand(mat_right_hand);
-        this->scene->getHumanoid()->getMatLeft(mat_left_arm);
-        this->scene->getHumanoid()->getMatLeftHand(mat_left_hand);
-        this->scene->getHumanoid()->getRightMinLimits(min_rlimits);
-        this->scene->getHumanoid()->getRightMaxLimits(max_rlimits);
-        this->scene->getHumanoid()->getLeftMinLimits(min_llimits);
-        this->scene->getHumanoid()->getLeftMaxLimits(max_llimits);
+        this->scene->getRobot()->getMatRight(mat_right_arm);
+        this->scene->getRobot()->getMatRightHand(mat_right_hand);
+        this->scene->getRobot()->getMatLeft(mat_left_arm);
+        this->scene->getRobot()->getMatLeftHand(mat_left_hand);
+        this->scene->getRobot()->getRightMinLimits(min_rlimits);
+        this->scene->getRobot()->getRightMaxLimits(max_rlimits);
+        this->scene->getRobot()->getLeftMinLimits(min_llimits);
+        this->scene->getRobot()->getLeftMaxLimits(max_llimits);
 
         h_planner->setMatRightArm(mat_right_arm);
         h_planner->setMatRightHand(mat_right_hand);
@@ -132,8 +132,8 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         h_planner->setLeftMinLimits(min_llimits);
 
 
-        humanoid_part torso = this->scene->getHumanoid()->getTorso();
-        HUMotion::HumanoidPart hump_torso;
+        robot_part torso = this->scene->getRobot()->getTorso();
+        HUMotion::RobotPart hump_torso;
 
         hump_torso.Xpos = torso.Xpos;
         hump_torso.Ypos = torso.Ypos;
@@ -148,8 +148,8 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
 
         h_planner->setTorso(hump_torso);
 
-        DHparams rDH = this->scene->getHumanoid()->getDH_rightArm();
-        DHparams lDH = this->scene->getHumanoid()->getDH_leftArm();
+        DHparams rDH = this->scene->getRobot()->getDH_rightArm();
+        DHparams lDH = this->scene->getRobot()->getDH_leftArm();
 
         HUMotion::DHparameters right_arm_DH;
         HUMotion::DHparameters left_arm_DH;
@@ -168,7 +168,7 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
 
 
 #if HAND==0
-        human_hand hhand = this->scene->getHumanoid()->getHumanHand();
+        human_hand hhand = this->scene->getRobot()->getHumanHand();
         HUMotion::HumanHand hump_hhand;
         hump_hhand.maxAperture = hhand.maxAperture;
         hump_hhand.thumb.uTx = hhand.thumb.uTx;
@@ -193,9 +193,9 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         hump_hhand.fingers = hump_fings;
 
 #elif HAND==1
-        barrett_hand b_hand = this->scene->getHumanoid()->getBarrettHand();
-        std::vector<int> rk; this->scene->getHumanoid()->getRK(rk);
-        std::vector<int> jk; this->scene->getHumanoid()->getRK(jk);
+        barrett_hand b_hand = this->scene->getRobot()->getBarrettHand();
+        std::vector<int> rk; this->scene->getRobot()->getRK(rk);
+        std::vector<int> jk; this->scene->getRobot()->getRK(jk);
         HUMotion::BarrettHand hump_bhand;
 
         hump_bhand.A1 = b_hand.A1;
@@ -212,8 +212,8 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         h_planner->setBarrettHand(hump_bhand);
 #endif
 #if HEAD==1
-        humanoid_part head = this->scene->getHumanoid()->getHead();
-        HUMotion::HumanoidPart hump_head;
+        robot_part head = this->scene->getRobot()->getHead();
+        HUMotion::RobotPart hump_head;
 
         hump_head.Xpos = head.Xpos;
         hump_head.Ypos = head.Ypos;
@@ -422,7 +422,7 @@ void Problem::setMoveSettings(std::vector<double> &tar, std::vector<double> &fin
 bool Problem::finalPostureFingers(int hand_id)
 {
     bool success=false;
-    humanoidPtr hh = this->scene->getHumanoid();
+    robotPtr hh = this->scene->getRobot();
 
     // get the object(s) involved in this movement
     objectPtr obj = this->mov->getObject();
@@ -720,7 +720,7 @@ bool Problem::finalPostureFingers(int hand_id)
 
 bool Problem::invKinHand(double d_obj,int hand_id,std::vector<double>& sols)
 {
-    humanoidPtr hh = this->scene->getHumanoid();
+    robotPtr hh = this->scene->getRobot();
 
     bool success = false;
     sols = std::vector<double>(2);
@@ -1019,12 +1019,12 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         break;
     case 1://right arm
         if(obj!=nullptr){obj->getEngTarRight(eng_to_tar);}
-        this->scene->getHumanoid()->getRightPosture(initPosture);
-        this->scene->getHumanoid()->getRightArmHomePosture(homePosture);
+        this->scene->getRobot()->getRightPosture(initPosture);
+        this->scene->getRobot()->getRightArmHomePosture(homePosture);
 
         if(mov_type==5)
         {
-          this->scene->getHumanoid()->getRightHandHomePosture(finalHand);
+          this->scene->getRobot()->getRightHandHomePosture(finalHand);
         }
         else if(mov_type==1)
         {
@@ -1039,12 +1039,12 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         break;
     case 2:// left arm
         if(obj!=nullptr){obj->getEngTarLeft(eng_to_tar);}
-        this->scene->getHumanoid()->getLeftPosture(initPosture);
-        this->scene->getHumanoid()->getLeftArmHomePosture(homePosture);
+        this->scene->getRobot()->getLeftPosture(initPosture);
+        this->scene->getRobot()->getLeftArmHomePosture(homePosture);
 
         if(mov_type==5)
         {
-          this->scene->getHumanoid()->getLeftHandHomePosture(finalHand);
+          this->scene->getRobot()->getLeftHandHomePosture(finalHand);
         }
         else if(mov_type==1)
         {
@@ -1214,9 +1214,9 @@ moveit_planning::PlanningResultPtr Problem::solve(moveit_planning::moveit_params
         break;
     case 1://right arm
         if(obj!=nullptr){obj->getTarRightObj(tar_to_obj);}
-        this->scene->getHumanoid()->getRightArmHomePosture(homePosture);
+        this->scene->getRobot()->getRightArmHomePosture(homePosture);
         if(mov_type==5){
-            this->scene->getHumanoid()->getRightHandHomePosture(finalHand);
+            this->scene->getRobot()->getRightHandHomePosture(finalHand);
         }else if(mov_type==1){
             finalHand=this->move_final_hand;
         }else{
@@ -1227,9 +1227,9 @@ moveit_planning::PlanningResultPtr Problem::solve(moveit_planning::moveit_params
         break;
     case 2:// left arm
         if(obj!=nullptr){obj->getTarLeftObj(tar_to_obj);}
-        this->scene->getHumanoid()->getLeftArmHomePosture(homePosture);
+        this->scene->getRobot()->getLeftArmHomePosture(homePosture);
         if(mov_type==5){
-            this->scene->getHumanoid()->getLeftHandHomePosture(finalHand);
+            this->scene->getRobot()->getLeftHandHomePosture(finalHand);
         }else if(mov_type==1){
             finalHand=this->move_final_hand;
         }else{
