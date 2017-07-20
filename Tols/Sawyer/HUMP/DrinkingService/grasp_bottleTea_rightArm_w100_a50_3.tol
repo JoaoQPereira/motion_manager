@@ -343,6 +343,7 @@ add_plane=false
 # Others
 max_velocity=100.0
 
+max_alpha=50.0
 tar_av=true
 ob_av=true
 approach=true

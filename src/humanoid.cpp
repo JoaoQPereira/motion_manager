@@ -261,6 +261,61 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, bar
     this->mat_r_hand = Matrix4d::Identity(4,4);
     this->mat_l_hand = Matrix4d::Identity(4,4);
 }
+
+#if HEAD==1
+Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+                   humanoid_part headspecs, vector<double> &r, vector<double> &l,
+                   vector<double> &min_rl, vector<double> &max_rl,
+                   vector<double> &min_ll, vector<double> &max_ll)
+{
+    this->m_name = name;
+    this->m_torso_pos = ppos;
+    this->m_torso_or = oor;
+    this->m_torso_size = ssize;
+    this->m_arm_specs = aspecs;
+
+    this->m_barrett_hand_specs = hspecs;
+    this->head = headspecs;
+
+    this->rk.push_back(-1.0);
+    this->rk.push_back(1.0);
+    this->rk.push_back(0.0);
+
+    this->jk.push_back(-1.0);
+    this->jk.push_back(-1.0);
+    this->jk.push_back(1.0);
+
+    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(r.begin(),r.end(),this->rightPosture.begin());
+    std::copy(l.begin(),l.end(),this->leftPosture.begin());
+    std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
+    std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
+
+    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(min_rl.begin(),min_rl.end(),this->min_rightLimits.begin());
+    std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
+    std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
+    std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
+
+    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->mat_right = Matrix4d::Identity(4,4);
+    this->mat_left = Matrix4d::Identity(4,4);
+    this->mat_r_hand = Matrix4d::Identity(4,4);
+    this->mat_l_hand = Matrix4d::Identity(4,4);
+}
+#endif
 #endif
 
 
@@ -286,9 +341,9 @@ Humanoid::Humanoid(const Humanoid &hh)
     this->m_DH_rightHand = hh.m_DH_rightHand;
     this->m_DH_leftHand = hh.m_DH_leftHand;
 
-//#if HEAD==1
- //this->head=hh.head;
-//#endif
+#if HEAD==1
+    this->head=hh.head;
+#endif
 //#if NECK==1
   //  this->neck=hh.neck;
 //#endif
@@ -517,13 +572,12 @@ void Humanoid::setMatLeftHand(Matrix4d &m)
 }
 // humanoid parts
 
-//#if HEAD==1
-
-//void Humanoid::setHead(humanoid_part& head){
-
-  //  this->head=head;
-//}
-//#endif
+#if HEAD==1
+void Humanoid::setHead(humanoid_part& head)
+{
+    this->head=head;
+}
+#endif
 
 //#if NECK==1
 
@@ -1398,12 +1452,12 @@ double Humanoid::getShoulderVelNorm(int arm, vector<double> &posture, vector<dou
 }
 
 
-//#if HEAD==1
-
-//humanoid_part Humanoid::getHead(){
-  //  return this->head;
-//}
-//#endif
+#if HEAD==1
+humanoid_part Humanoid::getHead()
+{
+    return this->head;
+}
+#endif
 
 //#if NECK==1
 

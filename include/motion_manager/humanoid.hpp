@@ -86,7 +86,7 @@ public:
              vector<double>& r, vector<double>& l);
 
     /**
-     * @brief Humanoid, a constructor
+     * @brief Humanoid
      * @param name
      * @param ppos
      * @param oor
@@ -104,6 +104,29 @@ public:
              vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
+
+#if HEAD == 1
+    /**
+     * @brief Humanoid
+     * @param name
+     * @param ppos
+     * @param oor
+     * @param ssize
+     * @param aspecs
+     * @param hspecs
+     * @param headspecs
+     * @param r
+     * @param l
+     * @param min_rl
+     * @param max_rl
+     * @param min_ll
+     * @param max_ll
+     */
+    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+             humanoid_part headspecs, vector<double>& r, vector<double>& l,
+             vector<double>& min_rl, vector<double>& max_rl,
+             vector<double>& min_ll, vector<double>& max_ll);
+#endif
 #endif
 
     /**
@@ -259,9 +282,9 @@ public:
     void setMatLeftHand(Matrix4d& m);
 
     // humanoid parts
-//#if HEAD==1
-  //  void setHead(humanoid_part& head);
-//#endif
+#if HEAD==1
+    void setHead(humanoid_part& head);
+#endif
 //#if NECK==1
   //  void setNeck(humanoid_part& neck);
 //#endif
@@ -803,9 +826,14 @@ public:
      */
     DHparams getDH_leftArm();
 
-//#if HEAD==1
-  //  humanoid_part getHead();
-//#endif
+#if HEAD==1
+    /**
+     * @brief getHead
+     * @return
+     */
+    humanoid_part getHead();
+#endif
+
 //#if NECK==1
   //  humanoid_part getNeck();
 //#endif
@@ -838,9 +866,9 @@ private:
     pos m_torso_pos;/**< position of the torso */
     orient m_torso_or; /**< orientation of the torso */
     dim m_torso_size; /**< size of the torso */
-//#if HEAD==1
-  //  humanoid_part head;
-//#endif
+#if HEAD==1
+    humanoid_part head;
+#endif
 //#if NECK==1
   //  humanoid_part neck;
 //#endif

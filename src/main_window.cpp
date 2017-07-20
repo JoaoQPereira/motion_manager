@@ -2673,7 +2673,7 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     this->curr_scene = scenarioPtr(new Scenario(*(this->init_scene.get())));
     qnode.resetSimTime();
     qnode.resetGlobals();
-    qnode.log(QNode::Info,std::string("Tha scenario has been reset"));
+    qnode.log(QNode::Info,std::string("The scenario has been reset"));
 
     int scene_id = this->scenario_id;
     string path;

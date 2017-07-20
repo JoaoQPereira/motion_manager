@@ -383,8 +383,10 @@ bool QNode::getElements(scenarioPtr scene)
     orient humanoid_or; // orientation of the humanoid
     dim humanoid_size; // size of the humanoid
 
+
     arm humanoid_arm_specs; // specs of the arms
     barrett_hand humanoid_hand_specs; // specs of the barret hand
+    humanoid_part humanoid_head_specs; // specs of the head
 
 
     // **** object info **** //
@@ -460,9 +462,14 @@ bool QNode::getElements(scenarioPtr scene)
     human_thumb thumb = jarde_hand.thumb;
 
     // torso
-    humanoid_part torso;  // parameters of the torso (ARoS and Jarde)
+    humanoid_part torso;  // parameters of the torso (ARoS, Jarde and Sawyer)
     std::string torso_str;
     std::vector<double> torso_vec;
+
+    //HEAD
+    humanoid_part head; // parameters of the head(ARoS and Sawyer)
+    std::string head_str;
+    std::vector<double> head_vec;
     /*
     // pelvis
     humanoid_part pelvis; // parameters of the pelvis (Jarde)
@@ -849,6 +856,7 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_size.Xsize = torso.Xsize;
             humanoid_size.Ysize = torso.Ysize;
             humanoid_size.Zsize = torso.Zsize;
+#if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
             humanoid_hand_specs.A1 = A1;
@@ -858,7 +866,6 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi2 = phi2;
             humanoid_hand_specs.phi3 = phi3;
 
-#if HAND==1
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
@@ -1803,6 +1810,7 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_size.Ysize = torso.Ysize;
             humanoid_size.Zsize = torso.Zsize;
 
+#if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
             humanoid_hand_specs.A1 = A1;
@@ -1812,7 +1820,6 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi2 = phi2;
             humanoid_hand_specs.phi3 = phi3;
 
-#if HAND==1
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
@@ -2265,6 +2272,7 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_size.Xsize = torso.Xsize;
             humanoid_size.Ysize = torso.Ysize;
             humanoid_size.Zsize = torso.Zsize;
+ #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
             humanoid_hand_specs.A1 = A1;
@@ -2274,7 +2282,6 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi2 = phi2;
             humanoid_hand_specs.phi3 = phi3;
 
-#if HAND==1
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
@@ -2716,6 +2723,8 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_size.Xsize = torso.Xsize;
             humanoid_size.Ysize = torso.Ysize;
             humanoid_size.Zsize = torso.Zsize;
+
+#if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
             humanoid_hand_specs.A1 = A1;
@@ -2725,7 +2734,6 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi2 = phi2;
             humanoid_hand_specs.phi3 = phi3;
 
-#if HAND==1
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
@@ -2810,7 +2818,6 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Wheel2");         // obj_id = 7
         objs_prefix.push_back("Base");           // obj_id = 8
         objs_prefix.push_back("Table");          // obj_id = 9
-        objs_prefix.push_back("SawyerHead");           // obj_id = 10
 
 
         while(cnt_obj < n_objs){
@@ -2883,9 +2890,7 @@ bool QNode::getElements(scenarioPtr scene)
 
                 infoLine = ob->getInfoLine();
                 Q_EMIT newElement(infoLine);
-
-                if(cnt_obj!=n_objs-1)
-                    Q_EMIT newObject(ob->getName());
+                Q_EMIT newObject(ob->getName());
 
                 // get the handles  of the object
                 //handle of the object
@@ -3116,6 +3121,45 @@ bool QNode::getElements(scenarioPtr scene)
         }
 #endif
 
+#if HEAD==1
+        // Head
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("HeadInfo");
+        add_client.call(srvs);
+
+        if (srvs.response.result == 1)
+        {
+             head_str = srvs.response.signalValue;
+        }
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the head");
+        }
+
+        floatCount = head_str.size()/sizeof(float);
+        if (!head_vec.empty())
+        {
+            head_vec.clear();
+        }
+
+        for (int k=0;k<floatCount;++k)
+            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+
+        head.Xpos = head_vec.at(0)*1000;//[mm]
+        head.Ypos = head_vec.at(1)*1000;//[mm]
+        head.Zpos = head_vec.at(2)*1000;//[mm]
+
+        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+
+        head.Xsize = head_vec.at(6)*1000;//[mm]
+        head.Ysize = head_vec.at(7)*1000;//[mm]
+        head.Zsize = head_vec.at(8)*1000;//[mm]
+#endif
+
         // Torso
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("TorsoInfo");
@@ -3224,6 +3268,22 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_size.Ysize = torso.Ysize;
             humanoid_size.Zsize = torso.Zsize;
 
+#if HEAD == 1
+            humanoid_head_specs.Xpos = head.Xpos;
+            humanoid_head_specs.Ypos = head.Ypos;
+            humanoid_head_specs.Zpos = head.Zpos;
+
+            humanoid_head_specs.Roll =  head.Roll;
+            humanoid_head_specs.Pitch = head.Pitch;
+            humanoid_head_specs.Yaw = head.Yaw;
+
+            humanoid_head_specs.Xsize = head.Xsize;
+            humanoid_head_specs.Ysize = head.Ysize;
+            humanoid_head_specs.Zsize = head.Zsize;
+#endif
+
+
+#if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
             humanoid_hand_specs.A1 = A1;
@@ -3233,13 +3293,18 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi2 = phi2;
             humanoid_hand_specs.phi3 = phi3;
 
-#if HAND==1
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
+#if HEAD == 1
+            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+                                          humanoid_head_specs, rposture, rposture,
+                                          min_rlimits,max_rlimits, min_rlimits,max_rlimits);
+#else
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
+#endif
             hptr->setMatRight(mat_right);
 
             // get the postures
@@ -3316,7 +3381,6 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Cup");            // obj_id = 3
         objs_prefix.push_back("Cup1");           // obj_id = 4
         objs_prefix.push_back("Table");          // obj_id = 5
-        objs_prefix.push_back("SawyerHead");     // obj_id = 6
 
         while(cnt_obj < n_objs)
         {
@@ -3391,8 +3455,7 @@ bool QNode::getElements(scenarioPtr scene)
 
                 infoLine = ob->getInfoLine();
                 Q_EMIT newElement(infoLine);
-                if(cnt_obj!=n_objs-1)
-                    Q_EMIT newObject(ob->getName());
+                Q_EMIT newObject(ob->getName());
                 Q_EMIT newPose(ps->getName());
 
 
@@ -3698,6 +3761,46 @@ bool QNode::getElements(scenarioPtr scene)
         }
 #endif
 
+
+#if HEAD==1
+        // Head
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("HeadInfo");
+        add_client.call(srvs);
+
+        if (srvs.response.result == 1)
+        {
+             head_str = srvs.response.signalValue;
+        }
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the head");
+        }
+
+        floatCount = head_str.size()/sizeof(float);
+        if (!head_vec.empty())
+        {
+            head_vec.clear();
+        }
+
+        for (int k=0;k<floatCount;++k)
+            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+
+        head.Xpos = head_vec.at(0)*1000;//[mm]
+        head.Ypos = head_vec.at(1)*1000;//[mm]
+        head.Zpos = head_vec.at(2)*1000;//[mm]
+
+        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+
+        head.Xsize = head_vec.at(6)*1000;//[mm]
+        head.Ysize = head_vec.at(7)*1000;//[mm]
+        head.Zsize = head_vec.at(8)*1000;//[mm]
+#endif
+
         // Torso
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("TorsoInfo");
@@ -3806,6 +3909,22 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_size.Ysize = torso.Ysize;
             humanoid_size.Zsize = torso.Zsize;
 
+#if HEAD == 1
+            humanoid_head_specs.Xpos = head.Xpos;
+            humanoid_head_specs.Ypos = head.Ypos;
+            humanoid_head_specs.Zpos = head.Zpos;
+
+            humanoid_head_specs.Roll =  head.Roll;
+            humanoid_head_specs.Pitch = head.Pitch;
+            humanoid_head_specs.Yaw = head.Yaw;
+
+            humanoid_head_specs.Xsize = head.Xsize;
+            humanoid_head_specs.Ysize = head.Ysize;
+            humanoid_head_specs.Zsize = head.Zsize;
+#endif
+
+
+#if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
             humanoid_hand_specs.A1 = A1;
@@ -3815,13 +3934,19 @@ bool QNode::getElements(scenarioPtr scene)
             humanoid_hand_specs.phi2 = phi2;
             humanoid_hand_specs.phi3 = phi3;
 
-#if HAND==1
             //add the joint's offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
+
+#if HEAD == 1
+            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+                                          humanoid_head_specs, rposture, rposture,
+                                          min_rlimits,max_rlimits, min_rlimits,max_rlimits);
+#else
             Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
+#endif
             hptr->setMatRight(mat_right);
 
             // get the postures
@@ -3848,7 +3973,9 @@ bool QNode::getElements(scenarioPtr scene)
             throw("You have probably chosen the wrong hand type");
 
 #endif
-        }else{
+        }
+        else
+        {
 
             throw string("Error while retrieving elements from the scenario");
         }

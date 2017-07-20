@@ -1,34 +1,20 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# 
+# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: BottleTea, Object Engaged: , Pose: , Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
-
-Sphere2_radius=61
-
+Sphere2_radius=60
 Sphere3_radius=0
-
 Sphere4_radius=85
-
 Sphere5_radius=80
-
 Sphere6_radius=70
-
 Sphere7_radius=0
-
 Sphere8_radius=70
-
 Sphere9_radius=70
-
 Sphere10_radius=60
-
 Sphere11_radius=0
-
 Sphere12_radius=60
-
 Sphere13_radius=80
-
 Sphere14_radius=70
-
 Hand_1_1=25
 
 Hand_1_2=25
@@ -254,8 +240,7 @@ pre_grasp_y=1
 
 pre_grasp_z=1
 
-pre_grasp_dist=105
-
+pre_grasp_dist=120
 post_grasp_x=0
 
 post_grasp_y=0
@@ -342,6 +327,8 @@ plane_point3_z=0.0
 add_plane=false
 # Others
 max_velocity=100.0
+
+max_alpha=50.0
 
 tar_av=true
 ob_av=true

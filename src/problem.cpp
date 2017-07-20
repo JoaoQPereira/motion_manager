@@ -206,6 +206,23 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
 
         h_planner->setBarrettHand(hump_bhand);
 #endif
+#if HEAD==1
+        humanoid_part r_head = this->scene->getHumanoid()->getHead();
+        HUMotion::BodyPart hump_head;
+
+        hump_head.Xpos = r_head.Xpos;
+        hump_head.Ypos = r_head.Ypos;
+        hump_head.Zpos = r_head.Zpos;
+        hump_head.Roll = r_head.Roll;
+        hump_head.Pitch = r_head.Pitch;
+        hump_head.Yaw = r_head.Yaw;
+        hump_head.Xsize = r_head.Xsize;
+        hump_head.Ysize = r_head.Ysize;
+        hump_head.Xpos = r_head.Xpos;
+        hump_head.Zsize = r_head.Zsize;
+
+        h_planner->setHead(hump_head);
+#endif
     }
 }
 
@@ -956,6 +973,13 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     // Barrett Hand
     int hand_code = 1;
 #endif
+
+#if HEAD == 1
+    int head_code = 1;
+#else
+    int head_code = 0;
+#endif
+
     double dHO;
     std::vector<double> finalHand;
     std::vector<double> homePosture;
@@ -1069,6 +1093,7 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     // movement settings
     params.mov_specs.arm_code = arm_code;
     params.mov_specs.hand_code = hand_code;
+    params.mov_specs.head_code = head_code;
     params.mov_specs.mov_infoline = this->mov->getInfoLine();
     params.mov_specs.finalHand = finalHand;
 
