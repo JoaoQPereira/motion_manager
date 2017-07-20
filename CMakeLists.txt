@@ -100,7 +100,7 @@ endif()
 # The torso and the arms are the only parts assumed for any humanoid robot. In other words, the anthropomorphism of the system is assumed.
 # The characteristics of the torso will be those ones of the humanoid.
 # However the following parts may be taken into account when they are present
-set (HEAD 1)
+set (HEAD 0)
 # set (NECK 0)
 # set (PELVIS 1)
 # set (RIGHT_UPPER_LEG 1)

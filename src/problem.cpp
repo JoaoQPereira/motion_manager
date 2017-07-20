@@ -131,17 +131,22 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         h_planner->setLeftMaxLimits(max_llimits);
         h_planner->setLeftMinLimits(min_llimits);
 
-        dim torso_dim = this->scene->getHumanoid()->getSize();
-        std::vector<double> tsize = {torso_dim.Xsize,torso_dim.Ysize,torso_dim.Zsize};
-        h_planner->setTorsoSize(tsize);
 
-        pos torso_pos = this->scene->getHumanoid()->getPos();
-        std::vector<double> tpos = {torso_pos.Xpos,torso_pos.Ypos,torso_pos.Zpos};
-        h_planner->setTorsoPosition(tpos);
+        humanoid_part torso = this->scene->getHumanoid()->getTorso();
+        HUMotion::HumanoidPart hump_torso;
 
-        orient torso_or = this->scene->getHumanoid()->getOr();
-        std::vector<double> tor = {torso_or.roll, torso_or.pitch, torso_or.yaw};
-        h_planner->setTorsoOrientation(tor);
+        hump_torso.Xpos = torso.Xpos;
+        hump_torso.Ypos = torso.Ypos;
+        hump_torso.Zpos = torso.Zpos;
+        hump_torso.Roll = torso.Roll;
+        hump_torso.Pitch = torso.Pitch;
+        hump_torso.Yaw = torso.Yaw;
+        hump_torso.Xsize = torso.Xsize;
+        hump_torso.Ysize = torso.Ysize;
+        hump_torso.Xpos = torso.Xpos;
+        hump_torso.Zsize = torso.Zsize;
+
+        h_planner->setTorso(hump_torso);
 
         DHparams rDH = this->scene->getHumanoid()->getDH_rightArm();
         DHparams lDH = this->scene->getHumanoid()->getDH_leftArm();
@@ -207,19 +212,19 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         h_planner->setBarrettHand(hump_bhand);
 #endif
 #if HEAD==1
-        humanoid_part r_head = this->scene->getHumanoid()->getHead();
-        HUMotion::BodyPart hump_head;
+        humanoid_part head = this->scene->getHumanoid()->getHead();
+        HUMotion::HumanoidPart hump_head;
 
-        hump_head.Xpos = r_head.Xpos;
-        hump_head.Ypos = r_head.Ypos;
-        hump_head.Zpos = r_head.Zpos;
-        hump_head.Roll = r_head.Roll;
-        hump_head.Pitch = r_head.Pitch;
-        hump_head.Yaw = r_head.Yaw;
-        hump_head.Xsize = r_head.Xsize;
-        hump_head.Ysize = r_head.Ysize;
-        hump_head.Xpos = r_head.Xpos;
-        hump_head.Zsize = r_head.Zsize;
+        hump_head.Xpos = head.Xpos;
+        hump_head.Ypos = head.Ypos;
+        hump_head.Zpos = head.Zpos;
+        hump_head.Roll = head.Roll;
+        hump_head.Pitch = head.Pitch;
+        hump_head.Yaw = head.Yaw;
+        hump_head.Xsize = head.Xsize;
+        hump_head.Ysize = head.Ysize;
+        hump_head.Xpos = head.Xpos;
+        hump_head.Zsize = head.Zsize;
 
         h_planner->setHead(hump_head);
 #endif

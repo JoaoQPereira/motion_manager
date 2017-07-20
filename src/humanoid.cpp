@@ -5,12 +5,10 @@ namespace motion_manager{
 
 #if HAND==0
 
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, human_hand hspecs)
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_human_hand_specs = hspecs;
@@ -38,13 +36,11 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, hum
 }
 
 
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, human_hand hspecs,
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs,
                    vector<double> &r, vector<double> &l)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_human_hand_specs = hspecs;
@@ -76,15 +72,13 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, hum
 }
 
 
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, human_hand hspecs,
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs,
                    vector<double> &r, vector<double> &l,
                    vector<double> &min_rl, vector<double> &max_rl,
                    vector<double> &min_ll, vector<double> &max_ll)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_human_hand_specs = hspecs;
@@ -124,12 +118,10 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, hum
 
 #elif HAND==1
 
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs)
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_barrett_hand_specs = hspecs;
@@ -164,13 +156,11 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, bar
 }
 
 
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
                    vector<double>& r, vector<double>& l)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_barrett_hand_specs = hspecs;
@@ -210,15 +200,13 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, bar
 }
 
 
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
                    vector<double> &r, vector<double> &l,
                    vector<double> &min_rl, vector<double> &max_rl,
                    vector<double> &min_ll, vector<double> &max_ll)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_barrett_hand_specs = hspecs;
@@ -263,19 +251,17 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, bar
 }
 
 #if HEAD==1
-Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+Humanoid::Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
                    humanoid_part headspecs, vector<double> &r, vector<double> &l,
                    vector<double> &min_rl, vector<double> &max_rl,
                    vector<double> &min_ll, vector<double> &max_ll)
 {
     this->m_name = name;
-    this->m_torso_pos = ppos;
-    this->m_torso_or = oor;
-    this->m_torso_size = ssize;
+    this->m_torso = torsospecs;
     this->m_arm_specs = aspecs;
 
     this->m_barrett_hand_specs = hspecs;
-    this->head = headspecs;
+    this->m_head = headspecs;
 
     this->rk.push_back(-1.0);
     this->rk.push_back(1.0);
@@ -322,9 +308,7 @@ Humanoid::Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, bar
 Humanoid::Humanoid(const Humanoid &hh)
 {
     this->m_name = hh.m_name;
-    this->m_torso_pos = hh.m_torso_pos;
-    this->m_torso_or = hh.m_torso_or;
-    this->m_torso_size = hh.m_torso_size;
+    this->m_torso = hh.m_torso;
     this->m_arm_specs = hh.m_arm_specs;
 
 #if HAND==0
@@ -342,7 +326,7 @@ Humanoid::Humanoid(const Humanoid &hh)
     this->m_DH_leftHand = hh.m_DH_leftHand;
 
 #if HEAD==1
-    this->head=hh.head;
+    this->m_head=hh.m_head;
 #endif
 //#if NECK==1
   //  this->neck=hh.neck;
@@ -421,21 +405,9 @@ void Humanoid::setName(string& name)
 }
 
 
-void Humanoid::setPos(pos& ppos)
+void Humanoid::setTorso(humanoid_part& torso)
 {
-    this->m_torso_pos = ppos;
-}
-
-
-void Humanoid::setOr(orient& oor)
-{
-    this->m_torso_or = oor;
-}
-
-
-void Humanoid::setSize(dim& ssize)
-{
-    this->m_torso_size = ssize;
+    this->m_torso=torso;
 }
 
 
@@ -575,7 +547,7 @@ void Humanoid::setMatLeftHand(Matrix4d &m)
 #if HEAD==1
 void Humanoid::setHead(humanoid_part& head)
 {
-    this->head=head;
+    this->m_head=head;
 }
 #endif
 
@@ -651,21 +623,9 @@ string Humanoid::getName()
 }
 
 
-pos Humanoid::getPos()
+humanoid_part Humanoid::getTorso()
 {
-    return this->m_torso_pos;
-}
-
-
-orient Humanoid::getOr()
-{
-    return this->m_torso_or;
-}
-
-
-dim Humanoid::getSize()
-{
-    return this->m_torso_size;
+    return this->m_torso;
 }
 
 
@@ -981,15 +941,15 @@ void Humanoid::getMatLeftHand(Matrix4d &m)
 string Humanoid::getInfoLine()
 {
     return  this->m_name + COLUMN + SPACE +
-            XposSTR + str(boost::format("%d") % this->m_torso_pos.Xpos) + MILLIMETERS + SEP +
-            YposSTR + str(boost::format("%d") % this->m_torso_pos.Ypos) + MILLIMETERS + SEP+
-            ZposSTR + str(boost::format("%d") % this->m_torso_pos.Zpos) + MILLIMETERS + SEP+
-            RollSTR + str(boost::format("%d") % this->m_torso_or.roll) + RAD + SEP+
-            PitchSTR + str(boost::format("%d") % this->m_torso_or.pitch) + RAD + SEP+
-            YawSTR + str(boost::format("%d") % this->m_torso_or.yaw) + RAD + SEP+
-            XsizeSTR + str(boost::format("%d") % this->m_torso_size.Xsize) + MILLIMETERS + SEP+
-            YsizeSTR + str(boost::format("%d") % this->m_torso_size.Ysize) + MILLIMETERS + SEP+
-            ZsizeSTR + str(boost::format("%d") % this->m_torso_size.Zsize)+ MILLIMETERS;
+            XposSTR + str(boost::format("%d") % this->m_torso.Xpos) + MILLIMETERS + SEP +
+            YposSTR + str(boost::format("%d") % this->m_torso.Ypos) + MILLIMETERS + SEP+
+            ZposSTR + str(boost::format("%d") % this->m_torso.Zpos) + MILLIMETERS + SEP+
+            RollSTR + str(boost::format("%d") % this->m_torso.Roll) + RAD + SEP+
+            PitchSTR + str(boost::format("%d") % this->m_torso.Pitch) + RAD + SEP+
+            YawSTR + str(boost::format("%d") % this->m_torso.Yaw) + RAD + SEP+
+            XsizeSTR + str(boost::format("%d") % this->m_torso.Xsize) + MILLIMETERS + SEP+
+            YsizeSTR + str(boost::format("%d") % this->m_torso.Ysize) + MILLIMETERS + SEP+
+            ZsizeSTR + str(boost::format("%d") % this->m_torso.Zsize)+ MILLIMETERS;
             //L1STR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(0))+ MILLIMETERS + SEP+
             //LuSTR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(2))+ MILLIMETERS + SEP+
             //LlSTR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(4)) + MILLIMETERS + SEP+
@@ -1455,7 +1415,7 @@ double Humanoid::getShoulderVelNorm(int arm, vector<double> &posture, vector<dou
 #if HEAD==1
 humanoid_part Humanoid::getHead()
 {
-    return this->head;
+    return this->m_head;
 }
 #endif
 

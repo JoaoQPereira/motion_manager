@@ -379,11 +379,11 @@ bool QNode::getElements(scenarioPtr scene)
     pos engage_pos; // engage point position
     orient engage_or;// engage point orientation
 
-    pos humanoid_pos; // position of the humanoid
-    orient humanoid_or; // orientation of the humanoid
-    dim humanoid_size; // size of the humanoid
+//    pos humanoid_pos; // position of the humanoid
+//    orient humanoid_or; // orientation of the humanoid
+//    dim humanoid_size; // size of the humanoid
 
-
+    humanoid_part humanoid_torso_specs;
     arm humanoid_arm_specs; // specs of the arms
     barrett_hand humanoid_hand_specs; // specs of the barret hand
     humanoid_part humanoid_head_specs; // specs of the head
@@ -847,15 +847,15 @@ bool QNode::getElements(scenarioPtr scene)
 
         if (succ){
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
 #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
@@ -870,7 +870,7 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
@@ -1486,18 +1486,17 @@ bool QNode::getElements(scenarioPtr scene)
         if(succ){
 
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
-
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
 #if HAND==0
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, jarde_hand,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, jarde_hand,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
@@ -1800,16 +1799,15 @@ bool QNode::getElements(scenarioPtr scene)
 
         if (succ){
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
-
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
 #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
@@ -1824,7 +1822,7 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
@@ -2263,15 +2261,15 @@ bool QNode::getElements(scenarioPtr scene)
         }
         if (succ){
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
  #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
@@ -2286,7 +2284,7 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
@@ -2714,16 +2712,15 @@ bool QNode::getElements(scenarioPtr scene)
         }
         if (succ){
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
-
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
 #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
@@ -2738,7 +2735,7 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, lposture,
                                           min_rlimits,max_rlimits,
                                           min_llimits,max_llimits);
@@ -3256,33 +3253,26 @@ bool QNode::getElements(scenarioPtr scene)
         if (succ)
         {
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
-
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
 #if HEAD == 1
             humanoid_head_specs.Xpos = head.Xpos;
             humanoid_head_specs.Ypos = head.Ypos;
             humanoid_head_specs.Zpos = head.Zpos;
-
             humanoid_head_specs.Roll =  head.Roll;
             humanoid_head_specs.Pitch = head.Pitch;
             humanoid_head_specs.Yaw = head.Yaw;
-
             humanoid_head_specs.Xsize = head.Xsize;
             humanoid_head_specs.Ysize = head.Ysize;
             humanoid_head_specs.Zsize = head.Zsize;
 #endif
-
-
 #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
@@ -3297,11 +3287,11 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
 #if HEAD == 1
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           humanoid_head_specs, rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #else
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #endif
@@ -3897,33 +3887,26 @@ bool QNode::getElements(scenarioPtr scene)
 
         if (succ){
             // create the new humanoid and add it to the scenario.
-            humanoid_pos.Xpos = torso.Xpos;
-            humanoid_pos.Ypos = torso.Ypos;
-            humanoid_pos.Zpos = torso.Zpos;
-
-            humanoid_or.roll =  torso.Roll;
-            humanoid_or.pitch = torso.Pitch;
-            humanoid_or.yaw = torso.Yaw;
-
-            humanoid_size.Xsize = torso.Xsize;
-            humanoid_size.Ysize = torso.Ysize;
-            humanoid_size.Zsize = torso.Zsize;
-
+            humanoid_torso_specs.Xpos = torso.Xpos;
+            humanoid_torso_specs.Ypos = torso.Ypos;
+            humanoid_torso_specs.Zpos = torso.Zpos;
+            humanoid_torso_specs.Roll = torso.Roll;
+            humanoid_torso_specs.Pitch = torso.Pitch;
+            humanoid_torso_specs.Yaw = torso.Yaw;
+            humanoid_torso_specs.Xsize = torso.Xsize;
+            humanoid_torso_specs.Ysize = torso.Ysize;
+            humanoid_torso_specs.Zsize = torso.Zsize;
 #if HEAD == 1
             humanoid_head_specs.Xpos = head.Xpos;
             humanoid_head_specs.Ypos = head.Ypos;
             humanoid_head_specs.Zpos = head.Zpos;
-
             humanoid_head_specs.Roll =  head.Roll;
             humanoid_head_specs.Pitch = head.Pitch;
             humanoid_head_specs.Yaw = head.Yaw;
-
             humanoid_head_specs.Xsize = head.Xsize;
             humanoid_head_specs.Ysize = head.Ysize;
             humanoid_head_specs.Zsize = head.Zsize;
 #endif
-
-
 #if HAND==1
             humanoid_hand_specs.maxAperture = maxAp;
             humanoid_hand_specs.Aw = Aw;
@@ -3939,11 +3922,11 @@ bool QNode::getElements(scenarioPtr scene)
 
 
 #if HEAD == 1
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           humanoid_head_specs, rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #else
-            Humanoid *hptr = new Humanoid(Hname,humanoid_pos,humanoid_or,humanoid_size,humanoid_arm_specs, humanoid_hand_specs,
+            Humanoid *hptr = new Humanoid(Hname,humanoid_torso_specs,humanoid_arm_specs, humanoid_hand_specs,
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #endif

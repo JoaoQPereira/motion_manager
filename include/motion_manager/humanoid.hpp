@@ -16,81 +16,30 @@ public:
 
 #if HAND==0
     /**
-     * @brief Humanoid, a constructor
+     * @brief Humanoid
      * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
+     * @param torsospecs
      * @param aspecs
      * @param hspecs
      */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, human_hand hspecs);
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs);
 
     /**
-     * @brief Humanoid, a constructor
+     * @brief Humanoid
      * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
+     * @param torsospecs
      * @param aspecs
      * @param hspecs
      * @param r
      * @param l
      */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, human_hand hspecs,
-             vector<double>& r, vector<double>& l);
-
-    /**
-     * @brief Humanoid, a constructor
-     * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
-     * @param aspecs
-     * @param hspecs
-     * @param r
-     * @param l
-     * @param min_rl
-     * @param max_rl
-     * @param min_ll
-     * @param max_ll
-     */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, human_hand hspecs,
-             vector<double>& r, vector<double>& l,
-             vector<double>& min_rl, vector<double>& max_rl,
-             vector<double>& min_ll, vector<double>& max_ll);
-#elif HAND==1
-    /**
-     * @brief Humanoid, a constructor
-     * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
-     * @param aspecs
-     * @param hspecs
-     */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs);
-
-    /**
-     * @brief Humanoid, a constructor
-     * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
-     * @param aspecs
-     * @param hspecs
-     * @param r
-     * @param l
-     */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs,
              vector<double>& r, vector<double>& l);
 
     /**
      * @brief Humanoid
      * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
+     * @param torsospecs
      * @param aspecs
      * @param hspecs
      * @param r
@@ -100,7 +49,46 @@ public:
      * @param min_ll
      * @param max_ll
      */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, human_hand hspecs,
+             vector<double>& r, vector<double>& l,
+             vector<double>& min_rl, vector<double>& max_rl,
+             vector<double>& min_ll, vector<double>& max_ll);
+#elif HAND==1
+    /**
+     * @brief Humanoid
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     */
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs);
+
+    /**
+     * @brief Humanoid
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param r
+     * @param l
+     */
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
+             vector<double>& r, vector<double>& l);
+
+    /**
+     * @brief Humanoid
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param r
+     * @param l
+     * @param min_rl
+     * @param max_rl
+     * @param min_ll
+     * @param max_ll
+     */
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
              vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
@@ -109,9 +97,7 @@ public:
     /**
      * @brief Humanoid
      * @param name
-     * @param ppos
-     * @param oor
-     * @param ssize
+     * @param torsospecs
      * @param aspecs
      * @param hspecs
      * @param headspecs
@@ -122,7 +108,7 @@ public:
      * @param min_ll
      * @param max_ll
      */
-    Humanoid(string name, pos ppos, orient oor, dim ssize, arm aspecs, barrett_hand hspecs,
+    Humanoid(string name, humanoid_part torsospecs, arm aspecs, barrett_hand hspecs,
              humanoid_part headspecs, vector<double>& r, vector<double>& l,
              vector<double>& min_rl, vector<double>& max_rl,
              vector<double>& min_ll, vector<double>& max_ll);
@@ -147,22 +133,10 @@ public:
     void setName(string& name);
 
     /**
-     * @brief This method sets the position of the humanoid as the position of its torso
-     * @param ppos
+     * @brief setTorso
+     * @param torso
      */
-    void setPos(pos& ppos);
-
-    /**
-     * @brief This method sets the orientation of the humanoid as the orientation of its torso
-     * @param oor
-     */
-    void setOr(orient& oor);
-
-    /**
-     * @brief This method sets the size of the humanoid as the size of its torso
-     * @param ssize
-     */
-    void setSize(dim& ssize);
+    void setTorso(humanoid_part& torso);
 
     /**
      * @brief This method sets the specifications of the arms
@@ -317,22 +291,10 @@ public:
     string getName();
 
     /**
-     * @brief This method gets the position of the humanoid
+     * @brief getTorso
      * @return
      */
-    pos getPos();
-
-    /**
-     * @brief This method gets the orientation of the humanoid
-     * @return
-     */
-    orient getOr();
-
-    /**
-     * @brief This method gets the size of the humanoid
-     * @return
-     */
-    dim getSize();
+    humanoid_part getTorso();
 
     /**
      * @brief This method gets the arm specifications of the humanoid
@@ -863,11 +825,9 @@ public:
 private:
 
     string m_name; /**< name of the humanoid */
-    pos m_torso_pos;/**< position of the torso */
-    orient m_torso_or; /**< orientation of the torso */
-    dim m_torso_size; /**< size of the torso */
+    humanoid_part m_torso;
 #if HEAD==1
-    humanoid_part head;
+    humanoid_part m_head;
 #endif
 //#if NECK==1
   //  humanoid_part neck;
