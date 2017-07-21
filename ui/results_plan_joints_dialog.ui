@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1250</width>
-    <height>800</height>
+    <height>688</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>10</x>
      <y>10</y>
      <width>1221</width>
-     <height>721</height>
+     <height>641</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -61,8 +61,8 @@
   <widget class="QPushButton" name="pushButton_save_joints_plots">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>770</y>
+     <x>10</x>
+     <y>660</y>
      <width>80</width>
      <height>23</height>
     </rect>
@@ -71,9 +71,6 @@
     <string>Save</string>
    </property>
   </widget>
-  <zorder>layoutWidget</zorder>
-  <zorder>pushButton_save_joints_plots</zorder>
-  <zorder>plot_joint_1</zorder>
  </widget>
  <customwidgets>
   <customwidget>
