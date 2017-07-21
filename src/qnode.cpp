@@ -747,6 +747,45 @@ bool QNode::getElements(scenarioPtr scene)
         }else{succ = false;}
 #endif
 
+#if HEAD==1
+        // Head
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("HeadInfo");
+        add_client.call(srvs);
+
+        if (srvs.response.result == 1)
+        {
+             head_str = srvs.response.signalValue;
+        }
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the head");
+        }
+
+        floatCount = head_str.size()/sizeof(float);
+        if (!head_vec.empty())
+        {
+            head_vec.clear();
+        }
+
+        for (int k=0;k<floatCount;++k)
+            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+
+        head.Xpos = head_vec.at(0)*1000;//[mm]
+        head.Ypos = head_vec.at(1)*1000;//[mm]
+        head.Zpos = head_vec.at(2)*1000;//[mm]
+
+        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+
+        head.Xsize = head_vec.at(6)*1000;//[mm]
+        head.Ysize = head_vec.at(7)*1000;//[mm]
+        head.Zsize = head_vec.at(8)*1000;//[mm]
+#endif
+
         // Torso
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("TorsoInfo");
@@ -853,6 +892,17 @@ bool QNode::getElements(scenarioPtr scene)
             robot_torso_specs.Xsize = torso.Xsize;
             robot_torso_specs.Ysize = torso.Ysize;
             robot_torso_specs.Zsize = torso.Zsize;
+#if HEAD == 1
+            robot_head_specs.Xpos = head.Xpos;
+            robot_head_specs.Ypos = head.Ypos;
+            robot_head_specs.Zpos = head.Zpos;
+            robot_head_specs.Roll =  head.Roll;
+            robot_head_specs.Pitch = head.Pitch;
+            robot_head_specs.Yaw = head.Yaw;
+            robot_head_specs.Xsize = head.Xsize;
+            robot_head_specs.Ysize = head.Ysize;
+            robot_head_specs.Zsize = head.Zsize;
+#endif
 #if HAND==1
             robot_hand_specs.maxAperture = maxAp;
             robot_hand_specs.Aw = Aw;
@@ -867,10 +917,18 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
+#if HEAD == 1
             Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                          rposture, lposture,
-                                          min_rlimits,max_rlimits,
-                                          min_llimits,max_llimits);
+                                    robot_head_specs, rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#else
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
+                                    rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#endif
+
             rptr->setMatRight(mat_right);
             rptr->setMatLeft(mat_left);
             // get the postures
@@ -1695,6 +1753,45 @@ bool QNode::getElements(scenarioPtr scene)
 
 #endif
 
+#if HEAD==1
+        // Head
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("HeadInfo");
+        add_client.call(srvs);
+
+        if (srvs.response.result == 1)
+        {
+             head_str = srvs.response.signalValue;
+        }
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the head");
+        }
+
+        floatCount = head_str.size()/sizeof(float);
+        if (!head_vec.empty())
+        {
+            head_vec.clear();
+        }
+
+        for (int k=0;k<floatCount;++k)
+            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+
+        head.Xpos = head_vec.at(0)*1000;//[mm]
+        head.Ypos = head_vec.at(1)*1000;//[mm]
+        head.Zpos = head_vec.at(2)*1000;//[mm]
+
+        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+
+        head.Xsize = head_vec.at(6)*1000;//[mm]
+        head.Ysize = head_vec.at(7)*1000;//[mm]
+        head.Zsize = head_vec.at(8)*1000;//[mm]
+#endif
+
         // Torso
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("TorsoInfo");
@@ -1805,6 +1902,17 @@ bool QNode::getElements(scenarioPtr scene)
             robot_torso_specs.Xsize = torso.Xsize;
             robot_torso_specs.Ysize = torso.Ysize;
             robot_torso_specs.Zsize = torso.Zsize;
+#if HEAD == 1
+            robot_head_specs.Xpos = head.Xpos;
+            robot_head_specs.Ypos = head.Ypos;
+            robot_head_specs.Zpos = head.Zpos;
+            robot_head_specs.Roll =  head.Roll;
+            robot_head_specs.Pitch = head.Pitch;
+            robot_head_specs.Yaw = head.Yaw;
+            robot_head_specs.Xsize = head.Xsize;
+            robot_head_specs.Ysize = head.Ysize;
+            robot_head_specs.Zsize = head.Zsize;
+#endif
 #if HAND==1
             robot_hand_specs.maxAperture = maxAp;
             robot_hand_specs.Aw = Aw;
@@ -1819,10 +1927,17 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
+#if HEAD == 1
             Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                          rposture, lposture,
-                                          min_rlimits,max_rlimits,
-                                          min_llimits,max_llimits);
+                                    robot_head_specs, rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#else
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
+                                    rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#endif
             rptr->setMatRight(mat_right);
             rptr->setMatLeft(mat_left);
             // get the postures
@@ -2165,6 +2280,44 @@ bool QNode::getElements(scenarioPtr scene)
              phi3= srvf.response.signalValue;
         }else{succ = false;}
 #endif
+#if HEAD==1
+        // Head
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("HeadInfo");
+        add_client.call(srvs);
+
+        if (srvs.response.result == 1)
+        {
+             head_str = srvs.response.signalValue;
+        }
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the head");
+        }
+
+        floatCount = head_str.size()/sizeof(float);
+        if (!head_vec.empty())
+        {
+            head_vec.clear();
+        }
+
+        for (int k=0;k<floatCount;++k)
+            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+
+        head.Xpos = head_vec.at(0)*1000;//[mm]
+        head.Ypos = head_vec.at(1)*1000;//[mm]
+        head.Zpos = head_vec.at(2)*1000;//[mm]
+
+        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+
+        head.Xsize = head_vec.at(6)*1000;//[mm]
+        head.Ysize = head_vec.at(7)*1000;//[mm]
+        head.Zsize = head_vec.at(8)*1000;//[mm]
+#endif
 
         // Torso
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
@@ -2267,7 +2420,18 @@ bool QNode::getElements(scenarioPtr scene)
             robot_torso_specs.Xsize = torso.Xsize;
             robot_torso_specs.Ysize = torso.Ysize;
             robot_torso_specs.Zsize = torso.Zsize;
- #if HAND==1
+#if HEAD == 1
+            robot_head_specs.Xpos = head.Xpos;
+            robot_head_specs.Ypos = head.Ypos;
+            robot_head_specs.Zpos = head.Zpos;
+            robot_head_specs.Roll =  head.Roll;
+            robot_head_specs.Pitch = head.Pitch;
+            robot_head_specs.Yaw = head.Yaw;
+            robot_head_specs.Xsize = head.Xsize;
+            robot_head_specs.Ysize = head.Ysize;
+            robot_head_specs.Zsize = head.Zsize;
+#endif
+#if HAND==1
             robot_hand_specs.maxAperture = maxAp;
             robot_hand_specs.Aw = Aw;
             robot_hand_specs.A1 = A1;
@@ -2281,10 +2445,17 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
+#if HEAD == 1
             Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                          rposture, lposture,
-                                          min_rlimits,max_rlimits,
-                                          min_llimits,max_llimits);
+                                    robot_head_specs, rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#else
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
+                                    rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#endif
             rptr->setMatRight(mat_right);
             rptr->setMatLeft(mat_left);
             // get the postures
@@ -2617,6 +2788,45 @@ bool QNode::getElements(scenarioPtr scene)
         }else{succ = false;}
 #endif
 
+#if HEAD==1
+        // Head
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("HeadInfo");
+        add_client.call(srvs);
+
+        if (srvs.response.result == 1)
+        {
+             head_str = srvs.response.signalValue;
+        }
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the head");
+        }
+
+        floatCount = head_str.size()/sizeof(float);
+        if (!head_vec.empty())
+        {
+            head_vec.clear();
+        }
+
+        for (int k=0;k<floatCount;++k)
+            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+
+        head.Xpos = head_vec.at(0)*1000;//[mm]
+        head.Ypos = head_vec.at(1)*1000;//[mm]
+        head.Zpos = head_vec.at(2)*1000;//[mm]
+
+        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+
+        head.Xsize = head_vec.at(6)*1000;//[mm]
+        head.Ysize = head_vec.at(7)*1000;//[mm]
+        head.Zsize = head_vec.at(8)*1000;//[mm]
+#endif
+
         // Torso
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("TorsoInfo");
@@ -2718,6 +2928,17 @@ bool QNode::getElements(scenarioPtr scene)
             robot_torso_specs.Xsize = torso.Xsize;
             robot_torso_specs.Ysize = torso.Ysize;
             robot_torso_specs.Zsize = torso.Zsize;
+#if HEAD == 1
+            robot_head_specs.Xpos = head.Xpos;
+            robot_head_specs.Ypos = head.Ypos;
+            robot_head_specs.Zpos = head.Zpos;
+            robot_head_specs.Roll =  head.Roll;
+            robot_head_specs.Pitch = head.Pitch;
+            robot_head_specs.Yaw = head.Yaw;
+            robot_head_specs.Xsize = head.Xsize;
+            robot_head_specs.Ysize = head.Ysize;
+            robot_head_specs.Zsize = head.Zsize;
+#endif
 #if HAND==1
             robot_hand_specs.maxAperture = maxAp;
             robot_hand_specs.Aw = Aw;
@@ -2732,10 +2953,17 @@ bool QNode::getElements(scenarioPtr scene)
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
+#if HEAD == 1
             Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                          rposture, lposture,
-                                          min_rlimits,max_rlimits,
-                                          min_llimits,max_llimits);
+                                    robot_head_specs, rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#else
+            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
+                                    rposture, lposture,
+                                    min_rlimits,max_rlimits,
+                                    min_llimits,max_llimits);
+#endif
             rptr->setMatRight(mat_right);
             rptr->setMatLeft(mat_left);
             // get the postures

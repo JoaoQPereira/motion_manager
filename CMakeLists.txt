@@ -94,11 +94,11 @@ if(MOVEIT)
     include_directories(${aros_moveit_planner_INCLUDE_DIRS})
 endif()
 
-## Humanoid parts configuration
+## Robot parts configuration
 # 1 means that the part is present and it is taken into account for the generation of the trajectories,
 # 0 otherwise.
-# The torso and the arms are the only parts assumed for any humanoid robot. In other words, the anthropomorphism of the system is assumed.
-# The characteristics of the torso will be those ones of the humanoid.
+# The torso and the arms are the only parts assumed for any robot. In other words, the anthropomorphism of the system is assumed.
+# The characteristics of the torso will be those ones of the robot.
 # However the following parts may be taken into account when they are present
 set (HEAD 1)
 # set (NECK 0)
