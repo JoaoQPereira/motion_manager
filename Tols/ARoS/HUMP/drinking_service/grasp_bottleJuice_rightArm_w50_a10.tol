@@ -1,14 +1,20 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
 # Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: BottleJuice, Object Engaged: , Pose: , Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
-Shoulder_radius=80.0
-
-Elbow_radius=70.0
-
-Wrist_radius=60.0
-
-Hand_radius=50
-
+Sphere1_radius=0
+Sphere2_radius=0
+Sphere3_radius=0
+Sphere4_radius=0
+Sphere5_radius=80
+Sphere6_radius=0
+Sphere7_radius=0
+Sphere8_radius=80
+Sphere9_radius=70
+Sphere10_radius=0
+Sphere11_radius=0
+Sphere12_radius=90
+Sphere13_radius=90
+Sphere14_radius=60
 Hand_1_1=25.0
 
 Hand_1_2=25.0
@@ -234,7 +240,7 @@ pre_grasp_y=0.707106781
 
 pre_grasp_z=0.707106781
 
-pre_grasp_dist=160
+pre_grasp_dist=150
 
 post_grasp_x=0
 
@@ -264,6 +270,7 @@ post_place_dist=0
 w_red_app=5
 
 w_red_ret=7
+
 # Move settings
 target_x=-400
 
@@ -271,10 +278,8 @@ target_y=0
 
 target_z=1000
 
-target_roll=1.57
-
-target_pitch=-3.14
-
+target_roll=90
+target_pitch=-180
 target_yaw=0.0
 
 final_arm_1=0.0
@@ -293,11 +298,10 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=1.22
+final_hand_2=69.95
+final_hand_3=69.95
 
-final_hand_3=1.22
-
-final_hand_4=1.22
+final_hand_4=69.95
 
 sel_final=false
 plane_point1_x=0.0
@@ -322,8 +326,7 @@ add_plane=false
 # Others
 max_velocity=50
 
-max_acceleration=10.0
-
+max_alpha=10.0
 tar_av=true
 ob_av=true
 approach=true

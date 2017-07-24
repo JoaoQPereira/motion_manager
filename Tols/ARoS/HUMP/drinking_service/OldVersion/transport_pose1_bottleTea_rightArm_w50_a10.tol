@@ -1,14 +1,20 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Transport, Arm: right, Object: BottleTea, Object Engaged: , Pose: BottleTea_pose1, Grip Type: Full Side thumb left
+# Planner: HUMP ,Movement: Transport, Arm: right, Object: BottleJuice, Object Engaged: , Pose: BottleJuice_pose1, Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
-Shoulder_radius=80.0
-
-Elbow_radius=70.0
-
-Wrist_radius=130
-
-Hand_radius=150
-
+Sphere1_radius=0
+Sphere2_radius=0
+Sphere3_radius=0
+Sphere4_radius=0
+Sphere5_radius=80
+Sphere6_radius=0
+Sphere7_radius=0
+Sphere8_radius=80
+Sphere9_radius=70
+Sphere10_radius=0
+Sphere11_radius=0
+Sphere12_radius=90
+Sphere13_radius=90
+Sphere14_radius=60
 Hand_1_1=25
 
 Hand_1_2=25
@@ -34,8 +40,7 @@ Hand_tip_2=5
 Hand_tip_3=5
 
 # Joint Expanse factors
-lambda_1=1
-
+lambda_1=0.99
 lambda_2=1
 
 lambda_3=1.0
@@ -58,16 +63,27 @@ lambda_11=1.0
 
 # Initial Velocity 
 init_vel_1=-0.0499198
+
 init_vel_2=0.0600279
+
 init_vel_3=-0.0207313
+
 init_vel_4=-0.13316
+
 init_vel_5=0.00849172
+
 init_vel_6=0.0791558
+
 init_vel_7=0.0794029
+
 init_vel_8=0
+
 init_vel_9=0
+
 init_vel_10=0
+
 init_vel_11=0
+
 # Final Velocity 
 final_vel_1=0
 
@@ -93,16 +109,27 @@ final_vel_11=0.0
 
 # Initial Acceleration 
 init_acc_1=-0.0157362
+
 init_acc_2=0.0189226
+
 init_acc_3=-0.00653513
+
 init_acc_4=-0.0419762
+
 init_acc_5=0.00267685
+
 init_acc_6=0.0249523
+
 init_acc_7=0.0250302
+
 init_acc_8=0
+
 init_acc_9=0
+
 init_acc_10=0
+
 init_acc_11=0
+
 # Final Acceleration 
 final_acc_1=0
 
@@ -229,8 +256,7 @@ pre_place_y=0
 
 pre_place_z=1
 
-pre_place_dist=60
-
+pre_place_dist=50
 post_place_x=0
 
 post_place_y=1
@@ -250,9 +276,9 @@ target_y=0
 
 target_z=1000
 
-target_roll=1.57
+target_roll=90
 
-target_pitch=-3.14
+target_pitch=-180
 
 target_yaw=0.0
 
@@ -272,11 +298,11 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=1.22
+final_hand_2=69.95
 
-final_hand_3=1.22
+final_hand_3=69.95
 
-final_hand_4=1.22
+final_hand_4=69.95
 
 sel_final=false
 plane_point1_x=0.0
@@ -300,8 +326,6 @@ plane_point3_z=0.0
 add_plane=false
 # Others
 max_velocity=50
-
-max_acceleration=10.0
 
 tar_av=true
 ob_av=true
