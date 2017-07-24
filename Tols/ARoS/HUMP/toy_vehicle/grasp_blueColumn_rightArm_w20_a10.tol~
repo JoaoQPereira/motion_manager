@@ -3,60 +3,60 @@
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
 
-Sphere2_radius=60
+Sphere2_radius=0
 
 Sphere3_radius=0
 
-Sphere4_radius=85
+Sphere4_radius=0
 
 Sphere5_radius=80
 
-Sphere6_radius=70
+Sphere6_radius=0
 
 Sphere7_radius=0
 
-Sphere8_radius=70
+Sphere8_radius=80
 
 Sphere9_radius=70
 
-Sphere10_radius=60
+Sphere10_radius=0
 
 Sphere11_radius=0
 
-Sphere12_radius=60
+Sphere12_radius=90
 
-Sphere13_radius=80
+Sphere13_radius=90
 
-Sphere14_radius=70
+Sphere14_radius=60
 
-Hand_1_1=25
+Hand_1_1=5
 
-Hand_1_2=25
+Hand_1_2=5
 
-Hand_1_3=25
+Hand_1_3=5
 
-Hand_2_1=20
+Hand_2_1=5
 
-Hand_2_2=20
+Hand_2_2=5
 
-Hand_2_3=20
+Hand_2_3=5
 
-Hand_3_1=15
+Hand_3_1=5
 
-Hand_3_2=15
+Hand_3_2=5
 
-Hand_3_3=15
+Hand_3_3=5
 
-Hand_tip_1=10
+Hand_tip_1=0
 
-Hand_tip_2=10
+Hand_tip_2=0
 
-Hand_tip_3=10
+Hand_tip_3=0
 
 # Joint Expanse factors
 lambda_1=0.99
 
-lambda_2=0.99
+lambda_2=1
 
 lambda_3=1.0
 
@@ -175,72 +175,72 @@ tar_xx_2=10
 
 tar_xx_3=10
 
-tar_yy_1=10
+tar_yy_1=0
 
-tar_yy_2=10
+tar_yy_2=0
 
-tar_yy_3=10
+tar_yy_3=0
 
-tar_zz_1=10
+tar_zz_1=0
 
-tar_zz_2=10
+tar_zz_2=0
 
-tar_zz_3=10
+tar_zz_3=0
 
-tar_xy_1=10
+tar_xy_1=0
 
-tar_xy_2=10
+tar_xy_2=0
 
-tar_xy_3=10
+tar_xy_3=0
 
-tar_xz_1=10
+tar_xz_1=0
 
-tar_xz_2=10
+tar_xz_2=0
 
-tar_xz_3=10
+tar_xz_3=0
 
-tar_yz_1=10
+tar_yz_1=0
 
-tar_yz_2=10
+tar_yz_2=0
 
-tar_yz_3=10
+tar_yz_3=0
 
 # Tolerances with the obstacles [mm]
-obs_xx_1=5
+obs_xx_1=0
 
-obs_xx_2=5
+obs_xx_2=0
 
-obs_xx_3=5
+obs_xx_3=0
 
-obs_yy_1=5
+obs_yy_1=0
 
-obs_yy_2=5
+obs_yy_2=0
 
-obs_yy_3=5
+obs_yy_3=0
 
-obs_zz_1=5
+obs_zz_1=0
 
-obs_zz_2=5
+obs_zz_2=0
 
-obs_zz_3=5
+obs_zz_3=0
 
-obs_xy_1=5
+obs_xy_1=0
 
-obs_xy_2=5
+obs_xy_2=0
 
-obs_xy_3=5
+obs_xy_3=0
 
-obs_xz_1=5
+obs_xz_1=0
 
-obs_xz_2=5
+obs_xz_2=0
 
-obs_xz_3=5
+obs_xz_3=0
 
-obs_yz_1=5
+obs_yz_1=0
 
-obs_yz_2=5
+obs_yz_2=0
 
-obs_yz_3=5
+obs_yz_3=0
 
 # Tolerances for the final posture
 tar_pos=1.0
@@ -252,16 +252,17 @@ pre_grasp_x=0
 
 pre_grasp_y=1
 
-pre_grasp_z=1
+pre_grasp_z=0
 
-pre_grasp_dist=100
+pre_grasp_dist=120
+
 post_grasp_x=0
 
-post_grasp_y=0
+post_grasp_y=1
 
-post_grasp_z=1
+post_grasp_z=0
 
-post_grasp_dist=80
+post_grasp_dist=120
 
 # Place settings
 pre_place_x=0
@@ -280,9 +281,9 @@ post_place_z=0
 
 post_place_dist=0
 
-w_red_app=5
+w_red_app=1
 
-w_red_ret=10
+w_red_ret=2
 
 # Move settings
 target_x=-400
@@ -340,9 +341,8 @@ plane_point3_z=0.0
 
 add_plane=false
 # Others
-max_velocity=100.0
-
-max_alpha=50.0
+max_velocity=20.0
+max_alpha=10.0
 
 tar_av=true
 ob_av=true
