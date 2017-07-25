@@ -451,6 +451,7 @@ private:
         vector< MatrixXd > jointsAcceleration_mov; /**< trajectory of the joint acceleration of the movement */
         vector< MatrixXd > jointsVelocity_mov; /**< trajectory of the joint velocity of the movement */
         vector< MatrixXd > jointsPosition_mov; /**< trajectory of the joint position of the movement */
+        vector< MatrixXd > jointsPosition_mov_plan; /**< trajectory of the joint position (without offset) of the movement */
         vector< string > traj_descr_mov; /**< description of the trajectories */
         vector<double> jointsEndPosition_mov; /**< end joint position of the movement */
         vector<double> jointsEndVelocity_mov; /**< end joint velocity of the movement */

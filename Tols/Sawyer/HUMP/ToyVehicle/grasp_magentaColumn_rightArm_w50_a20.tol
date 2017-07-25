@@ -241,13 +241,14 @@ pre_grasp_y=1
 pre_grasp_z=0
 
 pre_grasp_dist=100
+
 post_grasp_x=0
 
 post_grasp_y=1
 
 post_grasp_z=0
 
-post_grasp_dist=10
+post_grasp_dist=20
 
 # Place settings
 pre_place_x=0
@@ -328,7 +329,7 @@ add_plane=false
 # Others
 max_velocity=50.0
 
-max_alpha=10.0
+max_alpha=20.0
 
 tar_av=true
 ob_av=true

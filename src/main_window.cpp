@@ -29,10 +29,10 @@ namespace motion_manager {
 *****************************************************************************/
 
 MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
-	: QMainWindow(parent)
-	, qnode(argc,argv)
+    : QMainWindow(parent)
+    , qnode(argc,argv)
 {
-	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
+    ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
     QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
 
     // create Ros Communication dialog
@@ -95,10 +95,10 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
 
-	/*********************
-	** Logging
-	**********************/
-	ui.view_logging->setModel(qnode.loggingModel());
+    /*********************
+    ** Logging
+    **********************/
+    ui.view_logging->setModel(qnode.loggingModel());
     QObject::connect(&qnode, SIGNAL(loggingUpdated()), this, SLOT(updateLoggingView()));
 
     // ROS connected signal
@@ -130,7 +130,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     /*********************
     ** Start settings
-    **********************/    
+    **********************/
     ui.tabWidget_main->setCurrentIndex(0);
     ui.tabWidget_sol->setCurrentIndex(0);
 #if MOVEIT==0
@@ -771,7 +771,7 @@ void MainWindow::on_pushButton_addMov_clicked()
             arm_sel=0;
         }
 
-		if (ui.comboBox_objects->isEnabled() && ui.comboBox_objects_eng->isEnabled() && ui.groupBox_grip->isEnabled() && !ui.comboBox_poses->isEnabled()){
+        if (ui.comboBox_objects->isEnabled() && ui.comboBox_objects_eng->isEnabled() && ui.groupBox_grip->isEnabled() && !ui.comboBox_poses->isEnabled()){
                  // engage movements
                 string obj_name = ui.comboBox_objects->currentText().toStdString();
                 string obj_eng_name = ui.comboBox_objects_eng->currentText().toStdString();
@@ -918,7 +918,7 @@ void MainWindow::on_pushButton_addMov_clicked()
 void MainWindow::on_pushButton_plan_clicked()
 {
 
-    ui.tabWidget_sol->setCurrentIndex(0);    
+    ui.tabWidget_sol->setCurrentIndex(0);
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
     HUMotion::hump_params  tols;
@@ -1662,7 +1662,7 @@ if(solved){
 
             step++;
         }
-    }    
+    }
 
 
 
@@ -1798,12 +1798,8 @@ void MainWindow::on_pushButton_plan_3d_power_law_clicked()
                 pitch=pitch_min;
             if(pitch>pitch_max)
                 pitch=pitch_max;
-
-
-
             roll = roll_min + (roll_max-roll_min)*(rand() / double(RAND_MAX));
             pitch = pitch_min + (pitch_max-pitch_min)*(rand() / double(RAND_MAX));
-
             yaw = yaw_min + (yaw_max-yaw_min)*(rand() / double(RAND_MAX));
             */
 
@@ -2430,7 +2426,7 @@ void MainWindow::on_pushButton_load_task_clicked()
                 vel_stage.conservativeResize(vel_stage.rows()+1,JOINTS_ARM+JOINTS_HAND);
                 acc_stage.conservativeResize(acc_stage.rows()+1,JOINTS_ARM+JOINTS_HAND);
 
-                QStringList fields = line.split(",");                               
+                QStringList fields = line.split(",");
                 for(int i=0; i <fields.size();++i){
                     QStringList fields1 = fields.at(i).split("=");
                     if(QString::compare(fields1.at(0).simplified(),QString("time step"),Qt::CaseInsensitive)==0){
@@ -2731,7 +2727,7 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         title = string("Empty scenario with ARoS");
         success = string("Empty scenario with ARoS HAS BEEN LOADED");
         failure = string("Empty scenario with ARoS HAS NOT BEEN LOADED");
-        break;        
+        break;
     case 3:
         // Empty scenario: empty scenario with ARoS and NO self collisions
         path = path_vrep_emptyscene_aros_no_self_coll;
@@ -3678,8 +3674,8 @@ void MainWindow::WriteSettings()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-	WriteSettings();
-	QMainWindow::closeEvent(event);
+    WriteSettings();
+    QMainWindow::closeEvent(event);
 }
 
 
@@ -3934,4 +3930,3 @@ double MainWindow::getThirdQuartile(vector<int> v)
 
 
 }  // namespace motion_manager
-

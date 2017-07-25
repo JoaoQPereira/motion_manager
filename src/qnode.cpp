@@ -3019,10 +3019,8 @@ bool QNode::getElements(scenarioPtr scene)
 
 
         // get the info of the scenario
-
         // get the object handle
         client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-
         // this is the order of the object in this scenario
         objs_prefix.push_back("BlueColumn");     // obj_id = 0
         objs_prefix.push_back("GreenColumn");    // obj_id = 1
@@ -3042,23 +3040,15 @@ bool QNode::getElements(scenarioPtr scene)
             add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
             srvs.request.signalName = signPrefix + string("Info");
             add_client.call(srvs);
-
-            if (srvs.response.result == 1)
-            {
+            if (srvs.response.result == 1){
                  obj_info_str = srvs.response.signalValue;
-            }
-            else
-            {
-                succ = false;
-            }
 
-            if (succ)
-            {
+            }else{succ = false;}
+
+            if (succ){
+
                 floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty())
-                {
-                    obj_info_vec.clear();
-                }
+                if(!obj_info_vec.empty()){obj_info_vec.clear();}
                 for (int k=0;k<floatCount;++k)
                     obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
 
@@ -3066,41 +3056,43 @@ bool QNode::getElements(scenarioPtr scene)
                 obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
                 obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
                 obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-
                 // orientation of the object
                 obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
                 obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
                 obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-
                 // size of the object
                 obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
                 obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
                 obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-
                 // position of the target right
                 tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
                 tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
                 tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-
                 // orientation of the target right
                 tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
                 tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
                 tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
-
+                // position of the target left
+                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
+                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
+                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
+                // orientation of the target left
+                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
+                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
+                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
                 // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-
+                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
+                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
+                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
                 // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
 
 
                 Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
                                     new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                    new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
+                                    new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
                                     new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
 
@@ -3113,7 +3105,6 @@ bool QNode::getElements(scenarioPtr scene)
                 srv_get_handle.request.objectName = signPrefix;
                 client_getHandle.call(srv_get_handle);
                 ob->setHandle(srv_get_handle.response.handle);
-
                 // handle of the visible object
                 srv_get_handle.request.objectName = signPrefix+string("_body");
                 client_getHandle.call(srv_get_handle);
@@ -3123,12 +3114,11 @@ bool QNode::getElements(scenarioPtr scene)
                 scene->addObject(objectPtr(ob));
 
                 cnt_obj++;
-            }
-            else
-            {
+            }else{
+
                 throw string("Error while retrieving the objects of the scenario");
             }
-        }// while loop objects
+        } // while loop objects
 
 
         // get the info of the robot
@@ -6190,17 +6180,20 @@ void QNode::run()
 
 void QNode::JointsCallback(const sensor_msgs::JointState &state)
 {
-	std::vector<std::string> joints_names = state.name;
-	std::vector<double> joints_pos(state.position.begin(),state.position.end());
-	std::vector<double> joints_vel(state.velocity.begin(),state.velocity.end());
-	std::vector<double> joints_force(state.effort.begin(),state.effort.end());
+    std::vector<std::string> joints_names = state.name;
+    std::vector<double> joints_pos(state.position.begin(),state.position.end());
+    std::vector<double> joints_vel(state.velocity.begin(),state.velocity.end());
+    std::vector<double> joints_force(state.effort.begin(),state.effort.end());
 
-	std::vector<double> right_posture;
-	std::vector<double> right_vel;
-	std::vector<double> right_forces;
-	std::vector<double> left_posture;
-	std::vector<double> left_vel;
-	std::vector<double> left_forces;
+    std::vector<double> right_posture;
+    std::vector<double> right_vel;
+    std::vector<double> right_forces;
+    std::vector<double> left_posture;
+    std::vector<double> left_vel;
+    std::vector<double> left_forces;
+
+
+    //BOOST_LOG_SEV(lg, info) << "joints_callback";
 
     #if HAND == 0
     const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
@@ -6209,6 +6202,7 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
                              "left_joint_thumb_TMC_aa","left_joint_fing1_MCP","left_joint_fing3_MCP","left_joint_thumb_TMC_fe"};
     const char *r_2hand[] = {"right_joint_fing1_PIP","right_joint_fing3_PIP","right_joint_thumb_MCP"};
     const char *l_2hand[] = {"left_joint_fing1_PIP","left_joint_fing3_PIP","left_joint_thumb_MCP"};
+
     #elif HAND == 1
     const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
                              "right_BarrettHand_jointA_0","right_BarrettHand_jointB_0","right_BarrettHand_jointB_2","right_BarrettHand_jointB_1"};
@@ -6299,12 +6293,19 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
                         */
 
     if (this->curr_scene){
+        //add the joint's offset
+        std::transform(right_posture.begin(), right_posture.end(), theta_offset.begin(), right_posture.begin(), std::plus<double>());
         this->curr_scene->getRobot()->setRightPosture(right_posture);
-        this->curr_scene->getRobot()->setLeftPosture(left_posture);
         this->curr_scene->getRobot()->setRightVelocities(right_vel);
-        this->curr_scene->getRobot()->setLeftVelocities(left_vel);
         this->curr_scene->getRobot()->setRightForces(right_forces);
-        this->curr_scene->getRobot()->setLeftForces(left_forces);
+
+        if(this->curr_scene->getID()!=7 && this->curr_scene->getID()!=8)
+        {
+            std::transform(left_posture.begin(), left_posture.end(), theta_offset.begin(), left_posture.begin(), std::plus<double>());
+            this->curr_scene->getRobot()->setLeftPosture(left_posture);
+            this->curr_scene->getRobot()->setLeftVelocities(left_vel);
+            this->curr_scene->getRobot()->setLeftForces(left_forces);
+        }
     }
 }
 
