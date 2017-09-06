@@ -1,11 +1,11 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: MagentaColumn, Object Engaged: , Pose: , Grip Type: Full Side thumb left
+# Planner: HUMP ,Movement: Transport, Arm: right, Object: BottleJuice, Object Engaged: , Pose: BottleJuice_home, Grip Type: Full Side thumb left
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
 Sphere2_radius=60
 Sphere3_radius=0
 Sphere4_radius=85
-Sphere5_radius=80
+Sphere5_radius=65
 Sphere6_radius=70
 Sphere7_radius=0
 Sphere8_radius=70
@@ -15,21 +15,35 @@ Sphere11_radius=0
 Sphere12_radius=60
 Sphere13_radius=80
 Sphere14_radius=70
-Hand_1_1=5
-Hand_1_2=5
-Hand_1_3=5
-Hand_2_1=5
-Hand_2_2=5
-Hand_2_3=5
-Hand_3_1=5
-Hand_3_2=5
-Hand_3_3=5
+Hand_1_1=25
+
+Hand_1_2=25
+
+Hand_1_3=25
+
+Hand_2_1=25
+
+Hand_2_2=25
+
+Hand_2_3=25
+
+Hand_3_1=15
+
+Hand_3_2=15
+
+Hand_3_3=15
+
 Hand_tip_1=5
+
 Hand_tip_2=5
+
 Hand_tip_3=5
+
 # Joint Expanse factors
-lambda_1=1.0
-lambda_2=1.0
+lambda_1=1
+
+lambda_2=1
+
 lambda_3=1.0
 
 lambda_4=1.0
@@ -49,21 +63,27 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=0
-init_vel_2=0
-init_vel_3=0
-init_vel_4=0
-init_vel_5=0
-init_vel_6=0
-init_vel_7=0
+init_vel_1=4.42944e-17
 
-init_vel_8=0
+init_vel_2=1.35444e-17
 
-init_vel_9=0
+init_vel_3=1.30201e-17
 
-init_vel_10=0
+init_vel_4=6.2343e-17
 
-init_vel_11=0
+init_vel_5=4.64355e-18
+
+init_vel_6=-2.86681e-17
+
+init_vel_7=-5.97837e-17
+
+init_vel_8=-4.23234e-52
+
+init_vel_9=2.14682e-53
+
+init_vel_10=-2.37686e-51
+
+init_vel_11=-2.55578e-53
 
 # Final Velocity 
 final_vel_1=0
@@ -80,30 +100,36 @@ final_vel_6=0
 
 final_vel_7=0
 
-final_vel_8=0
+final_vel_8=0.0
 
-final_vel_9=0
+final_vel_9=0.0
 
-final_vel_10=0
+final_vel_10=0.0
 
-final_vel_11=0
+final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=0
-init_acc_2=0
-init_acc_3=0
-init_acc_4=0
-init_acc_5=0
-init_acc_6=0
-init_acc_7=0
+init_acc_1=-2.77288e-17
 
-init_acc_8=0
+init_acc_2=-1.03774e-16
 
-init_acc_9=0
+init_acc_3=1.30628e-16
 
-init_acc_10=0
+init_acc_4=6.07146e-17
 
-init_acc_11=0
+init_acc_5=-1.04842e-16
+
+init_acc_6=8.02839e-17
+
+init_acc_7=6.78343e-16
+
+init_acc_8=-1.02994e-21
+
+init_acc_9=5.22431e-23
+
+init_acc_10=-5.78411e-21
+
+init_acc_11=-6.21952e-23
 
 # Final Acceleration 
 final_acc_1=0
@@ -120,69 +146,69 @@ final_acc_6=0
 
 final_acc_7=0
 
-final_acc_8=0
+final_acc_8=0.0
 
-final_acc_9=0
+final_acc_9=0.0
 
-final_acc_10=0
+final_acc_10=0.0
 
-final_acc_11=0
+final_acc_11=0.0
 
 # Tolerances with the target [mm]
-tar_xx_1=5
+tar_xx_1=0
 
-tar_xx_2=5
+tar_xx_2=0
 
-tar_xx_3=5
+tar_xx_3=0
 
-tar_yy_1=5
+tar_yy_1=0
 
-tar_yy_2=5
+tar_yy_2=0
 
-tar_yy_3=5
+tar_yy_3=0
 
-tar_zz_1=5
+tar_zz_1=0
 
-tar_zz_2=5
+tar_zz_2=0
 
-tar_zz_3=5
+tar_zz_3=0
 
-tar_xy_1=5
+tar_xy_1=0
 
-tar_xy_2=5
+tar_xy_2=0
 
-tar_xy_3=5
+tar_xy_3=0
 
-tar_xz_1=5
+tar_xz_1=0
 
-tar_xz_2=5
+tar_xz_2=0
 
-tar_xz_3=5
+tar_xz_3=0
 
-tar_yz_1=5
+tar_yz_1=0
 
-tar_yz_2=5
+tar_yz_2=0
 
-tar_yz_3=5
+tar_yz_3=0
 
 # Tolerances with the obstacles [mm]
-obs_xx_1=0
+obs_xx_1=5
 
-obs_xx_2=0
+obs_xx_2=5
 
-obs_xx_3=0
+obs_xx_3=5
 
-obs_yy_1=0
+obs_yy_1=5
 
-obs_yy_2=0
+obs_yy_2=5
 
-obs_yy_3=0
+obs_yy_3=5
 
-obs_zz_1=0
+obs_zz_1=5
 
-obs_zz_2=0
+obs_zz_2=5
 
-obs_zz_3=0
+obs_zz_3=5
 
 obs_xy_1=0
 
@@ -210,39 +236,38 @@ tar_or=0.001
 # Pick settings
 pre_grasp_x=0
 
-pre_grasp_y=1
+pre_grasp_y=0
 
 pre_grasp_z=0
-pre_grasp_dist=100
+
+pre_grasp_dist=0
+
 post_grasp_x=0
 
-post_grasp_y=1
+post_grasp_y=0
 
 post_grasp_z=0
 
-post_grasp_dist=20
+post_grasp_dist=0
 
 # Place settings
 pre_place_x=0
 
-pre_place_y=0
+pre_place_y=1
 
 pre_place_z=0
 
-pre_place_dist=0
+pre_place_dist=170
 
 post_place_x=0
 
-post_place_y=0
+post_place_y=0.707106781
 
-post_place_z=0
+post_place_z=0.707106781
 
-post_place_dist=0
-
-w_red_app=2
-
-w_red_ret=4
-
+post_place_dist=20
+w_red_app=10
+w_red_ret=5
 # Move settings
 target_x=-400
 
@@ -250,9 +275,9 @@ target_y=0
 
 target_z=1000
 
-target_roll=90
+target_roll=90.0
 
-target_pitch=-180
+target_pitch=-180.0
 
 target_yaw=0.0
 
@@ -272,11 +297,11 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=69.95
+final_hand_2=69.96
 
-final_hand_3=69.95
+final_hand_3=69.96
 
-final_hand_4=69.95
+final_hand_4=69.96
 
 sel_final=false
 plane_point1_x=0.0
@@ -299,7 +324,7 @@ plane_point3_z=0.0
 
 add_plane=false
 # Others
-max_velocity=50.0
+max_velocity=50
 
 max_alpha=10.0
 
