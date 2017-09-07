@@ -98,13 +98,13 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.0151126
-init_acc_2=-0.00180895
-init_acc_3=-0.000873161
-init_acc_4=-0.0191687
-init_acc_5=-0.000714185
-init_acc_6=0.00351983
-init_acc_7=0.0157109
+init_acc_1=-0.00874675
+init_acc_2=-0.00351746
+init_acc_3=-0.000879522
+init_acc_4=-0.0111747
+init_acc_5=-0.00260217
+init_acc_6=0.00569056
+init_acc_7=0.00918179
 init_acc_8=0
 init_acc_9=0
 init_acc_10=0

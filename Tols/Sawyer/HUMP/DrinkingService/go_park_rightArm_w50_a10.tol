@@ -1,5 +1,5 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Transport, Arm: right, Object: BottleJuice, Object Engaged: , Pose: BottleJuice_home, Grip Type: Full Side thumb left
+# Planner: HUMP ,Movement: Go park, Arm: right, Object: , Object Engaged: , Pose: , Grip Type: 
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
 Sphere2_radius=60
@@ -63,17 +63,17 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=-0.0722267
-init_vel_2=-0.00284848
-init_vel_3=0.010651
-init_vel_4=0.0621798
-init_vel_5=-0.0526358
-init_vel_6=-0.133473
-init_vel_7=-0.0208167
+init_vel_1=0.000425652
+init_vel_2=-0.0601101
+init_vel_3=-0.0243708
+init_vel_4=0.0218599
+init_vel_5=-0.0134212
+init_vel_6=-0.0354275
+init_vel_7=0.0405846
 init_vel_8=0
-init_vel_9=-0.227626
-init_vel_10=-0.227626
-init_vel_11=-0.227626
+init_vel_9=-0.255368
+init_vel_10=-0.255368
+init_vel_11=-0.255368
 # Final Velocity 
 final_vel_1=0.0
 
@@ -98,17 +98,17 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.0282594
-init_acc_2=-0.0011145
-init_acc_3=0.00416733
-init_acc_4=0.0243285
-init_acc_5=-0.0205943
-init_acc_6=-0.0522227
-init_acc_7=-0.00814473
+init_acc_1=0.000186838
+init_acc_2=-0.026385
+init_acc_3=-0.0106974
+init_acc_4=0.00959528
+init_acc_5=-0.00589116
+init_acc_6=-0.0155507
+init_acc_7=0.0178144
 init_acc_8=0
-init_acc_9=-0.0890609
-init_acc_10=-0.0890609
-init_acc_11=-0.0890609
+init_acc_9=-0.112092
+init_acc_10=-0.112092
+init_acc_11=-0.112092
 # Final Acceleration 
 final_acc_1=0.0
 
@@ -279,7 +279,9 @@ final_arm_7=0.0
 final_hand_1=0.0
 
 final_hand_2=69.96
+
 final_hand_3=69.96
+
 final_hand_4=69.96
 
 sel_final=false

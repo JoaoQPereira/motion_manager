@@ -241,11 +241,12 @@ pre_grasp_y=0.707106781
 pre_grasp_z=0.707106781
 
 pre_grasp_dist=120
+
 post_grasp_x=0
 
-post_grasp_y=1
+post_grasp_y=0.707106781
 
-post_grasp_z=0
+post_grasp_z=0.707106781
 
 post_grasp_dist=40
 
@@ -268,7 +269,7 @@ post_place_dist=0
 
 w_red_app=5
 
-w_red_ret=10
+w_red_ret=12
 
 # Move settings
 target_x=-400

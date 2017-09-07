@@ -21,23 +21,23 @@ Hand_1_2=20
 
 Hand_1_3=20
 
-Hand_2_1=15
+Hand_2_1=25
 
-Hand_2_2=15
+Hand_2_2=25
 
-Hand_2_3=15
+Hand_2_3=25
 
-Hand_3_1=10
+Hand_3_1=20
 
-Hand_3_2=10
+Hand_3_2=20
 
-Hand_3_3=10
+Hand_3_3=20
 
-Hand_tip_1=5
+Hand_tip_1=15
 
-Hand_tip_2=5
+Hand_tip_2=15
 
-Hand_tip_3=5
+Hand_tip_3=15
 
 # Joint Expanse factors
 lambda_1=1.0
@@ -63,13 +63,13 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=-0.0604008
-init_vel_2=-0.0157083
-init_vel_3=-0.0232558
-init_vel_4=0.0484673
-init_vel_5=-0.0489001
-init_vel_6=-0.0978757
-init_vel_7=-0.0120145
+init_vel_1=-0.033697
+init_vel_2=-0.0593538
+init_vel_3=-0.030993
+init_vel_4=0.0328522
+init_vel_5=-0.0404181
+init_vel_6=-0.0899565
+init_vel_7=-0.00526331
 init_vel_8=0
 init_vel_9=0
 init_vel_10=0
@@ -98,13 +98,13 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.0587437
-init_acc_2=-0.0152774
-init_acc_3=-0.0226178
-init_acc_4=0.0471376
-init_acc_5=-0.0475586
-init_acc_6=-0.0951905
-init_acc_7=-0.0116848
+init_acc_1=-0.028111
+init_acc_2=-0.0495147
+init_acc_3=-0.0258552
+init_acc_4=0.0274063
+init_acc_5=-0.033718
+init_acc_6=-0.0750443
+init_acc_7=-0.0043908
 init_acc_8=0
 init_acc_9=0
 init_acc_10=0
@@ -235,7 +235,7 @@ pre_place_y=0
 
 pre_place_z=1
 
-pre_place_dist=40
+pre_place_dist=100
 
 post_place_x=0
 
