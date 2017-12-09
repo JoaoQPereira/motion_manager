@@ -419,343 +419,161 @@ void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
 
 void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
 {
-    int points_number;
-    double tol = 350; //Length of the link
+    double D_LENGHT_TOL = 350; //Max Length of the link
+    int npoints = 0;
 
-    //Arm without offsets in its links
-    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)==0)
+    ui->lineEdit_sphere1_r->setText(QString::number(0));
+    ui->lineEdit_sphere1_r->setEnabled(false);
+    ui->lineEdit_sphere2_r->setText(QString::number(0));
+    ui->lineEdit_sphere2_r->setEnabled(false);
+    ui->lineEdit_sphere3_r->setText(QString::number(0));
+    ui->lineEdit_sphere3_r->setEnabled(false);
+    ui->lineEdit_sphere4_r->setText(QString::number(0));
+    ui->lineEdit_sphere4_r->setEnabled(false);
+    ui->lineEdit_sphere5_r->setText(QString::number(0));
+    ui->lineEdit_sphere5_r->setEnabled(false);
+    ui->lineEdit_sphere6_r->setText(QString::number(0));
+    ui->lineEdit_sphere6_r->setEnabled(false);
+    ui->lineEdit_sphere7_r->setText(QString::number(0));
+    ui->lineEdit_sphere7_r->setEnabled(false);
+    ui->lineEdit_sphere8_r->setText(QString::number(0));
+    ui->lineEdit_sphere8_r->setEnabled(false);
+    ui->lineEdit_sphere9_r->setText(QString::number(0));
+    ui->lineEdit_sphere9_r->setEnabled(false);
+    ui->lineEdit_sphere10_r->setText(QString::number(0));
+    ui->lineEdit_sphere10_r->setEnabled(false);
+    ui->lineEdit_sphere11_r->setText(QString::number(0));
+    ui->lineEdit_sphere11_r->setEnabled(false);
+
+
+    //Manipulator with shoulder offset
+    if(m_DH_rightArm.d.at(1)!=0)
     {
-        points_number = 6 + 9;
+        npoints = npoints + 2;
+        ui->lineEdit_sphere2_r->setEnabled(true);
+        ui->lineEdit_sphere4_r->setEnabled(true);
 
-        ui->lineEdit_sphere1_r->setText(QString::number(0));
-        ui->lineEdit_sphere1_r->setEnabled(false);
-        ui->lineEdit_sphere2_r->setText(QString::number(0));
-        ui->lineEdit_sphere2_r->setEnabled(false);
-        ui->lineEdit_sphere3_r->setText(QString::number(0));
-        ui->lineEdit_sphere3_r->setEnabled(false);
-        ui->lineEdit_sphere4_r->setText(QString::number(0));
-        ui->lineEdit_sphere4_r->setEnabled(false);
-        ui->lineEdit_sphere6_r->setText(QString::number(0));
-        ui->lineEdit_sphere6_r->setEnabled(false);
-        ui->lineEdit_sphere7_r->setText(QString::number(0));
-        ui->lineEdit_sphere7_r->setEnabled(false);
-        ui->lineEdit_sphere10_r->setText(QString::number(0));
-        ui->lineEdit_sphere10_r->setEnabled(false);
-        ui->lineEdit_sphere11_r->setText(QString::number(0));
-        ui->lineEdit_sphere11_r->setEnabled(false);
-
-
-        if(!name.compare("ARoS"))
+        if(m_DH_rightArm.d.at(0)>=D_LENGHT_TOL)
         {
-            ui->lineEdit_sphere5_r->setText(QString::number(80.00));
-            ui->lineEdit_sphere8_r->setText(QString::number(80.00));
-            ui->lineEdit_sphere9_r->setText(QString::number(70.00));
-            ui->lineEdit_sphere12_r->setText(QString::number(90.00));
-            ui->lineEdit_sphere13_r->setText(QString::number(90.00));
-            ui->lineEdit_sphere14_r->setText(QString::number(60.00));
+            npoints++;
+            ui->lineEdit_sphere1_r->setEnabled(true);
+        }
+
+        if(m_DH_rightArm.d.at(1)>=D_LENGHT_TOL)
+        {
+            npoints++;
+            ui->lineEdit_sphere3_r->setEnabled(true);
+        }
+    }
+    //Manipulator without shoulder offset
+    else
+    {
+        npoints++;
+        ui->lineEdit_sphere4_r->setEnabled(true);
+
+        if(m_DH_rightArm.d.at(0)>=D_LENGHT_TOL)
+        {
+            npoints++;
+            ui->lineEdit_sphere1_r->setEnabled(true);
         }
     }
 
 
-    //Arm with offset in shoulder
-    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)==0)
+
+    //Manipulator with elbow offset
+    if(m_DH_rightArm.d.at(3)!=0)
     {
-        points_number = 8 + 9;
+        npoints = npoints + 2;
+        ui->lineEdit_sphere6_r->setEnabled(true);
+        ui->lineEdit_sphere8_r->setEnabled(true);
 
-        ui->lineEdit_sphere6_r->setText(QString::number(0));
-        ui->lineEdit_sphere6_r->setEnabled(false);
-        ui->lineEdit_sphere7_r->setText(QString::number(0));
-        ui->lineEdit_sphere7_r->setEnabled(false);
-        ui->lineEdit_sphere10_r->setText(QString::number(0));
-        ui->lineEdit_sphere10_r->setEnabled(false);
-        ui->lineEdit_sphere11_r->setText(QString::number(0));
-        ui->lineEdit_sphere11_r->setEnabled(false);
-
-        if(m_DH_rightArm.d.at(0)>= tol)
+        if(m_DH_rightArm.d.at(2)>=D_LENGHT_TOL)
         {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
+            npoints++;
+            ui->lineEdit_sphere5_r->setEnabled(true);
         }
 
-        if(m_DH_rightArm.d.at(1)>= tol)
+        if(m_DH_rightArm.d.at(3)>=D_LENGHT_TOL)
         {
-            ++points_number;
+            npoints++;
+            ui->lineEdit_sphere7_r->setEnabled(true);
         }
-        else
+    }
+    //Manipulator without elbow offset
+    else
+    {
+        npoints++;
+        ui->lineEdit_sphere8_r->setEnabled(true);
+
+        if(m_DH_rightArm.d.at(2)>=D_LENGHT_TOL)
         {
-            ui->lineEdit_sphere3_r->setText(QString::number(0));
-            ui->lineEdit_sphere3_r->setEnabled(false);
+            npoints++;
+            ui->lineEdit_sphere5_r->setEnabled(true);
         }
     }
 
 
-    //Arm with offset in elbow
-    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)==0)
+    //Manipulator with wrist offset
+    if(m_DH_rightArm.d.at(5)!=0)
     {
-        points_number = 8 + 9;
+        npoints = npoints + 2;
+        ui->lineEdit_sphere10_r->setEnabled(true);
+        ui->lineEdit_sphere12_r->setEnabled(true);
 
-        ui->lineEdit_sphere2_r->setText(QString::number(0));
-        ui->lineEdit_sphere2_r->setEnabled(false);
-        ui->lineEdit_sphere3_r->setText(QString::number(0));
-        ui->lineEdit_sphere3_r->setEnabled(false);
-        ui->lineEdit_sphere10_r->setText(QString::number(0));
-        ui->lineEdit_sphere10_r->setEnabled(false);
-        ui->lineEdit_sphere11_r->setText(QString::number(0));
-        ui->lineEdit_sphere11_r->setEnabled(false);
-
-        if(m_DH_rightArm.d.at(0)>= tol)
+        if(m_DH_rightArm.d.at(4)>=D_LENGHT_TOL)
         {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
+            npoints++;
+            ui->lineEdit_sphere9_r->setEnabled(true);
         }
 
-        if(m_DH_rightArm.d.at(3)>= tol)
+        if(m_DH_rightArm.d.at(5)>=D_LENGHT_TOL)
         {
-            ++points_number;
+            npoints++;
+            ui->lineEdit_sphere11_r->setEnabled(true);
         }
-        else
+    }
+    //Manipulator without wrist offset
+    else
+    {
+        npoints++;
+        ui->lineEdit_sphere12_r->setEnabled(true);
+
+        if(m_DH_rightArm.d.at(4)>=D_LENGHT_TOL)
         {
-            ui->lineEdit_sphere7_r->setText(QString::number(0));
-            ui->lineEdit_sphere7_r->setEnabled(false);
+            npoints++;
+            ui->lineEdit_sphere9_r->setEnabled(true);
         }
     }
 
+    npoints = npoints + 2;
 
-    //Arm with offset in wrist
-    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)!=0)
+    if(!name.compare("ARoS"))
     {
-        points_number = 8 + 9;
-
-        ui->lineEdit_sphere2_r->setText(QString::number(0));
-        ui->lineEdit_sphere2_r->setEnabled(false);
-        ui->lineEdit_sphere3_r->setText(QString::number(0));
-        ui->lineEdit_sphere3_r->setEnabled(false);
-        ui->lineEdit_sphere6_r->setText(QString::number(0));
-        ui->lineEdit_sphere6_r->setEnabled(false);
-        ui->lineEdit_sphere7_r->setText(QString::number(0));
-        ui->lineEdit_sphere7_r->setEnabled(false);
-
-        if(m_DH_rightArm.d.at(0)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(5)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere11_r->setText(QString::number(0));
-            ui->lineEdit_sphere11_r->setEnabled(false);
-        }
+        ui->lineEdit_sphere4_r->setText(QString::number(80.00));
+        ui->lineEdit_sphere5_r->setText(QString::number(80.00));
+        ui->lineEdit_sphere8_r->setText(QString::number(80.00));
+        ui->lineEdit_sphere9_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere12_r->setText(QString::number(90.00));
+        ui->lineEdit_sphere13_r->setText(QString::number(90.00));
+        ui->lineEdit_sphere14_r->setText(QString::number(60.00));
     }
 
 
-    //Arm with offset in shoulder and elbow
-    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)==0)
+    if(!name.compare("Sawyer"))
     {
-        points_number = 9 + 9;
+        ui->lineEdit_sphere2_r->setText(QString::number(60.00));
+        ui->lineEdit_sphere4_r->setText(QString::number(85.00));
+        ui->lineEdit_sphere5_r->setText(QString::number(65.00));
+        ui->lineEdit_sphere6_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere8_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere9_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere10_r->setText(QString::number(60.00));
+        ui->lineEdit_sphere12_r->setText(QString::number(60.00));
+        ui->lineEdit_sphere13_r->setText(QString::number(80.00));
+        ui->lineEdit_sphere14_r->setText(QString::number(70.00));
+   }
 
-        ui->lineEdit_sphere10_r->setText(QString::number(0));
-        ui->lineEdit_sphere10_r->setEnabled(false);
-        ui->lineEdit_sphere11_r->setText(QString::number(0));
-        ui->lineEdit_sphere11_r->setEnabled(false);
-
-
-        if(m_DH_rightArm.d.at(0)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(1)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere3_r->setText(QString::number(0));
-            ui->lineEdit_sphere3_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(3)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere7_r->setText(QString::number(0));
-            ui->lineEdit_sphere7_r->setEnabled(false);
-        }
-    }
-
-
-    //Arm with offset in shoulder and wrist
-    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)==0 && m_DH_rightArm.d.at(5)!=0)
-    {
-        points_number = 9 + 9;
-
-        ui->lineEdit_sphere6_r->setText(QString::number(0));
-        ui->lineEdit_sphere6_r->setEnabled(false);
-        ui->lineEdit_sphere7_r->setText(QString::number(0));
-        ui->lineEdit_sphere7_r->setEnabled(false);
-
-
-        if(m_DH_rightArm.d.at(0)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(1)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere3_r->setText(QString::number(0));
-            ui->lineEdit_sphere3_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(5)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere11_r->setText(QString::number(0));
-            ui->lineEdit_sphere11_r->setEnabled(false);
-        }
-    }
-
-
-    //Arm with offset in elbow and wrist
-    if(m_DH_rightArm.d.at(1)==0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)!=0)
-    {
-        points_number = 9 + 9;
-
-        ui->lineEdit_sphere2_r->setText(QString::number(0));
-        ui->lineEdit_sphere2_r->setEnabled(false);
-        ui->lineEdit_sphere3_r->setText(QString::number(0));
-        ui->lineEdit_sphere3_r->setEnabled(false);
-
-
-        if(m_DH_rightArm.d.at(0)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(3)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere7_r->setText(QString::number(0));
-            ui->lineEdit_sphere7_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(5)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere11_r->setText(QString::number(0));
-            ui->lineEdit_sphere11_r->setEnabled(false);
-        }
-    }
-
-
-    //Arm with offsets in all links
-    if(m_DH_rightArm.d.at(1)!=0 && m_DH_rightArm.d.at(3)!=0 && m_DH_rightArm.d.at(5)!=0)
-    {
-        points_number = 10 + 9;
-
-        if(m_DH_rightArm.d.at(0)>= tol)
-        {
-           ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere1_r->setText(QString::number(0));
-            ui->lineEdit_sphere1_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(1)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere3_r->setText(QString::number(0));
-            ui->lineEdit_sphere3_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(3)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere7_r->setText(QString::number(0));
-            ui->lineEdit_sphere7_r->setEnabled(false);
-        }
-
-        if(m_DH_rightArm.d.at(5)>= tol)
-        {
-            ++points_number;
-        }
-        else
-        {
-            ui->lineEdit_sphere11_r->setText(QString::number(0));
-            ui->lineEdit_sphere11_r->setEnabled(false);
-        }
-
-
-        if(!name.compare("Sawyer"))
-        {
-            ui->lineEdit_sphere2_r->setText(QString::number(60.00));
-            ui->lineEdit_sphere4_r->setText(QString::number(85.00));
-            ui->lineEdit_sphere5_r->setText(QString::number(65.00));
-            ui->lineEdit_sphere6_r->setText(QString::number(70.00));
-            ui->lineEdit_sphere8_r->setText(QString::number(70.00));
-            ui->lineEdit_sphere9_r->setText(QString::number(70.00));
-            ui->lineEdit_sphere10_r->setText(QString::number(60.00));
-            ui->lineEdit_sphere12_r->setText(QString::number(60.00));
-            ui->lineEdit_sphere13_r->setText(QString::number(80.00));
-            ui->lineEdit_sphere14_r->setText(QString::number(70.00));
-       }
-    }
-
-    ui->label_points_arm->setText(QString::number(points_number));
+   ui->label_points_arm->setText(QString::number(npoints));
 }
 
 
