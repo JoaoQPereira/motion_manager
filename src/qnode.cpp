@@ -2062,7 +2062,8 @@ bool QNode::getElements(scenarioPtr scene)
                                     new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
                                     new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
-                Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
+                //Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
+                Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
 
 
                 infoLine = ob->getInfoLine();
@@ -2580,7 +2581,8 @@ bool QNode::getElements(scenarioPtr scene)
                                     new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
                                     new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
-                Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
+                //Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
+                Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
 
 
                 infoLine = ob->getInfoLine();
