@@ -1115,17 +1115,11 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         if(obj!=nullptr){obj->getEngTarRight(eng_to_tar);}
         this->scene->getRobot()->getRightPosture(initPosture);
         this->scene->getRobot()->getRightArmHomePosture(homePosture);
-
-        if(mov_type==5)
-        {
+        if(mov_type==5){
           this->scene->getRobot()->getRightHandHomePosture(finalHand);
-        }
-        else if(mov_type==1)
-        {
+        }else if(mov_type==1){
             finalHand=this->move_final_hand;
-        }
-        else
-        {
+        }else{
             dHO=this->dHOr;
             tar = obj->getTargetRight();
             finalHand = this->rightFinalHand;
@@ -1135,17 +1129,11 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         if(obj!=nullptr){obj->getEngTarLeft(eng_to_tar);}
         this->scene->getRobot()->getLeftPosture(initPosture);
         this->scene->getRobot()->getLeftArmHomePosture(homePosture);
-
-        if(mov_type==5)
-        {
+        if(mov_type==5){
           this->scene->getRobot()->getLeftHandHomePosture(finalHand);
-        }
-        else if(mov_type==1)
-        {
+        }else if(mov_type==1){
             finalHand=this->move_final_hand;
-        }
-        else
-        {
+        }else{
             dHO=this->dHOl;
             finalHand = this->leftFinalHand;
             tar = obj->getTargetLeft();
@@ -1197,14 +1185,13 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         // movement settings
         //params.mov_specs.griptype = this->mov->getGrip();
         params.mov_specs.dHO = dHO;
-        params.mov_specs.obj = hump_obj;        
+        params.mov_specs.obj = hump_obj;
 
     }
 
     // movement settings
     params.mov_specs.arm_code = arm_code;
     params.mov_specs.hand_code = hand_code;
-    params.mov_specs.head_code = head_code;
     params.mov_specs.mov_infoline = this->mov->getInfoLine();
     params.mov_specs.finalHand = finalHand;
 

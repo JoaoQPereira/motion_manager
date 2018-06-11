@@ -549,13 +549,13 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
 
     if(!name.compare("ARoS"))
     {
-        ui->lineEdit_sphere4_r->setText(QString::number(80.00));
-        ui->lineEdit_sphere5_r->setText(QString::number(80.00));
-        ui->lineEdit_sphere8_r->setText(QString::number(80.00));
-        ui->lineEdit_sphere9_r->setText(QString::number(70.00));
-        ui->lineEdit_sphere12_r->setText(QString::number(90.00));
-        ui->lineEdit_sphere13_r->setText(QString::number(90.00));
-        ui->lineEdit_sphere14_r->setText(QString::number(60.00));
+        ui->lineEdit_sphere4_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere5_r->setText(QString::number(60.00));
+        ui->lineEdit_sphere8_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere9_r->setText(QString::number(60.00));
+        ui->lineEdit_sphere12_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere13_r->setText(QString::number(70.00));
+        ui->lineEdit_sphere14_r->setText(QString::number(40.00));
     }
 
 

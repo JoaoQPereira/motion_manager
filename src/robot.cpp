@@ -1305,24 +1305,24 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
     T = mat_world;
 
     for (size_t i = 0; i < posture.size(); ++i){
-        this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), T_aux);
+        this->transfMatrix(m_DH_arm.alpha.at(i), m_DH_arm.a.at(i), m_DH_arm.d.at(i), posture.at(i), T_aux);
         T = T * T_aux;
         Vector3d v;
-        if (i==0){
+        if (i==1){
             // get the shoulder
             shoulderOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             shoulderPos[0] = v[0];
             shoulderPos[1] = v[1];
             shoulderPos[2] = v[2];
-        }else if (i==2){
+        }else if (i==3){
             // get the elbow
             elbowOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             elbowPos[0] = v[0];
             elbowPos[1] = v[1];
             elbowPos[2] = v[2];
-        }else if (i==4){
+        }else if (i==5){
             // get the wrist
             wristOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
@@ -1338,7 +1338,6 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
             handPos[1] = v[1];
             handPos[2] = v[2];
         }
-
     }
 
     pos.clear();
@@ -2346,7 +2345,7 @@ void Robot::transfMatrix(double alpha, double a, double d, double theta, Matrix4
     T = Matrix4d::Zero();
 
     T(0,0) = cos(theta);            T(0,1) = -sin(theta);            T(0,2) = 0.0;         T(0,3) = a;
-    T(1,0) = sin(theta)*cos(alpha); T(1,1) = -cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
+    T(1,0) = sin(theta)*cos(alpha); T(1,1) = cos(theta)*cos(alpha);  T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
     T(2,0) = sin(theta)*sin(alpha); T(2,1) = cos(theta)*sin(alpha);  T(2,2) = cos(alpha);  T(2,3) = cos(alpha)*d;
     T(3,0) = 0.0;                   T(3,1) = 0.0;                    T(3,2) = 0.0;         T(3,3) = 1.0;
 }
@@ -2396,7 +2395,7 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
 #elif HAND == 1
 
          T(0,0) = cos(theta);            T(0,1) = -sin(theta);            T(0,2) = 0.0;         T(0,3) = a;
-         T(1,0) = sin(theta)*cos(alpha); T(1,1) = -cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
+         T(1,0) = sin(theta)*cos(alpha); T(1,1) = cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
          T(2,0) = sin(theta)*sin(alpha); T(2,1) = cos(theta)*sin(alpha);  T(2,2) = cos(alpha);  T(2,3) = cos(alpha)*d;
          T(3,0) = 0.0;                   T(3,1) = 0.0;                    T(3,2) = 0.0;         T(3,3) = 1.0;
 

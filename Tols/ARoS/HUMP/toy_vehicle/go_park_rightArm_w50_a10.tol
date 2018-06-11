@@ -1,20 +1,20 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Go park, Arm: right, Object: , Object Engaged: , Pose: , Grip Type: 
+# Planner: HUMP ,Movement: Engage, Arm: right, Object: MagentaColumn, Object Engaged: Base, Pose: , Grip Type: Full
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
 Sphere2_radius=0
 Sphere3_radius=0
-Sphere4_radius=0
-Sphere5_radius=80
+Sphere4_radius=70
+Sphere5_radius=60
 Sphere6_radius=0
 Sphere7_radius=0
-Sphere8_radius=80
-Sphere9_radius=70
+Sphere8_radius=70
+Sphere9_radius=60
 Sphere10_radius=0
 Sphere11_radius=0
-Sphere12_radius=90
-Sphere13_radius=90
-Sphere14_radius=60
+Sphere12_radius=70
+Sphere13_radius=70
+Sphere14_radius=40
 Hand_1_1=25
 
 Hand_1_2=25
@@ -63,28 +63,17 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=-0.125631
-
-init_vel_2=0.0490106
-
-init_vel_3=0.101286
-
-init_vel_4=-0.0104962
-
-init_vel_5=0.0356315
-
-init_vel_6=-0.0913133
-
-init_vel_7=-0.0234665
-
+init_vel_1=-0.0773643
+init_vel_2=0.0421852
+init_vel_3=0.0613745
+init_vel_4=-0.00988185
+init_vel_5=0.0236123
+init_vel_6=-0.0629615
+init_vel_7=-0.0117966
 init_vel_8=0
-
-init_vel_9=-0.134721
-
-init_vel_10=-0.134721
-
-init_vel_11=-0.134721
-
+init_vel_9=-0.187454
+init_vel_10=-0.187454
+init_vel_11=-0.187454
 # Final Velocity 
 final_vel_1=0.0
 
@@ -109,28 +98,17 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.029092
-
-init_acc_2=0.0113493
-
-init_acc_3=0.0234546
-
-init_acc_4=-0.00243059
-
-init_acc_5=0.00825111
-
-init_acc_6=-0.0211452
-
-init_acc_7=-0.00543408
-
+init_acc_1=-0.0249276
+init_acc_2=0.0135925
+init_acc_3=0.0197755
+init_acc_4=-0.00318403
+init_acc_5=0.00760812
+init_acc_6=-0.0202868
+init_acc_7=-0.00380098
 init_acc_8=0
-
-init_acc_9=-0.0311969
-
-init_acc_10=-0.0311969
-
-init_acc_11=-0.0311969
-
+init_acc_9=-0.0603996
+init_acc_10=-0.0603996
+init_acc_11=-0.0603996
 # Final Acceleration 
 final_acc_1=0.0
 
@@ -278,9 +256,10 @@ target_y=0
 
 target_z=1000
 
-target_roll=90.0
+target_roll=1.57
 
-target_pitch=-180.0
+target_pitch=-3.14
+
 target_yaw=0.0
 
 final_arm_1=0.0
@@ -299,10 +278,12 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=69.95
+final_hand_2=1.22
 
-final_hand_3=69.95
-final_hand_4=69.95
+final_hand_3=1.22
+
+final_hand_4=1.22
+
 sel_final=false
 plane_point1_x=0.0
 
@@ -324,8 +305,10 @@ plane_point3_z=0.0
 
 add_plane=false
 # Others
-max_velocity=50.0
+max_velocity=50
+
 max_alpha=10.0
+
 tar_av=true
 ob_av=true
 approach=true

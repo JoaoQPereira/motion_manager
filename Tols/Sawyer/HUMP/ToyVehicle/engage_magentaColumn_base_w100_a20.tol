@@ -1,20 +1,20 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: MagentaColumn, Object Engaged: , Pose: , Grip Type: Full
+# Planner: HUMP ,Movement: Engage, Arm: right, Object: MagentaColumn, Object Engaged: Base, Pose: , Grip Type: Full
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
-Sphere2_radius=0
+Sphere2_radius=60
 Sphere3_radius=0
-Sphere4_radius=70
-Sphere5_radius=60
-Sphere6_radius=0
+Sphere4_radius=85
+Sphere5_radius=65
+Sphere6_radius=70
 Sphere7_radius=0
 Sphere8_radius=70
-Sphere9_radius=60
-Sphere10_radius=0
+Sphere9_radius=70
+Sphere10_radius=60
 Sphere11_radius=0
-Sphere12_radius=70
-Sphere13_radius=70
-Sphere14_radius=40
+Sphere12_radius=60
+Sphere13_radius=80
+Sphere14_radius=70
 Hand_1_1=5
 
 Hand_1_2=5
@@ -40,7 +40,7 @@ Hand_tip_2=0
 Hand_tip_3=0
 
 # Joint Expanse factors
-lambda_1=1
+lambda_1=0.99
 
 lambda_2=1
 
@@ -63,28 +63,17 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=0
-
-init_vel_2=0
-
-init_vel_3=0
-
-init_vel_4=0
-
-init_vel_5=0
-
-init_vel_6=0
-
-init_vel_7=0
-
+init_vel_1=-0.0202497
+init_vel_2=-0.0376646
+init_vel_3=-0.022851
+init_vel_4=0.0914456
+init_vel_5=-0.0167744
+init_vel_6=-0.0854831
+init_vel_7=-0.0400694
 init_vel_8=0
-
 init_vel_9=0
-
 init_vel_10=0
-
 init_vel_11=0
-
 # Final Velocity 
 final_vel_1=0
 
@@ -109,28 +98,17 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=0
-
-init_acc_2=0
-
-init_acc_3=0
-
-init_acc_4=0
-
-init_acc_5=0
-
-init_acc_6=0
-
-init_acc_7=0
-
+init_acc_1=-0.0304523
+init_acc_2=-0.0566416
+init_acc_3=-0.0343643
+init_acc_4=0.13752
+init_acc_5=-0.025226
+init_acc_6=-0.128553
+init_acc_7=-0.0602581
 init_acc_8=0
-
 init_acc_9=0
-
 init_acc_10=0
-
 init_acc_11=0
-
 # Final Acceleration 
 final_acc_1=0
 
@@ -238,38 +216,37 @@ pre_grasp_x=0
 
 pre_grasp_y=0
 
-pre_grasp_z=-1
+pre_grasp_z=0
 
-pre_grasp_dist=110
+pre_grasp_dist=0
 
 post_grasp_x=0
 
 post_grasp_y=0
 
-post_grasp_z=-1
+post_grasp_z=0
 
-post_grasp_dist=10
+post_grasp_dist=0
 
 # Place settings
-pre_place_x=0
+pre_place_x=1
 
 pre_place_y=0
 
 pre_place_z=0
 
-pre_place_dist=0
+pre_place_dist=60
 
-post_place_x=0
+post_place_x=0.707106781
 
 post_place_y=0
 
-post_place_z=0
+post_place_z=-0.707106781
 
-post_place_dist=0
+post_place_dist=60
 
-w_red_app=2
-
-w_red_ret=10
+w_red_app=10
+w_red_ret=12
 
 # Move settings
 target_x=-400
@@ -327,9 +304,9 @@ plane_point3_z=0.0
 
 add_plane=false
 # Others
-max_velocity=50.0
+max_velocity=100.0
 
-max_alpha=10.0
+max_alpha=20.0
 
 tar_av=true
 ob_av=true

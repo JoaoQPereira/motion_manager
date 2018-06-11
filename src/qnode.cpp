@@ -913,7 +913,7 @@ bool QNode::getElements(scenarioPtr scene)
             robot_hand_specs.phi2 = phi2;
             robot_hand_specs.phi3 = phi3;
 
-            //add the joint's offset
+            //add the joints offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
@@ -937,6 +937,7 @@ bool QNode::getElements(scenarioPtr scene)
             rptr->getRightPosture(rightp);
             rptr->getLeftPosture(leftp);
 
+            //real joints position
             std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
 
@@ -1923,7 +1924,7 @@ bool QNode::getElements(scenarioPtr scene)
             robot_hand_specs.phi2 = phi2;
             robot_hand_specs.phi3 = phi3;
 
-            //add the joint's offset
+            //add the joints offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
@@ -1946,6 +1947,7 @@ bool QNode::getElements(scenarioPtr scene)
             rptr->getRightPosture(rightp);
             rptr->getLeftPosture(leftp);
 
+            //real joints position
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
 
@@ -2436,7 +2438,7 @@ bool QNode::getElements(scenarioPtr scene)
             robot_hand_specs.phi2 = phi2;
             robot_hand_specs.phi3 = phi3;
 
-            //add the joint's offset
+            //add the joints offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
@@ -2459,6 +2461,7 @@ bool QNode::getElements(scenarioPtr scene)
             rptr->getRightPosture(rightp);
             rptr->getLeftPosture(leftp);
 
+            //real joints position
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
 
@@ -2945,7 +2948,7 @@ bool QNode::getElements(scenarioPtr scene)
             robot_hand_specs.phi2 = phi2;
             robot_hand_specs.phi3 = phi3;
 
-            //add the joint's offset
+            //add the joints offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
 
@@ -2968,6 +2971,7 @@ bool QNode::getElements(scenarioPtr scene)
             rptr->getRightPosture(rightp);
             rptr->getLeftPosture(leftp);
 
+            //real joints position
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
 
@@ -3014,7 +3018,8 @@ bool QNode::getElements(scenarioPtr scene)
         {
              n_objs= srvi.response.signalValue;
         }
-        else{
+        else
+        {
             succ = false;
             throw string("Communication error");
         }
@@ -3036,21 +3041,30 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Table");          // obj_id = 9
 
 
-        while(cnt_obj < n_objs){
+        while(cnt_obj < n_objs)
+        {
             signPrefix = objs_prefix[cnt_obj];
 
             add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
             srvs.request.signalName = signPrefix + string("Info");
             add_client.call(srvs);
-            if (srvs.response.result == 1){
+
+            if (srvs.response.result == 1)
+            {
                  obj_info_str = srvs.response.signalValue;
+            }
+            else
+            {
+                succ = false;
+            }
 
-            }else{succ = false;}
 
-            if (succ){
-
+            if (succ)
+            {
                 floatCount = obj_info_str.size()/sizeof(float);
+
                 if(!obj_info_vec.empty()){obj_info_vec.clear();}
+
                 for (int k=0;k<floatCount;++k)
                     obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
 
@@ -3116,8 +3130,9 @@ bool QNode::getElements(scenarioPtr scene)
                 scene->addObject(objectPtr(ob));
 
                 cnt_obj++;
-            }else{
-
+            }
+            else
+            {
                 throw string("Error while retrieving the objects of the scenario");
             }
         } // while loop objects
@@ -3167,14 +3182,22 @@ bool QNode::getElements(scenarioPtr scene)
 
         rows=0;
         for(int i=0;i<3;++i){
-            for(int j=0;j<4;++j){
-                if(i==3 && j<3){
+            for(int j=0;j<4;++j)
+            {
+                if(i==3 && j<3)
+                {
                     mat_right(i,j) = 0;
-                }else if(i==3 && j==3){
+                }
+                else if(i==3 && j==3)
+                {
                     mat_right(i,j) = 1;
-                }else if(i<3 && j==3){
+                }
+                else if(i<3 && j==3)
+                {
                     mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                }else{
+                }
+                else
+                {
                     mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
                 }
             }
@@ -3494,7 +3517,7 @@ bool QNode::getElements(scenarioPtr scene)
             robot_hand_specs.phi2 = phi2;
             robot_hand_specs.phi3 = phi3;
 
-            //add the joint's offset
+            //add the joints offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
 #if HEAD == 1
@@ -3506,23 +3529,25 @@ bool QNode::getElements(scenarioPtr scene)
                                           rposture, rposture,
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #endif
+
             rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_left);
 
             // get the postures
             std::vector<double> rightp;
             rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(rightp);
 
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            //add the joint's offset
+            //real joints position
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
 
+            std::vector<string> rj = std::vector<string>(rightp.size());
             for (size_t i=0; i<rightp.size(); i++ )
             {
                 rj.at(i) = string("joint "+ QString::number(i+1).toStdString()+ ": "+
                                        QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(rj.at(i));
             }
-
 
             // display info of the robot
             infoLine = rptr->getInfoLine();
@@ -3540,6 +3565,7 @@ bool QNode::getElements(scenarioPtr scene)
 
         break;
 
+
     case 8:
         // Human assistance scenario: Serving a drink with Sawyer
 
@@ -3554,9 +3580,9 @@ bool QNode::getElements(scenarioPtr scene)
         }
         else
         {
-            succ = false;
-            throw string("Communication error");
+            succ = false; throw string("Communication error");
         }
+
 
         srvi.request.signalName = NPOSES;
         add_client.call(srvi);
@@ -3566,13 +3592,11 @@ bool QNode::getElements(scenarioPtr scene)
         }
         else
         {
-            succ = false;
-            throw string("Communication error");
+            succ = false; throw string("Communication error");
         }
 
 
         // get the info of the scenario
-
         // get the object handle
         client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
         // this is the order of the object in this scenario
@@ -3599,59 +3623,62 @@ bool QNode::getElements(scenarioPtr scene)
                 succ = false;
             }
 
+
             if (succ)
             {
                 floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty())
-                {
-                    obj_info_vec.clear();
-                }
+
+                if(!obj_info_vec.empty()){obj_info_vec.clear();}
 
                 for (int k=0;k<floatCount;++k)
                     obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
+
 
                 // position of the object
                 obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
                 obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
                 obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-
                 // orientation of the object
                 obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
                 obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
                 obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-
                 // size of the object
                 obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
                 obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
                 obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-
                 // position of the target right
                 tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
                 tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
                 tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-
                 // orientation of the target right
                 tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
                 tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
                 tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
-
+                // position of the target left
+                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
+                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
+                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
+                // orientation of the target left
+                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
+                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
+                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
                 // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-
+                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
+                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
+                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
                 // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
+                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
 
 
                 Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
                                     new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                    new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
+                                    new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
                                     new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
-                Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
+                //Pose* ps = new Pose(signPrefix+string("_home"),obj_pos,obj_or,true,cnt_obj);
+                Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
 
 
                 infoLine = ob->getInfoLine();
@@ -3659,13 +3686,11 @@ bool QNode::getElements(scenarioPtr scene)
                 Q_EMIT newObject(ob->getName());
                 Q_EMIT newPose(ps->getName());
 
-
                 // get the handles  of the object
                 //handle of the object
                 srv_get_handle.request.objectName = signPrefix;
                 client_getHandle.call(srv_get_handle);
                 ob->setHandle(srv_get_handle.response.handle);
-
                 // handle of the visible object
                 srv_get_handle.request.objectName = signPrefix+string("_body");
                 client_getHandle.call(srv_get_handle);
@@ -3684,7 +3709,10 @@ bool QNode::getElements(scenarioPtr scene)
             }
         } // while loop objects
 
+
+
         // this is the order of the poses in this scenario
+        // pose_id = 0
         poses_prefix.push_back("BottleJuice_pose1");
         poses_rel.push_back(true);
         poses_obj_id.push_back(2);
@@ -3696,6 +3724,7 @@ bool QNode::getElements(scenarioPtr scene)
         poses_prefix.push_back("BottleJuice_pose3");
         poses_rel.push_back(true);
         poses_obj_id.push_back(2);
+
 
         while(cnt_pose < n_poses)
         {
@@ -3713,13 +3742,12 @@ bool QNode::getElements(scenarioPtr scene)
                 succ = false;
             }
 
+
             if (succ)
             {
                 floatCount = pose_info_str.size()/sizeof(float);
-                if(!pose_info_vec.empty())
-                {
-                    pose_info_vec.clear();
-                }
+
+                if(!pose_info_vec.empty()){pose_info_vec.clear();}
 
                 for (int k=0;k<floatCount;++k)
                     pose_info_vec.push_back(static_cast<double>(((float*)pose_info_str.c_str())[k]));
@@ -3765,6 +3793,7 @@ bool QNode::getElements(scenarioPtr scene)
         // get the handles of both arms
         succ = getArmsHandles(2);
 
+
         // transformation matrix for the arm
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("mat_right_arm");
@@ -3785,20 +3814,30 @@ bool QNode::getElements(scenarioPtr scene)
         }
 
         floatCount = mat_right_arm_str.size()/sizeof(float);
+
         for (int k=0;k<floatCount;++k)
             mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
 
 
         rows=0;
-        for(int i=0;i<3;++i){
-            for(int j=0;j<4;++j){
-                if(i==3 && j<3){
+        for(int i=0;i<3;++i)
+        {
+            for(int j=0;j<4;++j)
+            {
+                if(i==3 && j<3)
+                {
                     mat_right(i,j) = 0;
-                }else if(i==3 && j==3){
+                }
+                else if(i==3 && j==3)
+                {
                     mat_right(i,j) = 1;
-                }else if(i<3 && j==3){
+                }
+                else if(i<3 && j==3)
+                {
                     mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                }else{
+                }
+                else
+                {
                     mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
                 }
             }
@@ -3827,6 +3866,7 @@ bool QNode::getElements(scenarioPtr scene)
             DH_params_vec.clear();
             theta_offset.clear();
         }
+
         for (int k=0;k<floatCount;++k)
             DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
@@ -4006,6 +4046,7 @@ bool QNode::getElements(scenarioPtr scene)
             throw string("Error: Couldn't get the information of the torso");
         }
 
+
         floatCount = torso_str.size()/sizeof(float);
         if (!torso_vec.empty())
         {
@@ -4029,15 +4070,6 @@ bool QNode::getElements(scenarioPtr scene)
         torso.Zsize = torso_vec.at(8)*1000;//[mm]
 
 
-
-        // Home posture
-        // Joint 0 = 0
-        // Joint 1 = -85
-        // Joint 2 = 0
-        // Joint 3 = 100
-        // Joint 4 = 0
-        // Joint 5 = 75
-        // Joint 6 = 90
         add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
 
         for (size_t i = 0; i <rposture.size(); i++)
@@ -4085,7 +4117,8 @@ bool QNode::getElements(scenarioPtr scene)
         }
 
 
-        if (succ){
+        if (succ)
+        {
             // create the new robot and add it to the scenario.
             robot_torso_specs.Xpos = torso.Xpos;
             robot_torso_specs.Ypos = torso.Ypos;
@@ -4117,7 +4150,8 @@ bool QNode::getElements(scenarioPtr scene)
             robot_hand_specs.phi2 = phi2;
             robot_hand_specs.phi3 = phi3;
 
-            //add the joint's offset
+
+            //add the joints offset
             std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
 
 
@@ -4131,22 +4165,25 @@ bool QNode::getElements(scenarioPtr scene)
                                           min_rlimits,max_rlimits, min_rlimits,max_rlimits);
 #endif
             rptr->setMatRight(mat_right);
+            rptr->setMatLeft(mat_right);
+
 
             // get the postures
             std::vector<double> rightp;
             rptr->getRightPosture(rightp);
+            rptr->getLeftPosture(rightp);
 
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            //add the joint's offset
+
+            //real joints position
             std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
 
+            std::vector<string> rj = std::vector<string>(rightp.size());
             for (size_t i=0; i<rightp.size(); i++ )
             {
                 rj.at(i) = string("joint "+ QString::number(i+1).toStdString()+ ": "+
                                        QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(rj.at(i));
             }
-
 
             // display info of the robot
             infoLine = rptr->getInfoLine();
@@ -4689,9 +4726,9 @@ vector<MatrixXd> QNode::realJointsPosition(std::vector<MatrixXd>& traj_mov)
 }
 
 
+
 bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene)
 {
-
     this->curr_scene = scene;
     int scenarioID = scene->getID();
     this->curr_mov = mov; int mov_type = mov->getType();  int arm_code = mov->getArm();
@@ -4774,8 +4811,8 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
             }
         }
-
     }
+
 
     // start the simulation
     add_client = node.serviceClient<vrep_common::simRosStartSimulation>("/vrep/simRosStartSimulation");
@@ -4784,13 +4821,17 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     ros::spinOnce(); // first handle ROS messages
 
 
-    for (size_t k=0; k< traj_mov.size();++k){  // for loop stages
+    std::vector<MatrixXd> traj_mov_real;
+    //add the joints offset
+    traj_mov_real = realJointsPosition(traj_mov);
+
+    for (size_t k=0; k< traj_mov_real.size();++k){  // for loop stages
 
         string mov_descr = traj_descr.at(k);
         if(strcmp(mov_descr.c_str(),"plan")==0){
             plan=true; approach=false; retreat=false;
             if(join_plan_approach){
-                MatrixXd tt = traj_mov.at(k);
+                MatrixXd tt = traj_mov_real.at(k);
                 MatrixXd vv = vel_mov.at(k);
                 std::vector<double> ttsteps = timesteps.at(k);
                 traj_plan_approach.topLeftCorner(tt.rows(),tt.cols()) = tt;
@@ -4802,7 +4843,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
         }else if(strcmp(mov_descr.c_str(),"approach")==0){
             plan=false; approach=true; retreat=false;
             if(join_plan_approach){
-                MatrixXd tt = traj_mov.at(k); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
+                MatrixXd tt = traj_mov_real.at(k); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
                 MatrixXd vv = vel_mov.at(k); MatrixXd vv_red = vv.bottomRows(vv.rows()-1);
                 std::vector<double> ttsteps = timesteps.at(k);
                 traj_plan_approach.bottomLeftCorner(tt_red.rows(),tt_red.cols()) = tt_red;
@@ -4836,7 +4877,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 #if HAND == 1 && OPEN_CLOSE_HAND ==1
                 this->closeBarrettHand(arm_code);
 #else
-                MatrixXd tt = traj_mov.at(k); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+                MatrixXd tt = traj_mov_real.at(k); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                 std::vector<double> hand_init_pos;
                 hand_init_pos.resize(init_h_posture.size());
                 VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
@@ -4866,7 +4907,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 }
 #if HAND ==1 && OPEN_CLOSE_HAND ==1
               //this->openBarrettHand(arm_code);
-              MatrixXd tt = traj_mov.at(k); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+              MatrixXd tt = traj_mov_real.at(k); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
               std::vector<double> hand_init_pos;
               hand_init_pos.resize(init_h_posture.size());
               VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
@@ -4888,7 +4929,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             vel = vel_plan_approach;
             timesteps_stage = timesteps_plan_approach;
         }else{
-            traj = traj_mov.at(k);
+            traj = traj_mov_real.at(k);
             vel = vel_mov.at(k);
             timesteps_stage = timesteps.at(k);
         }
@@ -5068,7 +5109,7 @@ if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.r
         switch (mov_type) {
         case 0: // reach-to grasp
             // grasp the object
-            if(approach ||(plan && (traj_mov.size()==1))){
+            if(approach ||(plan && (traj_mov_real.size()==1))){
                 if(obj_in_hand){
                     add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
                     vrep_common::simRosSetObjectParent srvset_parent; // service to set a parent object
@@ -5121,8 +5162,8 @@ if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.r
 
 
     return true;
-
 }
+
 
 bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene)
 {
@@ -6295,7 +6336,7 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
                         */
 
     if (this->curr_scene){
-        //add the joint's offset
+        //add the joints offset
         std::transform(right_posture.begin(), right_posture.end(), theta_offset.begin(), right_posture.begin(), std::plus<double>());
         this->curr_scene->getRobot()->setRightPosture(right_posture);
         this->curr_scene->getRobot()->setRightVelocities(right_vel);

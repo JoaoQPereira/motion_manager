@@ -158,10 +158,8 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     for (size_t i=0; i< scenarios.size();++i){
         ui.listWidget_scenario->addItem(scenarios.at(i));
     }
-
-
-
 }
+
 
 MainWindow::~MainWindow()
 {
@@ -179,6 +177,7 @@ void MainWindow::updateLoggingView()
         ui.view_logging->scrollToBottom();
 }
 
+
 void MainWindow::updateRosStatus(bool c)
 {
 
@@ -194,13 +193,11 @@ void MainWindow::updateRosStatus(bool c)
         ui.labelStatusVrep->setEnabled(false);
         ui.labelVrepComm->setEnabled(false);
     }
-
-
 }
+
 
 void MainWindow::updateVrepStatus(bool c)
 {
-
     if (c){
         ui.labelVrepComm->setText(QString("on-line"));
 #if MOVEIT==1
@@ -228,6 +225,7 @@ void MainWindow::updateVrepStatus(bool c)
     ui.groupBox_getElements->setEnabled(false);
 }
 
+
 void MainWindow::updateRVizStatus(bool c)
 {
     if (c){
@@ -245,21 +243,19 @@ void MainWindow::updateRVizStatus(bool c)
     ui.groupBox_getElements->setEnabled(false);
 }
 
+
 void MainWindow::addElement(string value)
 {
-
     ui.listWidget_elements->addItem(QString(value.c_str()));
     ui.listWidget_elements->setCurrentRow(0);
-
 }
+
 
 void MainWindow::updateElement(int id, string value)
 {
-
     QListWidgetItem* curr_item = ui.listWidget_elements->takeItem(id);
     delete curr_item;
     ui.listWidget_elements->insertItem(id,QString(value.c_str()));
-
 }
 
 
@@ -269,20 +265,19 @@ void MainWindow::addObject(string value)
    ui.comboBox_objects_eng->addItem(QString(value.c_str()));
 }
 
+
 void MainWindow::addPose(string value)
 {
-
    ui.comboBox_poses->addItem(QString(value.c_str()));
 }
 
 
 void MainWindow::updateHomePosture(string value)
 {
-
     ui.listWidget_homePosture->addItem(QString(value.c_str()));
     ui.listWidget_homePosture->setCurrentRow(0);
-
 }
+
 
 /*****************************************************************************
 ** Implementation [Menu]
@@ -295,18 +290,18 @@ void MainWindow::on_actionAbout_triggered()
                                                            "This software is designed to plan the movements of the arms for any robot</p>"));
 }
 
+
 void MainWindow::on_actionRos_Communication_triggered()
 {
-
     mrosCommdlg->show();
-
 }
+
 
 void MainWindow::on_actionVrep_Communication_triggered()
 {
-
     mvrepCommdlg->show();
 }
+
 #if MOVEIT==1
 void MainWindow::on_actionRViz_Communication_triggered()
 {
@@ -321,7 +316,6 @@ void MainWindow::on_actionRViz_Communication_triggered()
 
 void MainWindow::on_pushButton_tuning_clicked()
 {
-
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
     switch(planner_id){
@@ -347,7 +341,6 @@ void MainWindow::on_pushButton_tuning_clicked()
         mPRMstardlg->show();
         break;
     }
-
 }
 
 
@@ -652,19 +645,17 @@ void MainWindow::on_pushButton_loadScenario_clicked()
     }
 }
 
+
 void MainWindow::on_pushButton_getElements_pressed()
 {
-
     qnode.log(QNode::Info,string("getting the elements of the scenario . . ."));
     ui.pushButton_getElements->setCheckable(true);
     ui.pushButton_loadScenario->setEnabled(false);
-
-
 }
+
 
 void MainWindow::on_pushButton_plan_pressed()
 {
-
     qnode.log(QNode::Info,string("planning the selected movement. . ."));
     ui.pushButton_plan->setCheckable(true);
     ui.tableWidget_sol_mov->clear();
@@ -672,10 +663,8 @@ void MainWindow::on_pushButton_plan_pressed()
 }
 
 
-
 void MainWindow::on_pushButton_getElements_clicked()
 {
-
     ui.listWidget_elements->clear();
     try{
         if (qnode.getElements(this->curr_scene)){
@@ -723,8 +712,6 @@ void MainWindow::on_pushButton_getElements_clicked()
     }catch(std::exception e){
         qnode.log(QNode::Error,e.what());
     }
-
-
 }
 
 
@@ -917,7 +904,6 @@ void MainWindow::on_pushButton_addMov_clicked()
 
 void MainWindow::on_pushButton_plan_clicked()
 {
-
     ui.tabWidget_sol->setCurrentIndex(0);
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
@@ -1001,7 +987,6 @@ void MainWindow::on_pushButton_plan_clicked()
                 this->curr_mov = prob->getMovement();
                 this->timesteps_mov.clear();
                 this->jointsPosition_mov.clear(); this->jointsPosition_mov = h_results->trajectory_stages;
-                this->jointsPosition_mov = qnode.realJointsPosition(this->jointsPosition_mov);
                 this->jointsVelocity_mov.clear(); this->jointsVelocity_mov = h_results->velocity_stages;
                 this->jointsAcceleration_mov.clear(); this->jointsAcceleration_mov = h_results->acceleration_stages;
                 this->traj_descr_mov.clear(); this->traj_descr_mov = h_results->trajectory_descriptions;
@@ -1632,9 +1617,12 @@ if(solved){
         for(int i=0;i<pos_stage.rows();++i){
             // position
             VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
-            vector<double> posture; posture.resize(pos_row.size());
+            vector<double> posture;
+            posture.resize(pos_row.size());
             VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
+
             this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_mov.at(step),posture);
+
             // velocities
             VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
             vector<double> velocities; velocities.resize(vel_row.size());
@@ -1665,8 +1653,7 @@ if(solved){
     }
 
 
-
-    // normlized jerk cost of the hand
+    // normalized jerk cost of the hand
     QVector<double> handPosition_mov_x; QVector<double> handPosition_mov_y; QVector<double> handPosition_mov_z;
     QVector<double> der_1_handPosition_mov_x; QVector<double> der_1_handPosition_mov_y; QVector<double> der_1_handPosition_mov_z;
     QVector<double> der_2_handPosition_mov_x; QVector<double> der_2_handPosition_mov_y; QVector<double> der_2_handPosition_mov_z;
@@ -1711,7 +1698,6 @@ if(solved){
     ui.label_nmu->setText(QString::number(this->nmu_mov));
 
 } // if the problem has been solved
-
 }
 
 
@@ -1729,8 +1715,9 @@ void MainWindow::on_pushButton_plan_trials_clicked()
 
     double rate = 100*success/trials;
     ui.label_rate_task->setText(QString::number(rate));
-
 }
+
+
 void MainWindow::on_pushButton_plan_3d_power_law_clicked()
 {
     int n_traj=100;
@@ -1854,13 +1841,9 @@ void MainWindow::on_pushButton_plan_3d_power_law_clicked()
             }else{
                 solved = false;
             }
-
-
             sleep(1);
-
         }
     }
-
 }
 
 
@@ -2001,7 +1984,6 @@ void MainWindow::on_pushButton_plan_2d_power_law_clicked()
             }
 
             sleep(1);
-
         }
     }
 }
@@ -2014,6 +1996,7 @@ void MainWindow::on_pushButton_execMov_pressed()
 
 }
 
+
 void MainWindow::on_pushButton_execMov_moveit_pressed()
 {
     qnode.log(QNode::Info,std::string("Executing the movement in RViz . . ."));
@@ -2023,8 +2006,8 @@ void MainWindow::on_pushButton_execMov_moveit_pressed()
 void MainWindow::on_pushButton_execMov_clicked()
 {
     qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
-
 }
+
 
 #if MOVEIT==1
 void MainWindow::on_pushButton_execMov_moveit_clicked()
@@ -2034,6 +2017,7 @@ void MainWindow::on_pushButton_execMov_moveit_clicked()
 }
 #endif
 
+
 void MainWindow::on_pushButton_stop_mov_clicked()
 {
 
@@ -2042,12 +2026,14 @@ void MainWindow::on_pushButton_stop_mov_clicked()
     qnode.resetGlobals();
 }
 
+
 void MainWindow::on_pushButton_stop_task_clicked()
 {
     qnode.stopSim();
     qnode.resetSimTime();
     qnode.resetGlobals();
 }
+
 
 void MainWindow::on_pushButton_save_end_posture_clicked()
 {
@@ -2071,6 +2057,7 @@ void MainWindow::on_pushButton_save_end_posture_clicked()
     }
 }
 
+
 void MainWindow::on_pushButton_execTask_pressed(){
 
     qnode.log(QNode::Info,std::string("Executing the task . . ."));
@@ -2089,8 +2076,6 @@ void MainWindow::on_pushButton_execTask_clicked()
 
 void MainWindow::on_pushButton_load_task_clicked()
 {
-
-
     int plan_id; QString plan_type;
     int mov_id; QString mov_type;
     int arm_code; QString arm_type;
@@ -2497,7 +2482,9 @@ void MainWindow::on_pushButton_load_task_clicked()
                     VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
                     vector<double> posture; posture.resize(pos_row.size());
                     VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
+
                     this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
+
                     // velocity norm
                     VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
                     vector<double> velocities; velocities.resize(vel_row.size());
@@ -2539,21 +2526,13 @@ void MainWindow::on_pushButton_load_task_clicked()
         string stdev_prob_str =  boost::str(boost::format("%.2f") % (stdev_prob));
         boost::replace_all(stdev_prob_str,",",".");
         ui.label_solving_time_task->setText(QString::fromStdString(mean_prob_str)+QString("(")+QString::fromStdString(stdev_prob_str)+QString(")"));
-
-
     }
     f.close();
-
-
-
-
 }
 
 
 void MainWindow::on_pushButton_save_task_clicked()
 {
-
-
     QString filename = QFileDialog::getSaveFileName(this,
                                                     tr("Save the task trajectory"),
                                                     QString(MAIN_PATH)+"/Tasks",
@@ -2607,18 +2586,13 @@ void MainWindow::on_pushButton_save_task_clicked()
             }
         }// for loop task
         stream << "#END" <<endl;
-
-
     }// open file
     f.close();
-
-
 }
 
 
 void MainWindow::on_pushButton_scene_reset_clicked()
 {
-
     // reset the movements
     ui.tableWidget_sol_mov->clear();
     //ui.listWidget_movs->clear();
@@ -2745,14 +2719,11 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         ui.groupBox_homePosture->setEnabled(false);
         ui.pushButton_loadScenario->setEnabled(true);
     }
-
-
 }
 
 
 void MainWindow::on_pushButton_append_mov_clicked()
 {
-
     ui.tableWidget_sol_task->clear();
     ui.pushButton_save_task->setEnabled(true);
     this->moveit_task = false;
@@ -2852,7 +2823,9 @@ void MainWindow::on_pushButton_append_mov_clicked()
                      VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
                      vector<double> posture; posture.resize(pos_row.size());
                      VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
+
                      this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
+
                      // velocity norm
                      VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
                      vector<double> velocities; velocities.resize(vel_row.size());
@@ -2894,20 +2867,12 @@ void MainWindow::on_pushButton_append_mov_clicked()
          string stdev_prob_str =  boost::str(boost::format("%.2f") % (stdev_prob));
          boost::replace_all(stdev_prob_str,",",".");
          ui.label_solving_time_task->setText(QString::fromStdString(mean_prob_str)+QString("(")+QString::fromStdString(stdev_prob_str)+QString(")"));
-
-
-
-
     } // if the problem has been solved
-
-
-
 }
 
 
 void MainWindow::on_pushButton_clear_task_clicked()
 {
-
     this->jointsAcceleration_task.clear();
     this->jointsVelocity_task.clear();
     this->jointsPosition_task.clear();
@@ -2938,14 +2903,11 @@ void MainWindow::on_pushButton_clear_task_clicked()
     ui.label_totalTime_value_mov->clear();
     ui.listWidget_movs->clear();
     this->curr_task->clearProblems();
-
-
 }
 
 
 void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
 {
-
    switch (i){
 
        case 0:
@@ -2967,16 +2929,13 @@ void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
         ui.radioButton_right->setEnabled(false);
         ui.radioButton_left->setEnabled(false);
 
-
        break;
-
    }
 }
 
 
 void MainWindow::on_comboBox_mov_currentIndexChanged(int i)
 {
-
     switch (i){
 
         case 0:
@@ -3033,15 +2992,12 @@ void MainWindow::on_comboBox_mov_currentIndexChanged(int i)
             ui.comboBox_poses->setEnabled(false);
             ui.label_poses->setEnabled(false);
             break;
-
     }
-
-
 }
+
 
 void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
 {
-
     ui.pushButton_loadScenario->setEnabled(true);
 
 #if HAND==0
@@ -3066,11 +3022,8 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
                 //Organizing scenario: shelfs and objects with Jarde
 
                 break;
-
             }
-
         }
-
     }
 
 #elif HAND==1
@@ -3121,12 +3074,9 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
                                                          "Sawyer serves a drink to a human patient"));
                 break;
             }
-
         }
-
     }
 #endif
-
 }
 
 
@@ -3178,6 +3128,7 @@ void MainWindow::on_pushButton_plot_mov_clicked()
     }
 }
 
+
 void MainWindow::on_pushButton_plot_task_clicked()
 {
     // plot the 3D hand position
@@ -3224,8 +3175,8 @@ void MainWindow::on_pushButton_plot_task_clicked()
         ui.plot_hand_vel_task->plotLayout()->clear();
         ui.plot_hand_vel_task->clearGraphs();
     }
-
 }
+
 
 void MainWindow::on_pushButton_joints_results_mov_clicked()
 {
@@ -3234,12 +3185,14 @@ void MainWindow::on_pushButton_joints_results_mov_clicked()
     this->mResultsJointsdlg->show();
 }
 
+
 void MainWindow::on_pushButton_joints_results_task_clicked()
 {
     if(!this->jointsPosition_task.empty())
         this->mResultsJointsdlg->setupPlots(this->jointsPosition_task,this->jointsVelocity_task,this->jointsAcceleration_task,this->timesteps_task);
     this->mResultsJointsdlg->show();
 }
+
 
 void MainWindow::on_pushButton_power_law_clicked()
 {
@@ -3248,12 +3201,14 @@ void MainWindow::on_pushButton_power_law_clicked()
     this->mPowerLawdlg->show();
 }
 
+
 void MainWindow::on_pushButton_power_law_3D_clicked()
 {
     if(!this->handPosition_task.empty())
         this->mPowerLaw3Ddlg->setupPlots(this->handPosition_task,this->timesteps_task);
     this->mPowerLaw3Ddlg->show();
 }
+
 
 void MainWindow::on_pushButton_comp_vel_mov_clicked()
 {
@@ -3266,13 +3221,11 @@ void MainWindow::on_pushButton_comp_vel_mov_clicked()
     if(!this->handLinearVelocity_mov.empty())
         this->mCompVeldlg->setupPlots(this->handLinearVelocity_mov,this->handAngularVelocity_mov,this->qtime_mov,3);
     this->mCompVeldlg->show();
-
 }
 
 
 void MainWindow::on_pushButton_save_res_mov_clicked()
 {
-
     struct stat st = {0};
     if (stat("results", &st) == -1) {
         mkdir("results", 0700);
@@ -3369,9 +3322,8 @@ void MainWindow::on_pushButton_save_res_mov_clicked()
     svg_qstr = path+QString("hand_vel_mov.svg"); svg_str = svg_qstr.toStdString();
     cmdLine = string("pdftocairo -svg ")+pdf_str+string(" ")+svg_str;
     system(cmdLine.c_str());
-
-
 }
+
 
 void MainWindow::on_pushButton_save_res_task_clicked()
 {
@@ -3596,10 +3548,7 @@ void MainWindow::on_pushButton_save_res_task_clicked()
     svg_qstr = path+QString("hand_vel_task.svg"); svg_str = svg_qstr.toStdString();
     cmdLine = string("pdftocairo -svg ")+pdf_str+string(" ")+svg_str;
     system(cmdLine.c_str());
-
-
 }
-
 
 
 void MainWindow::ReadSettings()
@@ -3621,8 +3570,6 @@ void MainWindow::ReadSettings()
 
     mrosCommdlg->enableMasterUrl(!checked);
     mrosCommdlg->enableHostUrl(!checked);
-
-
 }
 
 
@@ -3635,17 +3582,14 @@ void MainWindow::WriteSettings()
     settings.setValue("remember_settings",QVariant(mrosCommdlg->getRememberCheckbox()));
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
-
 }
+
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     WriteSettings();
     QMainWindow::closeEvent(event);
 }
-
-
-
 
 
 void MainWindow::getDerivative(QVector<double> &function, QVector<double> &step_values, QVector<double> &derFunction)
@@ -3734,10 +3678,8 @@ void MainWindow::getDerivative(QVector<double> &function, QVector<double> &step_
           if(step_value==0)
               step_value=MIN_STEP_VALUE;
           derFunction.push_back((double)(  3*f0 - 16*f1 + 36*f2 - 48*f3 + 25*f4)/(12*h*step_value));
-
-
-
 }
+
 
 int MainWindow::getNumberMovementUnits(vector<double> &function, QVector<double> &time)
 {
@@ -3772,10 +3714,9 @@ int MainWindow::getNumberMovementUnits(vector<double> &function, QVector<double>
             nmu++;
     }
 
-
     return nmu;
-
 }
+
 
 double MainWindow::getMedian(vector<double> v)
 {
@@ -3796,6 +3737,7 @@ double MainWindow::getMedian(vector<double> v)
     return median;
 }
 
+
 double MainWindow::getFirstQuartile(vector<double> v)
 {
     double first_quartile;
@@ -3814,6 +3756,7 @@ double MainWindow::getFirstQuartile(vector<double> v)
 
     return first_quartile;
 }
+
 
 double MainWindow::getThirdQuartile(vector<double> v)
 {
@@ -3835,6 +3778,7 @@ double MainWindow::getThirdQuartile(vector<double> v)
     return third_quartile;
 }
 
+
 double MainWindow::getMedian(vector<int> v)
 {
     double median;
@@ -3853,6 +3797,7 @@ double MainWindow::getMedian(vector<int> v)
 
     return median;
 }
+
 
 double MainWindow::getFirstQuartile(vector<int> v)
 {
@@ -3873,6 +3818,7 @@ double MainWindow::getFirstQuartile(vector<int> v)
     return first_quartile;
 }
 
+
 double MainWindow::getThirdQuartile(vector<int> v)
 {
     double third_quartile;
@@ -3892,7 +3838,4 @@ double MainWindow::getThirdQuartile(vector<int> v)
 
     return third_quartile;
 }
-
-
-
 }  // namespace motion_manager
