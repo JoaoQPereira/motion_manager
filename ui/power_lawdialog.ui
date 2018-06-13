@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1115</width>
-    <height>686</height>
+    <height>694</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,17 +16,17 @@
   <widget class="QPushButton" name="pushButton_save">
    <property name="geometry">
     <rect>
-     <x>1010</x>
-     <y>650</y>
+     <x>1020</x>
+     <y>660</y>
      <width>80</width>
-     <height>23</height>
+     <height>25</height>
     </rect>
    </property>
    <property name="text">
     <string>Save</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>

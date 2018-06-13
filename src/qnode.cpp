@@ -4822,8 +4822,13 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 
     std::vector<MatrixXd> traj_mov_real;
-    //add the joints offset
-    traj_mov_real = realJointsPosition(traj_mov);
+    std::vector<MatrixXd> traj_mov_w_offset;
+
+    //the trajectory obtained doesn't include the joints offsets
+    traj_mov_w_offset = traj_mov;
+    //add the joints offsets
+    traj_mov_real = realJointsPosition(traj_mov_w_offset);
+
 
     for (size_t k=0; k< traj_mov_real.size();++k){  // for loop stages
 
@@ -5215,11 +5220,16 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     add_client.call(srvstart);
     ros::spinOnce(); // first handle ROS messages
 
+
+
     int hh=0; // it counts problems that do not belong to the task
     for(int kk=0; kk < task->getProblemNumber(); ++kk){ //for loop movements
       if(task->getProblem(kk)->getPartOfTask() && task->getProblem(kk)->getSolved()){
           int ii = kk - hh;
-          vector<MatrixXd> traj_mov = traj_task.at(ii);
+           //the trajectory obtained doesn't include the joints offsets
+          vector<MatrixXd> traj_mov_w_offset = traj_task.at(ii);
+          //add the joints offsets
+          vector<MatrixXd>traj_mov_real = realJointsPosition(traj_mov_w_offset);
           vector<MatrixXd> vel_mov = vel_task.at(ii);
           vector<vector<double>> timesteps_mov = timesteps_task.at(ii);
           vector<double> tols_stop_mov = tols_stop_task.at(ii);
@@ -5264,7 +5274,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
 
 
 
-          for(size_t j=0; j <traj_mov.size();++j){ //for loop stages
+          for(size_t j=0; j <traj_mov_real.size();++j){ //for loop stages
 
               string mov_descr = traj_descr_mov.at(j);
               if(strcmp(mov_descr.c_str(),"plan")==0){
@@ -5292,7 +5302,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
 #if HAND == 1 && OPEN_CLOSE_HAND ==1
                       this->closeBarrettHand(arm_code);
 #else
-                      MatrixXd tt = traj_mov.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+                      MatrixXd tt = traj_mov_real.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                       std::vector<double> hand_init_pos;
                       hand_init_pos.resize(init_h_posture.size());
                       VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
@@ -5322,7 +5332,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                       }
 #if HAND ==1 && OPEN_CLOSE_HAND ==1
                   //this->openBarrettHand(arm_code);
-                  MatrixXd tt = traj_mov.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+                  MatrixXd tt = traj_mov_real.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                   std::vector<double> hand_init_pos;
                   hand_init_pos.resize(init_h_posture.size());
                   VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
@@ -5338,7 +5348,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                   break;
               }
 
-              traj = traj_mov.at(j);
+              traj = traj_mov_real.at(j);
               vel = vel_mov.at(j);
               timesteps_stage = timesteps_mov.at(j);
               f_posture = traj.row(traj.rows()-1);
@@ -5514,7 +5524,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                     switch (mov_type) {
                     case 0: // reach-to grasp
                         // grasp the object
-                        if(approach ||(plan && (traj_mov.size()==1))){
+                        if(approach ||(plan && (traj_mov_real.size()==1))){
                             if(obj_in_hand){
                                 //srvset_parent.request.handle = h_detobj;
                                 srvset_parent.request.handle = this->curr_mov->getObject()->getHandle();
@@ -5573,11 +5583,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
       TotalTime=simulationTime;
 
       return true;
-
-
-
-
 }
+
 
 bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task, taskPtr task, scenarioPtr scene)
 {
@@ -5637,7 +5644,10 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
     for(int kk=0; kk < task->getProblemNumber(); ++kk){ //for loop movements
       if(task->getProblem(kk)->getPartOfTask() && task->getProblem(kk)->getSolved()){
           int ii = kk - hh;
-          vector<MatrixXd> traj_mov = traj_task.at(ii);
+          //the trajectory obtained doesn't include the joints offsets
+          vector<MatrixXd> traj_mov_w_offset = traj_task.at(ii);
+          //add the joints offsets
+          vector<MatrixXd>traj_mov_real = realJointsPosition(traj_mov_w_offset);
           vector<MatrixXd> vel_mov = vel_task.at(ii);
           vector<vector<double>> timesteps_mov = timesteps_task.at(ii);
           vector<double> tols_stop_mov = tols_stop_task.at(ii);
@@ -5690,7 +5700,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
 
           if(mov_type==0 || mov_type==2 || mov_type==3 || mov_type==4){
               // reach-to-grasp, transport, engage, disengage
-              if(traj_mov.size() > 1){
+              if(traj_mov_real.size() > 1){
                   // there is more than one stage
                   string mov_descr_1 = traj_descr_mov.at(0);
                   string mov_descr_2 = traj_descr_mov.at(1);
@@ -5699,17 +5709,17 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                       if(ii==0 || traj_prev_retreat.rows()==0){
                           // first movement of the task => there is no previous retreat
                           join_plan_app = true;
-                          traj_ret_plan_app.resize((traj_mov.at(0).rows() + traj_mov.at(1).rows()-1),traj_mov.at(0).cols());
+                          traj_ret_plan_app.resize((traj_mov_real.at(0).rows() + traj_mov_real.at(1).rows()-1),traj_mov_real.at(0).cols());
                           vel_ret_plan_app.resize((vel_mov.at(0).rows() + vel_mov.at(1).rows()-1),vel_mov.at(0).cols());
                       }else{
                           join_ret_plan_app = true;
-                          traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov.at(0).rows()-1 + traj_mov.at(1).rows()-1),traj_mov.at(0).cols());
+                          traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov_real.at(0).rows()-1 + traj_mov_real.at(1).rows()-1),traj_mov_real.at(0).cols());
                           vel_ret_plan_app.resize((vel_prev_retreat.rows() + vel_mov.at(0).rows()-1 + vel_mov.at(1).rows()-1),vel_mov.at(0).cols());
                       }
                   }else if((strcmp(mov_descr_1.c_str(),"plan")==0) && (strcmp(mov_descr_2.c_str(),"retreat")==0)){
                       if(ii!=0 && traj_prev_retreat.rows()!=0){
                           join_ret_plan = true;
-                          traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov.at(0).rows()-1),traj_mov.at(0).cols());
+                          traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov_real.at(0).rows()-1),traj_mov_real.at(0).cols());
                           vel_ret_plan_app.resize((vel_prev_retreat.rows() + vel_mov.at(0).rows()-1),vel_mov.at(0).cols());
                       }
                   }
@@ -5717,7 +5727,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                   // there is only the plan stage
                   if(ii!=0 && traj_prev_retreat.rows()!=0){
                       join_ret_plan = true;
-                      traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov.at(0).rows()-1),traj_mov.at(0).cols());
+                      traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov_real.at(0).rows()-1),traj_mov_real.at(0).cols());
                       vel_ret_plan_app.resize((vel_prev_retreat.rows() + vel_mov.at(0).rows()-1),vel_mov.at(0).cols());
                   }
               }
@@ -5725,12 +5735,12 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
               // reaching, go-park
               if(ii!=0 && traj_prev_retreat.rows()!=0){
                   join_ret_plan = true;
-                  traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov.at(0).rows()-1),traj_mov.at(0).cols());
+                  traj_ret_plan_app.resize((traj_prev_retreat.rows() + traj_mov_real.at(0).rows()-1),traj_mov_real.at(0).cols());
                   vel_ret_plan_app.resize((vel_prev_retreat.rows() + vel_mov.at(0).rows()-1),vel_mov.at(0).cols());
               }
           }
 
-          for(size_t j=0; j <traj_mov.size();++j){ //for loop stages
+          for(size_t j=0; j <traj_mov_real.size();++j){ //for loop stages
 
               string mov_descr = traj_descr_mov.at(j);
               if(strcmp(mov_descr.c_str(),"plan")==0){
@@ -5740,7 +5750,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                       vel_ret_plan_app.topLeftCorner(vel_prev_retreat.rows(),vel_prev_retreat.cols()) = vel_prev_retreat;
                       timesteps_ret_plan_app.reserve(ttsteps_prev_retreat.size());
                       std::copy (ttsteps_prev_retreat.begin(), ttsteps_prev_retreat.end(), std::back_inserter(timesteps_ret_plan_app));
-                      MatrixXd tt = traj_mov.at(j); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
+                      MatrixXd tt = traj_mov_real.at(j); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
                       MatrixXd vv = vel_mov.at(j); MatrixXd vv_red = vv.bottomRows(vv.rows()-1);
                       std::vector<double> ttsteps = timesteps_mov.at(j);
                       traj_ret_plan_app.block(traj_prev_retreat.rows(),0,tt_red.rows(),tt_red.cols()) = tt_red;
@@ -5758,7 +5768,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                       vel_ret_plan_app.topLeftCorner(vel_prev_retreat.rows(),vel_prev_retreat.cols()) = vel_prev_retreat;
                       timesteps_ret_plan_app.reserve(ttsteps_prev_retreat.size());
                       std::copy (ttsteps_prev_retreat.begin(), ttsteps_prev_retreat.end(), std::back_inserter(timesteps_ret_plan_app));
-                      MatrixXd tt = traj_mov.at(j); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
+                      MatrixXd tt = traj_mov_real.at(j); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
                       MatrixXd vv = vel_mov.at(j); MatrixXd vv_red = vv.bottomRows(vv.rows()-1);
                       std::vector<double> ttsteps = timesteps_mov.at(j);
                       traj_ret_plan_app.bottomLeftCorner(tt_red.rows(),tt_red.cols()) = tt_red;
@@ -5771,7 +5781,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                       std::copy (ttsteps.begin(), ttsteps.end(), std::back_inserter(timesteps_ret_plan_app));
                       traj_prev_retreat.resize(0,0);
                   }else if(join_plan_app){
-                      MatrixXd tt = traj_mov.at(j);
+                      MatrixXd tt = traj_mov_real.at(j);
                       MatrixXd vv = vel_mov.at(j);
                       std::vector<double> ttsteps = timesteps_mov.at(j);
                       traj_ret_plan_app.topLeftCorner(tt.rows(),tt.cols()) = tt;
@@ -5783,7 +5793,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
               }else if(strcmp(mov_descr.c_str(),"approach")==0){
                   plan=false; approach=true; retreat=false;
                   if(join_ret_plan_app || join_plan_app){
-                      MatrixXd tt = traj_mov.at(j); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
+                      MatrixXd tt = traj_mov_real.at(j); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
                       MatrixXd vv = vel_mov.at(j); MatrixXd vv_red = vv.bottomRows(vv.rows()-1);
                       std::vector<double> ttsteps = timesteps_mov.at(j);
                       traj_ret_plan_app.bottomLeftCorner(tt_red.rows(),tt_red.cols()) = tt_red;
@@ -5800,7 +5810,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                   }
               }else if(strcmp(mov_descr.c_str(),"retreat")==0){
                   plan=false; approach=false; retreat=true;
-                  traj_prev_retreat = traj_mov.at(j);
+                  traj_prev_retreat = traj_mov_real.at(j);
                   vel_prev_retreat = vel_mov.at(j);
                   ttsteps_prev_retreat = timesteps_mov.at(j);
 
@@ -5823,7 +5833,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
 #if HAND == 1 && OPEN_CLOSE_HAND ==1
                       this->closeBarrettHand(arm_code);
 #else
-                      MatrixXd tt = traj_mov.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+                      MatrixXd tt = traj_mov_real.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                       std::vector<double> hand_init_pos;
                       hand_init_pos.resize(init_h_posture.size());
                       VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
@@ -5854,7 +5864,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                       }
 #if HAND ==1 && OPEN_CLOSE_HAND ==1
                   //this->openBarrettHand(arm_code);
-                  MatrixXd tt = traj_mov.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+                  MatrixXd tt = traj_mov_real.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                   std::vector<double> hand_init_pos;
                   hand_init_pos.resize(init_h_posture.size());
                   VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
@@ -5876,7 +5886,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                   vel = vel_ret_plan_app;
                   timesteps_stage = timesteps_ret_plan_app;
               }else{
-                  traj = traj_mov.at(j);
+                  traj = traj_mov_real.at(j);
                   vel = vel_mov.at(j);
                   timesteps_stage = timesteps_mov.at(j);
               }
@@ -6057,7 +6067,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                     switch (mov_type) {
                     case 0: // reach-to grasp
                         // grasp the object
-                        if(approach ||(plan && (traj_mov.size()==1))){
+                        if(approach ||(plan && (traj_mov_real.size()==1))){
                             if(obj_in_hand){
                                 //srvset_parent.request.handle = h_detobj;
                                 srvset_parent.request.handle = this->curr_mov->getObject()->getHandle();

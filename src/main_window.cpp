@@ -1528,8 +1528,16 @@ if(solved){
     double mov_duration = 0.0;
     vector<double> time; QVector<double> tot_timesteps;
     std::vector<std::vector<QString>> mov_steps;
-    for (size_t k=0; k< this->jointsPosition_mov.size();++k){
-        MatrixXd jointPosition_stage = this->jointsPosition_mov.at(k);
+
+    std::vector<MatrixXd> jointsPosition_mov_real;
+    std::vector<MatrixXd> jointsPosition_mov_w_offset;
+    //the trajectory obtained doesn't include the joints offsets
+    jointsPosition_mov_w_offset = this->jointsPosition_mov;
+    //add the joints offsets
+    jointsPosition_mov_real = qnode.realJointsPosition(jointsPosition_mov_w_offset);
+
+    for (size_t k=0; k< jointsPosition_mov_real.size();++k){
+        MatrixXd jointPosition_stage = jointsPosition_mov_real.at(k);
         MatrixXd jointVelocity_stage = this->jointsVelocity_mov.at(k);
         MatrixXd jointAcceleration_stage = this->jointsAcceleration_mov.at(k);
         std::vector<double> timestep_stage = this->timesteps_mov.at(k);
@@ -2401,18 +2409,23 @@ void MainWindow::on_pushButton_load_task_clicked()
 
         QStringList h_headers; bool h_head=false; QStringList v_headers;
         std::vector<std::vector<QString>> task_steps;
-        vector<MatrixXd> pos_mov; vector<MatrixXd> vel_mov; vector<MatrixXd> acc_mov; vector<vector<double>> tstep_mov; vector<double> tstep_stage;
+        vector<MatrixXd> pos_mov; std::vector<MatrixXd> pos_mov_real;std::vector<MatrixXd> pos_mov_w_offset;
+        vector<MatrixXd> vel_mov; vector<MatrixXd> acc_mov; vector<vector<double>> tstep_mov; vector<double> tstep_stage;
         double task_duration = 0.0; double mov_duration = 0.0; double stage_duration = 0.0;
         vector<double> time_task; uint tot_steps = 0;
         for(size_t h=0; h< this->jointsPosition_task.size();++h){
             pos_mov = this->jointsPosition_task.at(h);
+            //the trajectory obtained doesn't include the joints offsets
+            pos_mov_w_offset = pos_mov;
+            //add the joints offsets
+            pos_mov_real = qnode.realJointsPosition(pos_mov_w_offset);
             vel_mov = this->jointsVelocity_task.at(h);
             acc_mov = this->jointsAcceleration_task.at(h);
             tstep_mov = this->timesteps_task.at(h);
             mov_duration = 0.0;
 
-            for (size_t k=0; k< pos_mov.size();++k){
-                MatrixXd jointPosition_stage = pos_mov.at(k);
+            for (size_t k=0; k< pos_mov_real.size();++k){
+                MatrixXd jointPosition_stage = pos_mov_real.at(k);
                 MatrixXd jointVelocity_stage = vel_mov.at(k);
                 MatrixXd jointAcceleration_stage = acc_mov.at(k);
                 tstep_stage = tstep_mov.at(k);
@@ -2739,19 +2752,26 @@ void MainWindow::on_pushButton_append_mov_clicked()
         this->njs_task.push_back(this->njs_mov);
         this->nmu_task.push_back(this->nmu_mov);
         this->prob_time_task.push_back(this->prob_time_mov);
-         QStringList h_headers; bool h_head=false; QStringList v_headers;
-         std::vector<std::vector<QString>> task_steps;
-         vector<MatrixXd> pos_mov; vector<MatrixXd> vel_mov; vector<MatrixXd> acc_mov; vector<vector<double>> tstep_mov;
-         double task_duration = 0.0; double mov_duration = 0.0; double stage_duration = 0.0;
-         vector<double> time_task; uint tot_steps = 0;
+        QStringList h_headers; bool h_head=false; QStringList v_headers;
+        std::vector<std::vector<QString>> task_steps;
+        vector<MatrixXd> pos_mov; std::vector<MatrixXd> pos_mov_real;std::vector<MatrixXd> pos_mov_w_offset;
+
+        vector<MatrixXd> vel_mov; vector<MatrixXd> acc_mov; vector<vector<double>> tstep_mov;
+        double task_duration = 0.0; double mov_duration = 0.0; double stage_duration = 0.0;
+        vector<double> time_task; uint tot_steps = 0;
+
          for(size_t h=0; h< this->jointsPosition_task.size();++h){
              pos_mov = this->jointsPosition_task.at(h);
+             //the trajectory obtained doesn't include the joints offs
+             pos_mov_w_offset = pos_mov;
+             //add the joints offsets
+             pos_mov_real = qnode.realJointsPosition(pos_mov_w_offset);
              vel_mov = this->jointsVelocity_task.at(h);
              acc_mov = this->jointsAcceleration_task.at(h);
              tstep_mov = this->timesteps_task.at(h);
              mov_duration = 0.0;
-             for (size_t k=0; k< pos_mov.size();++k){
-                 MatrixXd jointPosition_stage = pos_mov.at(k);
+             for (size_t k=0; k< pos_mov_real.size();++k){
+                 MatrixXd jointPosition_stage = pos_mov_real.at(k);
                  MatrixXd jointVelocity_stage = vel_mov.at(k);
                  MatrixXd jointAcceleration_stage = acc_mov.at(k);
                  vector<double> tstep_stage = tstep_mov.at(k);

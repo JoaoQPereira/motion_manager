@@ -420,7 +420,8 @@ void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
 void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
 {
     double D_LENGHT_TOL = 350; //Max Length of the link
-    int npoints = 0;
+    int npoints_arm = 0;
+    int npoints_finger = 9;
 
     ui->lineEdit_sphere1_r->setText(QString::number(0));
     ui->lineEdit_sphere1_r->setEnabled(false);
@@ -449,31 +450,31 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
     //Manipulator with shoulder offset
     if(m_DH_rightArm.d.at(1)!=0)
     {
-        npoints = npoints + 2;
+        npoints_arm = npoints_arm + 2;
         ui->lineEdit_sphere2_r->setEnabled(true);
         ui->lineEdit_sphere4_r->setEnabled(true);
 
         if(m_DH_rightArm.d.at(0)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere1_r->setEnabled(true);
         }
 
         if(m_DH_rightArm.d.at(1)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere3_r->setEnabled(true);
         }
     }
     //Manipulator without shoulder offset
     else
     {
-        npoints++;
+        npoints_arm++;
         ui->lineEdit_sphere4_r->setEnabled(true);
 
         if(m_DH_rightArm.d.at(0)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere1_r->setEnabled(true);
         }
     }
@@ -483,31 +484,31 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
     //Manipulator with elbow offset
     if(m_DH_rightArm.d.at(3)!=0)
     {
-        npoints = npoints + 2;
+        npoints_arm = npoints_arm + 2;
         ui->lineEdit_sphere6_r->setEnabled(true);
         ui->lineEdit_sphere8_r->setEnabled(true);
 
         if(m_DH_rightArm.d.at(2)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere5_r->setEnabled(true);
         }
 
         if(m_DH_rightArm.d.at(3)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere7_r->setEnabled(true);
         }
     }
     //Manipulator without elbow offset
     else
     {
-        npoints++;
+        npoints_arm++;
         ui->lineEdit_sphere8_r->setEnabled(true);
 
         if(m_DH_rightArm.d.at(2)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere5_r->setEnabled(true);
         }
     }
@@ -516,36 +517,39 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
     //Manipulator with wrist offset
     if(m_DH_rightArm.d.at(5)!=0)
     {
-        npoints = npoints + 2;
+        npoints_arm = npoints_arm + 2;
         ui->lineEdit_sphere10_r->setEnabled(true);
         ui->lineEdit_sphere12_r->setEnabled(true);
 
         if(m_DH_rightArm.d.at(4)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere9_r->setEnabled(true);
         }
 
         if(m_DH_rightArm.d.at(5)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere11_r->setEnabled(true);
         }
     }
     //Manipulator without wrist offset
     else
     {
-        npoints++;
+        npoints_arm++;
         ui->lineEdit_sphere12_r->setEnabled(true);
 
         if(m_DH_rightArm.d.at(4)>=D_LENGHT_TOL)
         {
-            npoints++;
+            npoints_arm++;
             ui->lineEdit_sphere9_r->setEnabled(true);
         }
     }
 
-    npoints = npoints + 2;
+    //Sphere 13 and 14 are create for all manipulators
+    npoints_arm = npoints_arm + 2;
+    //Spheres used to model/represent the fingers (in BarrettHand)
+    npoints_arm = npoints_arm + npoints_finger;
 
     if(!name.compare("ARoS"))
     {
@@ -573,7 +577,7 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
         ui->lineEdit_sphere14_r->setText(QString::number(70.00));
    }
 
-   ui->label_points_arm->setText(QString::number(npoints));
+   ui->label_points_arm->setText(QString::number(npoints_arm));
 }
 
 

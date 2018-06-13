@@ -25,9 +25,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>500</y>
+      <y>510</y>
       <width>1081</width>
-      <height>131</height>
+      <height>121</height>
      </rect>
     </property>
     <property name="title">
@@ -37,9 +37,9 @@
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>20</y>
+       <y>22</y>
        <width>1081</width>
-       <height>101</height>
+       <height>91</height>
       </rect>
      </property>
     </widget>
@@ -217,7 +217,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab_scenario">
      <property name="enabled">
@@ -324,7 +324,7 @@ p, li { white-space: pre-wrap; }
       </property>
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>806</x>
         <y>250</y>
         <width>261</width>
         <height>171</height>
@@ -556,8 +556,6 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </widget>
-       <zorder>layoutWidget_grip</zorder>
-       <zorder>layoutWidget</zorder>
       </widget>
       <widget class="QWidget" name="layoutWidget_planner">
        <property name="geometry">
@@ -788,8 +786,8 @@ p, li { white-space: pre-wrap; }
       <widget class="QWidget" name="">
        <property name="geometry">
         <rect>
-         <x>0</x>
-         <y>420</y>
+         <x>1</x>
+         <y>422</y>
          <width>381</width>
          <height>29</height>
         </rect>
@@ -884,10 +882,10 @@ p, li { white-space: pre-wrap; }
         <string>Plan</string>
        </property>
       </widget>
+      <zorder>pushButton_tuning</zorder>
+      <zorder>pushButton_plan</zorder>
       <zorder>listWidget_movs</zorder>
-      <zorder>layoutWidget</zorder>
       <zorder>pushButton_plan_trials</zorder>
-      <zorder>tableWidget_sol_mov</zorder>
      </widget>
      <widget class="QTabWidget" name="tabWidget_sol">
       <property name="geometry">
@@ -899,7 +897,7 @@ p, li { white-space: pre-wrap; }
        </rect>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_mov">
        <attribute name="title">
@@ -953,7 +951,7 @@ p, li { white-space: pre-wrap; }
           </rect>
          </property>
         </widget>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>520</x>
@@ -979,7 +977,7 @@ p, li { white-space: pre-wrap; }
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>0</x>
@@ -1129,10 +1127,10 @@ p, li { white-space: pre-wrap; }
         <widget class="QCheckBox" name="checkBox_comp_exec">
          <property name="geometry">
           <rect>
-           <x>450</x>
-           <y>220</y>
-           <width>171</width>
-           <height>21</height>
+           <x>475</x>
+           <y>214</y>
+           <width>170</width>
+           <height>23</height>
           </rect>
          </property>
          <property name="text">
@@ -1142,11 +1140,6 @@ p, li { white-space: pre-wrap; }
        </widget>
       </widget>
      </widget>
-     <zorder>label</zorder>
-     <zorder>groupBox_specs</zorder>
-     <zorder>groupBox_task</zorder>
-     <zorder>tabWidget_sol</zorder>
-     <zorder>layoutWidget</zorder>
     </widget>
     <widget class="QWidget" name="tab_results">
      <property name="enabled">
@@ -1181,7 +1174,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab_results_plan_mov">
          <attribute name="title">
@@ -1193,7 +1186,7 @@ p, li { white-space: pre-wrap; }
             <x>10</x>
             <y>330</y>
             <width>1051</width>
-            <height>31</height>
+            <height>41</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -1201,6 +1194,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
               <widget class="QLabel" name="label_cost_hand">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>Normalized jerk cost of the hand: </string>
                </property>
@@ -1208,6 +1207,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QLabel" name="label_cost_hand_value">
+               <property name="minimumSize">
+                <size>
+                 <width>130</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1219,6 +1224,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_5">
              <item>
               <widget class="QLabel" name="label_cost_hand_3">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>Number of movement units: </string>
                </property>
@@ -1237,6 +1248,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_4">
              <item>
               <widget class="QLabel" name="label_cost_hand_2">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>Solving time [ms]:</string>
                </property>
@@ -1244,6 +1261,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QLabel" name="label_solving_time">
+               <property name="minimumSize">
+                <size>
+                 <width>150</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1256,9 +1279,9 @@ p, li { white-space: pre-wrap; }
          <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
-            <x>20</x>
+            <x>10</x>
             <y>10</y>
-            <width>1031</width>
+            <width>1051</width>
             <height>311</height>
            </rect>
           </property>
@@ -1297,7 +1320,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>10</x>
@@ -1333,8 +1356,8 @@ p, li { white-space: pre-wrap; }
            <rect>
             <x>10</x>
             <y>330</y>
-            <width>1051</width>
-            <height>31</height>
+            <width>1055</width>
+            <height>41</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -1342,6 +1365,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_7">
              <item>
               <widget class="QLabel" name="label_cost_hand_4">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>NJS of the hand. Mean(SD): </string>
                </property>
@@ -1349,6 +1378,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QLabel" name="label_cost_hand_value_task">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1360,6 +1395,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_8">
              <item>
               <widget class="QLabel" name="label_cost_hand_5">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>NMU. Mean(SD): </string>
                </property>
@@ -1367,6 +1408,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QLabel" name="label_nmu_task">
+               <property name="minimumSize">
+                <size>
+                 <width>70</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1378,6 +1425,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_9">
              <item>
               <widget class="QLabel" name="label_cost_hand_6">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>Solving time [ms]. Mean(SD):</string>
                </property>
@@ -1385,6 +1438,18 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QLabel" name="label_solving_time_task">
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1396,6 +1461,12 @@ p, li { white-space: pre-wrap; }
             <layout class="QHBoxLayout" name="horizontalLayout_10">
              <item>
               <widget class="QLabel" name="label_cost_hand_7">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>Rate of success [%]:</string>
                </property>
@@ -1403,6 +1474,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QLabel" name="label_rate_task">
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string/>
                </property>
@@ -1415,9 +1492,9 @@ p, li { white-space: pre-wrap; }
          <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
-            <x>20</x>
+            <x>10</x>
             <y>10</y>
-            <width>1031</width>
+            <width>1051</width>
             <height>311</height>
            </rect>
           </property>
@@ -1430,7 +1507,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>390</x>
@@ -1466,7 +1543,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>10</x>
@@ -1638,7 +1715,7 @@ p, li { white-space: pre-wrap; }
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -1649,7 +1726,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_22"/>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
