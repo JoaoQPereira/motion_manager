@@ -3279,7 +3279,7 @@ void MainWindow::on_pushButton_save_res_mov_clicked()
     boost::replace_all(nmu_str,",",".");
     results << string("nmu =")+nmu_str+string(";\n");
 
-    results << string("# TIME TAKEN TO PLAN THE MOVEMENT [ms] \n");
+    results << string("# TIME TAKEN TO PLAN THE MOVEMENT [s] \n");
     string time_str =  boost::str(boost::format("%.2f") % (this->prob_time_mov));
     boost::replace_all(time_str,",",".");
     results << string("prob_time =")+time_str+string(";\n");
@@ -3442,7 +3442,7 @@ void MainWindow::on_pushButton_save_res_task_clicked()
     results << string("third quartile nmu = ")+third_quartile_nmu_str+string(" \n");
 
 
-    results << string("# TIME TAKEN TO PLAN THE MOVEMENT [ms] \n");
+    results << string("# TIME TAKEN TO PLAN THE MOVEMENT [s] \n");
     results << string("prob_time = ");
     for(size_t i=0;i<this->prob_time_task.size();++i){
         string prob_str =  boost::str(boost::format("%.2f") % (this->prob_time_task.at(i)));
