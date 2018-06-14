@@ -1704,7 +1704,6 @@ if(solved){
     // -- compute the number of movement units -- //
     this->nmu_mov = this->getNumberMovementUnits(this->handVelocityNorm_mov,this->qtime_mov);
     ui.label_nmu->setText(QString::number(this->nmu_mov));
-
 } // if the problem has been solved
 }
 
