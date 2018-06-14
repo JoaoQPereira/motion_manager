@@ -217,7 +217,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab_scenario">
      <property name="enabled">
@@ -783,7 +783,7 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>1</x>
@@ -944,9 +944,9 @@ p, li { white-space: pre-wrap; }
         <widget class="QTableWidget" name="tableWidget_sol_mov">
          <property name="geometry">
           <rect>
-           <x>1</x>
+           <x>2</x>
            <y>20</y>
-           <width>640</width>
+           <width>639</width>
            <height>181</height>
           </rect>
          </property>
@@ -1039,7 +1039,7 @@ p, li { white-space: pre-wrap; }
        <widget class="QGroupBox" name="groupBox_sol_task">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>2</x>
           <y>10</y>
           <width>641</width>
           <height>241</height>
@@ -1053,7 +1053,7 @@ p, li { white-space: pre-wrap; }
           <rect>
            <x>470</x>
            <y>0</y>
-           <width>166</width>
+           <width>171</width>
            <height>19</height>
           </rect>
          </property>
@@ -1077,10 +1077,10 @@ p, li { white-space: pre-wrap; }
         <widget class="QWidget" name="layoutWidget_action_task">
          <property name="geometry">
           <rect>
-           <x>2</x>
-           <y>211</y>
-           <width>360</width>
-           <height>28</height>
+           <x>0</x>
+           <y>210</y>
+           <width>341</width>
+           <height>31</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_action_task">
@@ -1117,9 +1117,9 @@ p, li { white-space: pre-wrap; }
         <widget class="QTableWidget" name="tableWidget_sol_task">
          <property name="geometry">
           <rect>
-           <x>0</x>
+           <x>2</x>
            <y>20</y>
-           <width>631</width>
+           <width>639</width>
            <height>181</height>
           </rect>
          </property>
@@ -1127,9 +1127,9 @@ p, li { white-space: pre-wrap; }
         <widget class="QCheckBox" name="checkBox_comp_exec">
          <property name="geometry">
           <rect>
-           <x>475</x>
+           <x>485</x>
            <y>214</y>
-           <width>170</width>
+           <width>161</width>
            <height>23</height>
           </rect>
          </property>
@@ -1174,7 +1174,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab_results_plan_mov">
          <attribute name="title">
@@ -1255,7 +1255,7 @@ p, li { white-space: pre-wrap; }
                 </font>
                </property>
                <property name="text">
-                <string>Solving time [ms]:</string>
+                <string>Solving time [sec]:</string>
                </property>
               </widget>
              </item>
@@ -1356,7 +1356,7 @@ p, li { white-space: pre-wrap; }
            <rect>
             <x>10</x>
             <y>330</y>
-            <width>1055</width>
+            <width>1058</width>
             <height>41</height>
            </rect>
           </property>
@@ -1432,7 +1432,7 @@ p, li { white-space: pre-wrap; }
                 </font>
                </property>
                <property name="text">
-                <string>Solving time [ms]. Mean(SD):</string>
+                <string>Solving time [sec]. Mean(SD):</string>
                </property>
               </widget>
              </item>

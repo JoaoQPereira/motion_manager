@@ -1481,7 +1481,7 @@ long long Problem::GetTimeMs64()
 
 double Problem::getTime()
 {
-    return this->exec_time;
+    return this->exec_time/1000;
 }
 
 
