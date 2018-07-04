@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Task_ExecuteDialogDesign</class>
+ <widget class="QDialog" name="Task_ExecuteDialogDesign">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>210</width>
+    <height>191</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Execution Settings</string>
+  </property>
+  <widget class="QGroupBox" name="groupBox_execute">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>18</y>
+     <width>161</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="title">
+    <string>Execute the task in</string>
+   </property>
+   <widget class="QRadioButton" name="radioButton_execTask_Robot">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>60</y>
+      <width>91</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Robot</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_execTask_VRep">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>31</y>
+      <width>161</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>V-Rep Simulator</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="pushButtonOK">
+   <property name="geometry">
+    <rect>
+     <x>105</x>
+     <y>150</y>
+     <width>85</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&amp;OK</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_rememberChoice">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>120</y>
+     <width>161</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Don't ask again</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonOK</sender>
+   <signal>clicked()</signal>
+   <receiver>Task_ExecuteDialogDesign</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>239</x>
+     <y>132</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>150</x>
+     <y>79</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

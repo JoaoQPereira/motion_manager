@@ -762,7 +762,7 @@ void TolDialogHUMP::on_pushButton_save_clicked()
        stream << "acc_approach_5=" << ui->lineEdit_acc_approach_5->text().toStdString().c_str() << endl;
        stream << "acc_approach_6=" << ui->lineEdit_acc_approach_6->text().toStdString().c_str() << endl;
        stream << "acc_approach_7=" << ui->lineEdit_acc_approach_7->text().toStdString().c_str() << endl;
-       stream << "acc_approach_8=" << ui->lineEdit_acc_approach_8->text().toStdString().c_str() << endl;
+       stream << "acc_approach_8=" << ui->linradioButton_transeEdit_acc_approach_8->text().toStdString().c_str() << endl;
        stream << "acc_approach_9=" << ui->lineEdit_acc_approach_9->text().toStdString().c_str() << endl;
        stream << "acc_approach_10=" << ui->lineEdit_acc_approach_10->text().toStdString().c_str() << endl;
        stream << "acc_approach_11=" << ui->lineEdit_acc_approach_11->text().toStdString().c_str() << endl;

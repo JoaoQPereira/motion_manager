@@ -20,6 +20,8 @@
 #include "vrepcommdialog.hpp"
 #include "rvizcommdialog.hpp"
 #include "toldialoghump.hpp"
+#include "mov_executedialog.hpp"
+#include "task_executedialog.hpp"
 #include "config.hpp"
 #include "rrtdialog.hpp"
 #include "rrtconnectdialog.hpp"
@@ -237,22 +239,6 @@ public Q_SLOTS:
          * @brief This method executes the selected movement
          */
         void on_pushButton_execMov_clicked();
-#if MOVEIT==1
-        /**
-         * @brief on_pushButton_execMov_moveit_clicked
-         */
-        void on_pushButton_execMov_moveit_clicked();
-#endif
-
-        /**
-         * @brief on_pushButton_execMov_moveit_pressed
-         */
-        void on_pushButton_execMov_moveit_pressed();
-
-        /**
-         * @brief This method executes the selected movement
-         */
-        void on_pushButton_execMov_pressed();
 
         /**
          * @brief This method reload the scenario and resets the related variables
@@ -275,19 +261,14 @@ public Q_SLOTS:
         void on_pushButton_clear_task_clicked();
 
         /**
-         * @brief This method executes the current task
-         */
-        void on_pushButton_execTask_clicked();
-
-        /**
-         * @brief This method executes the current task
-         */
-        void on_pushButton_execTask_pressed();
-
-        /**
          * @brief This method saves the current task to file
          */
         void on_pushButton_save_task_clicked();
+
+        /**
+         * @brief This method executes the task
+         */
+        void on_pushButton_execTask_clicked();
 
         /**
          * @brief This method loads the current task from file
@@ -322,6 +303,22 @@ public Q_SLOTS:
          * c=true => "connected", c=false => "disconnected"
          */
         void updateRosStatus(bool c);
+
+        /**
+         * @brief This method executes the planned movement in the selected plataform
+         * @param c, a
+         * c=0 => "V-Rep", c=1 => "robot", c=2 => "MoveIt"
+         * a=true => "Don't ask again", a=false => "ask again"
+         */
+        void execMove(int c, bool a);
+
+        /**
+         * @brief This method executes the task in the selected plataform
+         * @param c, a
+         * c=0 => "V-Rep", c=1 => "robot"
+         * a=true => "Don't ask again", a=false => "ask again"
+         */
+        void execTask(int c, bool a);
 
         /**
          * @brief This method updates the V-REP status
@@ -433,6 +430,8 @@ private:
         RVizCommDialog *mrvizCommdlg; /**< handle of the RViz communication dialog */
 #endif
         TolDialogHUMP *mTolHumpdlg; /**< handle of the HUMP tuning dialog */
+        Mov_ExecuteDialog *mMovExecutedlg; /**< handle of the Execute Settings dialog in movements*/
+        Task_ExecuteDialog *mTaskExecutedlg; /**< handle of the Execute Settings dialog in tasks */
         RRTDialog *mRRTdlg; /**< handle of the RRT tuning dialog */
         RRTConnectDialog *mRRTConnectdlg; /**< handle of the RRT Connect tuning dialog */
         RRTstarDialog *mRRTstardlg; /**< handle of the RRT star tuning dialog */
@@ -444,6 +443,10 @@ private:
         CompVelocityDialog *mCompVeldlg; /**< handle of the velocity components dlg */
         int scenario_id; /**< id of the current scenario */
         QVector<QString> scenarios;  /**< list of scenarios */
+        int usedPlat_task; /**< platform used to execute the task */
+        bool execSettings_task = false; /** < ask again you options: V-Rep or robot*/
+        int usedPlat_move; /**< platform used to execute the planned movement */
+        bool execSettings_move = false; /** < ask again you options: V-Rep or robot*/
 
         vector< vector < double > > timesteps_mov; /**< current time steps of the movement */
         QVector<double> qtime_mov; /**< time of the current movement for plotting */

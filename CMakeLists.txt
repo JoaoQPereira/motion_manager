@@ -259,7 +259,6 @@ target_link_libraries(${PROJECT_NAME} EigenPCA)
 target_link_libraries(${PROJECT_NAME} Persistence1D)
 
 
-
 ##############################################################################
 # Testing
 ##############################################################################

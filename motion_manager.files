@@ -8,6 +8,8 @@ include/motion_manager/handposcolor.hpp
 include/motion_manager/handposfunction.hpp
 include/motion_manager/handposplot.hpp
 include/motion_manager/main_window.hpp
+include/motion_manager/mov_executedialog.hpp
+include/motion_manager/mov_executedialog.ui
 include/motion_manager/movement.hpp
 include/motion_manager/object.hpp
 include/motion_manager/point.hpp
@@ -28,9 +30,13 @@ include/motion_manager/rvizcommdialog.hpp
 include/motion_manager/scenario.hpp
 include/motion_manager/target.hpp
 include/motion_manager/task.hpp
+include/motion_manager/task_executedialog.hpp
 include/motion_manager/toldialoghump.hpp
 include/motion_manager/v_repConst.hpp
 include/motion_manager/vrepcommdialog.hpp
+include/task_executedialog.cpp
+include/task_executedialog.h
+include/task_executedialog.ui
 package.xml
 resources/images.qrc
 resources/images/icon.png
@@ -43,6 +49,7 @@ src/handposfunction.cpp
 src/handposplot.cpp
 src/main.cpp
 src/main_window.cpp
+src/mov_executedialog.cpp
 src/movement.cpp
 src/object.cpp
 src/point.cpp
@@ -52,7 +59,6 @@ src/powerlaw3ddialog.cpp
 src/prmdialog.cpp
 src/prmstardialog.cpp
 src/problem.cpp
-src/problem.cpp.orig
 src/qnode.cpp
 src/results_plan_joints_dialog.cpp
 src/robot.cpp
@@ -64,10 +70,12 @@ src/rvizcommdialog.cpp
 src/scenario.cpp
 src/target.cpp
 src/task.cpp
+src/task_executedialog.cpp
 src/toldialoghump.cpp
 src/vrepcommdialog.cpp
 ui/comp_velocitydialog.ui
 ui/main_window.ui
+ui/mov_executedialog.ui
 ui/power_law_3ddialog.ui
 ui/power_lawdialog.ui
 ui/prmdialog.ui
@@ -78,5 +86,6 @@ ui/rrtconnectdialog.ui
 ui/rrtdialog.ui
 ui/rrtstardialog.ui
 ui/rvizcommdialog.ui
+ui/task_executedialog.ui
 ui/toldialoghump.ui
 ui/vrepcommdialog.ui

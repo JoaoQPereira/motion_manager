@@ -62,7 +62,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>4</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab_huml_params">
     <attribute name="title">
@@ -348,7 +348,7 @@
      <property name="title">
       <string>Joint Expense factors</string>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>2</x>
@@ -803,13 +803,13 @@
      <property name="title">
       <string>Tolerances for the final posture</string>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>30</y>
         <width>191</width>
-        <height>61</height>
+        <height>62</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -869,7 +869,7 @@
      <property name="title">
       <string>Geometric Dimensions of the arm and of the fingers</string>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>181</x>
@@ -919,7 +919,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>280</x>
@@ -969,7 +969,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>380</x>
@@ -1019,7 +1019,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>1</x>
@@ -1059,7 +1059,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>4</x>
@@ -3456,7 +3456,7 @@
    <property name="title">
     <string>Approach and retreat settings</string>
    </property>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -3488,8 +3488,6 @@
      </item>
     </layout>
    </widget>
-   <zorder>layoutWidget_5</zorder>
-   <zorder></zorder>
   </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
@@ -3531,7 +3529,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -3579,7 +3577,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -3590,7 +3588,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_8"/>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -3601,7 +3599,7 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_8"/>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>610</x>
@@ -3635,11 +3633,12 @@
   </widget>
   <zorder>layoutWidget</zorder>
   <zorder>layoutWidget</zorder>
-  <zorder>layoutWidget_max_vel</zorder>
+  <zorder>layoutWidget</zorder>
+  <zorder>layoutWidget</zorder>
+  <zorder>layoutWidget</zorder>
   <zorder>groupBox_constraints</zorder>
   <zorder>tabWidget</zorder>
   <zorder>groupBox_constraints_2</zorder>
-  <zorder>layoutWidget_max_vel_2</zorder>
  </widget>
  <resources/>
  <connections>

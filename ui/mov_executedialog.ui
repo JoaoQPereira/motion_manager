@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Mov_ExecuteDialogDesign</class>
+ <widget class="QDialog" name="Mov_ExecuteDialogDesign">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>301</width>
+    <height>222</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Execution Settings</string>
+  </property>
+  <widget class="QGroupBox" name="groupBox_execute">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>18</y>
+     <width>251</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="title">
+    <string>Execute the planned movements in</string>
+   </property>
+   <widget class="QRadioButton" name="radioButton_execMov_Robot">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>60</y>
+      <width>91</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Robot</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_execMov_VRep">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>31</y>
+      <width>161</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>V-Rep Simulator</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton_execMov_MoveIt">
+    <property name="geometry">
+     <rect>
+      <x>11</x>
+      <y>89</y>
+      <width>161</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>RViz MoveIt</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="pushButtonOK">
+   <property name="geometry">
+    <rect>
+     <x>196</x>
+     <y>180</y>
+     <width>85</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&amp;OK</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_rememberChoice">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>150</y>
+     <width>161</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Don't ask again</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushButtonOK</sender>
+   <signal>clicked()</signal>
+   <receiver>Mov_ExecuteDialogDesign</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>238</x>
+     <y>162</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>151</x>
+     <y>93</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

@@ -52,6 +52,14 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     mTolHumpdlg = new TolDialogHUMP(this);
     mTolHumpdlg->setModal(true);
 
+    //create Execute Movement Tunning dialog
+    mMovExecutedlg = new Mov_ExecuteDialog(&qnode, this);
+    mMovExecutedlg->setModal(true);
+
+    //create Execute Movement Tunning dialog
+    mTaskExecutedlg = new Task_ExecuteDialog(&qnode, this);
+    mTaskExecutedlg->setModal(true);
+
     //create RRT Tuning dialog
     mRRTdlg = new RRTDialog(this);
     mRRTdlg->setModal(true);
@@ -89,6 +97,8 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     mCompVeldlg->setModal(false);
 
 
+
+
     ReadSettings();
     setWindowIcon(QIcon(":/images/motion_managerIcon.png"));
 
@@ -112,6 +122,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     QObject::connect(mrvizCommdlg, SIGNAL(rvizConnected(bool)), this, SLOT(updateRVizStatus(bool)));
 #endif
 
+    // Plataform used to execute the planned movement
+    QObject::connect(mMovExecutedlg, SIGNAL(addPlat_execMove(int, bool)), this, SLOT(execMove(int, bool)));
+
+    // Plataform used to execute the selected task
+    QObject::connect(mTaskExecutedlg, SIGNAL(addPlat_execTask(int, bool)), this, SLOT(execTask(int, bool)));
 
     // new element in the scenario signal
     QObject::connect(&qnode, SIGNAL(newElement(string)),this,SLOT(addElement(string)));
@@ -134,7 +149,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     ui.tabWidget_main->setCurrentIndex(0);
     ui.tabWidget_sol->setCurrentIndex(0);
 #if MOVEIT==0
-    ui.pushButton_execMov_moveit->setEnabled(false);
     ui.comboBox_planner->clear();
     ui.comboBox_planner->addItem(QString("HUMP"));
 #endif
@@ -243,6 +257,48 @@ void MainWindow::updateRVizStatus(bool c)
     ui.groupBox_getElements->setEnabled(false);
 }
 
+
+void MainWindow::execMove(int c, bool a)
+{
+    //Execute the planned movement in V-REP simulator
+    if(c == 0)
+        qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+
+    //Execute the planned movement in Robot
+    // else if(c == 1)
+
+    //Execute the planned movement in RViz
+#if MOVEIT==1
+    else if(c == 2 && this->moveit_mov)
+        this->m_planner->execute(m_results);
+#endif
+
+    execSettings_move = a;
+
+    if(execSettings_move == true)
+        usedPlat_move = c;
+}
+
+
+void MainWindow::execTask(int c, bool a)
+{
+    //Execute the task in V-REP simulator
+    if(c == 0)
+    {
+        if(ui.checkBox_comp_exec->isChecked())
+            qnode.execTask_complete(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
+        else
+            qnode.execTask(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
+    }
+    //Execute the task in Robot
+    // else if(c == 1)
+
+    execSettings_task = a;
+
+    if(execSettings_task == true)
+        usedPlat_task = c;
+
+}
 
 void MainWindow::addElement(string value)
 {
@@ -1590,11 +1646,6 @@ if(solved){
     }
     ui.label_totalTime_value_mov->setText(QString::number(mov_duration).toStdString().c_str());
     ui.tabWidget_sol->setEnabled(true);
-    if(this->moveit_mov){
-        ui.pushButton_execMov_moveit->setEnabled(true);
-    }else{
-        ui.pushButton_execMov_moveit->setEnabled(false);
-    }
 
     this->tols_stop_mov.clear();
     double tol_stop = ui.lineEdit_tol_stop_mov->text().toDouble();
@@ -1837,11 +1888,6 @@ void MainWindow::on_pushButton_plan_3d_power_law_clicked()
             problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
             if(prob->getSolved()){
                 this->on_pushButton_append_mov_clicked();
-                if(planner_id!=0){
-#if MOVEIT==1
-                    this->on_pushButton_execMov_moveit_clicked();
-#endif
-                }
                 this->on_pushButton_execMov_clicked();
 
                 solved = true;
@@ -1978,11 +2024,6 @@ void MainWindow::on_pushButton_plan_2d_power_law_clicked()
             problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
             if(prob->getSolved()){
                 this->on_pushButton_append_mov_clicked();
-                if(planner_id!=0){
-#if MOVEIT==1
-                    this->on_pushButton_execMov_moveit_clicked();
-#endif
-                }
                 this->on_pushButton_execMov_clicked();
 
                 solved = true;
@@ -1996,33 +2037,24 @@ void MainWindow::on_pushButton_plan_2d_power_law_clicked()
 }
 
 
-void MainWindow::on_pushButton_execMov_pressed()
-{
-
-    qnode.log(QNode::Info,std::string("Executing the movement in V-REP . . ."));
-
-}
-
-
-void MainWindow::on_pushButton_execMov_moveit_pressed()
-{
-    qnode.log(QNode::Info,std::string("Executing the movement in RViz . . ."));
-}
-
-
 void MainWindow::on_pushButton_execMov_clicked()
 {
-    qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
-}
-
-
+    if(execSettings_move == false)
+       mMovExecutedlg->show();
+    else
+    {
+        //Execute the planned movement in VRep
+        if(usedPlat_move == 0)
+            qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+        //Execute the planned movement in Robot
+        //else if(usedPlat_move == 1)
+        //Execute the planned movement in RViz
 #if MOVEIT==1
-void MainWindow::on_pushButton_execMov_moveit_clicked()
-{
-    if(this->moveit_mov)
-        this->m_planner->execute(m_results);
-}
+            else if(c == 2 && this->moveit_mov)
+                this->m_planner->execute(m_results);
 #endif
+    }
+}
 
 
 void MainWindow::on_pushButton_stop_mov_clicked()
@@ -2065,19 +2097,24 @@ void MainWindow::on_pushButton_save_end_posture_clicked()
 }
 
 
-void MainWindow::on_pushButton_execTask_pressed(){
-
-    qnode.log(QNode::Info,std::string("Executing the task . . ."));
-}
-
-
 void MainWindow::on_pushButton_execTask_clicked()
 {
-    if(ui.checkBox_comp_exec->isChecked()){
-        qnode.execTask_complete(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
-    }else{
-        qnode.execTask(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
-    }
+     if(execSettings_task == false)
+        mTaskExecutedlg->show();
+     else
+     {
+         //Execute the task in Vrep
+         if(usedPlat_task == 0)
+         {
+             if(ui.checkBox_comp_exec->isChecked())
+                 qnode.execTask_complete(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
+             else
+                 qnode.execTask(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
+         }
+
+         //Execute the task in Robot
+         // else if(usedPlat_task == 1)
+     }
 }
 
 
@@ -3687,7 +3724,6 @@ void MainWindow::on_pushButton_save_res_task_clicked()
                     joints_pos_vel_acc << n_steps_str + string("\n");
                 else
                     joints_pos_vel_acc << n_steps_str + string(", ");
-
             }
         }
     }
