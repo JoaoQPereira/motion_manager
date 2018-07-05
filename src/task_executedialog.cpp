@@ -11,6 +11,10 @@ Task_ExecuteDialog::Task_ExecuteDialog(QNode *q, QWidget *parent) :
 {
     ui->setupUi(this);
     qnode = q;
+
+#if ROBOT==0
+    ui->radioButton_execTask_Robot->setEnabled(false);
+#endif
 }
 
 Task_ExecuteDialog::~Task_ExecuteDialog()

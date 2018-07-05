@@ -8,25 +8,50 @@
 
 
 namespace motion_manager{
-
+/**
+ * @brief This class defines the dialog of the execution settings (platform used to execute the planned movement)
+ */
 class Mov_ExecuteDialog : public QDialog
 {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Mov_ExecuteDialog, a contructor
+     * @param q
+     * @param parent
+     */
     explicit Mov_ExecuteDialog(QNode* q, QWidget *parent = 0);
 
+    /**
+     * @brief ~Mov_ExecuteDialog, a destructor
+     */
     ~Mov_ExecuteDialog();
 
 public Q_SLOTS:
+    /**
+     * @brief on_pushButtonOK_clicked
+     * This method checks which platform to use to execute the planned movement
+     */
     void on_pushButtonOK_clicked();
+
+    /**
+     * @brief on_pushButtonOK_pressed
+     * This method checks if the movement is being executed
+     */
     void on_pushButtonOK_pressed();
 
 private:
-    Ui::Mov_ExecuteDialogDesign *ui;
+    Ui::Mov_ExecuteDialogDesign *ui; /**< handle of the user interface */
     QNode *qnode; /**< pointer of the ROS node */
 
 Q_SIGNALS:
+    /**
+     * @brief addPlat_execMove
+     * This method signals which platform is used to execute the planned movement and if this dialog will be displayed again
+     * @param c (c = 0 => "V-rep simulator", c = 1 => "Robot", c = 2 => "RViz MoveIt")
+     * @param a (a = true => "Don't ask again", a = false => "ask again")
+     */
     void addPlat_execMove(int c, bool a);
 };
 

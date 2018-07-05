@@ -275,6 +275,7 @@ void MainWindow::execMove(int c, bool a)
 
     execSettings_move = a;
 
+    //The user chooses the "Don't ask again" option
     if(execSettings_move == true)
         usedPlat_move = c;
 }
@@ -295,10 +296,11 @@ void MainWindow::execTask(int c, bool a)
 
     execSettings_task = a;
 
+    //The user chooses the "Don't ask again" option
     if(execSettings_task == true)
         usedPlat_task = c;
-
 }
+
 
 void MainWindow::addElement(string value)
 {
@@ -2039,19 +2041,24 @@ void MainWindow::on_pushButton_plan_2d_power_law_clicked()
 
 void MainWindow::on_pushButton_execMov_clicked()
 {
+    //If the dialog hasn't been displayed or the user hasn't chosen the "don't ask again" option
     if(execSettings_move == false)
        mMovExecutedlg->show();
+
+    //If the the user has chosen the "don't ask again" option
     else
     {
-        //Execute the planned movement in VRep
+        //Execute the planned movement in V-Rep simulator
         if(usedPlat_move == 0)
             qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+
         //Execute the planned movement in Robot
         //else if(usedPlat_move == 1)
-        //Execute the planned movement in RViz
+
+        //Execute the planned movement in RViz MoveIt
 #if MOVEIT==1
-            else if(c == 2 && this->moveit_mov)
-                this->m_planner->execute(m_results);
+        else if(usedPlat_move == 2 && this->moveit_mov)
+            this->m_planner->execute(m_results);
 #endif
     }
 }
@@ -2098,12 +2105,15 @@ void MainWindow::on_pushButton_save_end_posture_clicked()
 
 
 void MainWindow::on_pushButton_execTask_clicked()
-{
+{ 
+     //If the dialog hasn't been displayed or the user hasn't chosen the "don't ask again" option
      if(execSettings_task == false)
         mTaskExecutedlg->show();
+
+     //If the the user has chosen the "don't ask again" option
      else
      {
-         //Execute the task in Vrep
+         //Execute the task in Vrep simulator
          if(usedPlat_task == 0)
          {
              if(ui.checkBox_comp_exec->isChecked())

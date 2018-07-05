@@ -15,3 +15,5 @@
 
 // MOVEIT
 #define MOVEIT @MOVEIT@
+// ROBOT
+#define ROBOT @ROBOT@

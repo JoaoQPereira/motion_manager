@@ -306,17 +306,15 @@ public Q_SLOTS:
 
         /**
          * @brief This method executes the planned movement in the selected plataform
-         * @param c, a
-         * c=0 => "V-Rep", c=1 => "robot", c=2 => "MoveIt"
-         * a=true => "Don't ask again", a=false => "ask again"
+         * @param c , c = 0 => "V-Rep simulator", c = 1 => "robot", c = 2 => "RViz MoveIt"
+         * @param a , a = true => "Don't ask again", a = false => "ask again"
          */
         void execMove(int c, bool a);
 
         /**
          * @brief This method executes the task in the selected plataform
-         * @param c, a
-         * c=0 => "V-Rep", c=1 => "robot"
-         * a=true => "Don't ask again", a=false => "ask again"
+         * @param c , c = 0 => "V-Rep simulator", c = 1 => "robot"
+         * @param a , a = true => "Don't ask again", a = false => "ask again"
          */
         void execTask(int c, bool a);
 

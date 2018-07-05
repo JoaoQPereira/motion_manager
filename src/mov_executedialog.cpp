@@ -12,6 +12,9 @@ Mov_ExecuteDialog::Mov_ExecuteDialog(QNode *q, QWidget *parent) :
     ui->setupUi(this);
     qnode = q;
 
+#if ROBOT==0
+    ui->radioButton_execMov_Robot->setEnabled(false);
+#endif
 #if MOVEIT==0
     ui->radioButton_execMov_MoveIt->setEnabled(false);
 #endif
