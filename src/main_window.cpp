@@ -42,6 +42,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     // create Vrep Communication dialog
     mvrepCommdlg = new VrepCommDialog(&qnode, this);
     mvrepCommdlg->setModal(true);
+
 #if MOVEIT==1
     // create RViz Communication dialog
     mrvizCommdlg = new RVizCommDialog(&qnode, this);
@@ -97,8 +98,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     mCompVeldlg->setModal(false);
 
 
-
-
     ReadSettings();
     setWindowIcon(QIcon(":/images/motion_managerIcon.png"));
 
@@ -118,7 +117,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     QObject::connect(mvrepCommdlg, SIGNAL(vrepConnected(bool)), this, SLOT(updateVrepStatus(bool)));
 
 #if MOVEIT==1
-    // RViz connectedsignal
+    // RViz connected signal
     QObject::connect(mrvizCommdlg, SIGNAL(rvizConnected(bool)), this, SLOT(updateRVizStatus(bool)));
 #endif
 
@@ -194,14 +193,15 @@ void MainWindow::updateLoggingView()
 
 void MainWindow::updateRosStatus(bool c)
 {
-
-    if (c){
+    if (c)
+    {
         ui.labelRosComm->setText(QString("connected"));
         ui.actionVrep_Communication->setEnabled(true);
         ui.labelStatusVrep->setEnabled(true);
         ui.labelVrepComm->setEnabled(true);
-    }else{
-
+    }
+    else
+    {
         ui.labelRosComm->setText(QString("disconnected"));
         ui.actionVrep_Communication->setEnabled(false);
         ui.labelStatusVrep->setEnabled(false);
@@ -212,7 +212,8 @@ void MainWindow::updateRosStatus(bool c)
 
 void MainWindow::updateVrepStatus(bool c)
 {
-    if (c){
+    if (c)
+    {
         ui.labelVrepComm->setText(QString("on-line"));
 #if MOVEIT==1
         ui.actionRViz_Communication->setEnabled(true);
@@ -226,7 +227,9 @@ void MainWindow::updateVrepStatus(bool c)
         //ui.tab_scenario->setEnabled(true);
         //ui.groupBox_selectScenario->setEnabled(true);
         //ui.listWidget_scenario->setCurrentRow(0);
-    }else{
+    }
+    else
+    {
         ui.labelVrepComm->setText(QString("off-line"));
         ui.actionRViz_Communication->setEnabled(false);
         ui.labelStatusRViz->setEnabled(false);
@@ -238,7 +241,6 @@ void MainWindow::updateVrepStatus(bool c)
     ui.pushButton_loadScenario->setEnabled(false);
     ui.groupBox_getElements->setEnabled(false);
 }
-
 
 void MainWindow::updateRVizStatus(bool c)
 {
@@ -359,6 +361,7 @@ void MainWindow::on_actionVrep_Communication_triggered()
 {
     mvrepCommdlg->show();
 }
+
 
 #if MOVEIT==1
 void MainWindow::on_actionRViz_Communication_triggered()
@@ -2043,7 +2046,9 @@ void MainWindow::on_pushButton_execMov_clicked()
 {
     //If the dialog hasn't been displayed or the user hasn't chosen the "don't ask again" option
     if(execSettings_move == false)
-       mMovExecutedlg->show();
+    {
+        mMovExecutedlg->show();
+    }
 
     //If the the user has chosen the "don't ask again" option
     else
@@ -2066,7 +2071,6 @@ void MainWindow::on_pushButton_execMov_clicked()
 
 void MainWindow::on_pushButton_stop_mov_clicked()
 {
-
     qnode.stopSim();
     qnode.resetSimTime();
     qnode.resetGlobals();
@@ -2107,8 +2111,10 @@ void MainWindow::on_pushButton_save_end_posture_clicked()
 void MainWindow::on_pushButton_execTask_clicked()
 { 
      //If the dialog hasn't been displayed or the user hasn't chosen the "don't ask again" option
-     if(execSettings_task == false)
+    if(execSettings_task == false)
+    {
         mTaskExecutedlg->show();
+    }
 
      //If the the user has chosen the "don't ask again" option
      else
@@ -3358,106 +3364,6 @@ void MainWindow::on_pushButton_save_res_mov_clicked()
     }
 
 
-    //Joints position, velocity and acceleration
-    if(!this->jointsPosition_mov.empty() && !this->jointsVelocity_mov.empty() && !this->jointsAcceleration_mov.empty())
-    {
-        string filename_joints_pos("joints_pos_vel_acc_mov.txt");
-        ofstream joints_pos_vel_acc;
-        joints_pos_vel_acc.open(path.toStdString()+filename_joints_pos);
-
-        int aux = ui.listWidget_movs->count();
-        joints_pos_vel_acc << string("# ") << ui.listWidget_movs->item(aux-1)->text().toStdString().c_str() << string("\n");
-        joints_pos_vel_acc << string("*****************************************************************") +
-                              string("******************************************************\n");
-
-        //Number of movements
-        joints_pos_vel_acc << string("# NUMBER OF MOVEMENTS\n");
-        joints_pos_vel_acc << string("1 \n\n");
-
-
-        std::vector<MatrixXd> jointsPosition_mov_real;
-        std::vector<MatrixXd> jointsPosition_mov_w_offset;
-        //the trajectory obtained doesn't include the joints offsets
-        jointsPosition_mov_w_offset = this->jointsPosition_mov;
-        //add the joints offsets
-        jointsPosition_mov_real = qnode.realJointsPosition(jointsPosition_mov_w_offset);
-
-
-        //Number of stages
-        joints_pos_vel_acc << string("# NUMBER OF STAGES\n");
-        string n_stages_str = boost::str(boost::format("%.d") % (jointsPosition_mov_real.size()));
-        joints_pos_vel_acc <<  n_stages_str + string("\n");
-
-
-        //Number of steps
-        joints_pos_vel_acc << string("# NUMBER OF STEPS\n");
-        for(size_t i = 0; i < jointsPosition_mov_real.size(); ++i)
-        {
-            MatrixXd jointsPosition_stage = jointsPosition_mov_real.at(i);
-            string n_steps_str =  boost::str(boost::format("%.d") % (jointsPosition_stage.rows()));
-
-            if(i == jointsPosition_mov_real.size() - 1)
-                joints_pos_vel_acc << n_steps_str + string("\n");
-            else
-                joints_pos_vel_acc << n_steps_str + string(", ");
-        }
-
-
-        int init_stage = 0;
-        string n_joints =  boost::str(boost::format("%.d") % (JOINTS_ARM+JOINTS_HAND));
-        joints_pos_vel_acc << string("# PLANNED MOVEMENT: STEP, TIME [s], JOINTS(1...") + n_joints + string(") [rad]|[rad/s]|[rad/s²] \n");
-
-        for(size_t k = 0; k < jointsPosition_mov_real.size(); ++k)
-        {
-            MatrixXd jointsPosition_stage = jointsPosition_mov_real.at(k);
-            MatrixXd jointsVelocity_stage = this->jointsVelocity_mov.at(k);
-            MatrixXd jointsAcceleration_stage = this->jointsAcceleration_mov.at(k);
-
-            int steps_stage = jointsPosition_stage.rows();
-
-            for(int i = 0; i < jointsPosition_stage.rows(); ++i)
-            {
-                string step_str =  boost::str(boost::format("%.d") % (i));
-
-                double time = this->qtime_mov.at(i + init_stage);
-                string time_str =  boost::str(boost::format("%.2f") % (time));
-                boost::replace_all(time_str,",",".");
-
-                joints_pos_vel_acc << step_str + string(", ") + time_str + string(", ");
-
-
-                for(int j = 0; j < jointsPosition_stage.cols(); ++j)
-                {
-                    double joints_value = jointsPosition_stage(i,j);
-                    string joints_value_str = boost::str(boost::format("%.2f") % (joints_value));
-                    boost::replace_all(joints_value_str,",",".");
-
-                    double joints_vel = jointsVelocity_stage(i,j);
-                    string joints_vel_str = boost::str(boost::format("%.2f") % (joints_vel));
-                    boost::replace_all(joints_vel_str,",",".");
-
-                    double joints_acc = jointsAcceleration_stage(i,j);
-                    string joints_acc_str = boost::str(boost::format("%.2f") % (joints_acc));
-                    boost::replace_all(joints_acc_str,",",".");
-
-
-                    if (j == jointsPosition_stage.cols() - 1)
-                        joints_pos_vel_acc << joints_value_str + string("|") + joints_vel_str + string("|") + joints_acc_str;
-                    else
-                        joints_pos_vel_acc << joints_value_str + string("|") + joints_vel_str + string("|") + joints_acc_str + string(", ");
-                }
-
-                joints_pos_vel_acc << string("\n");
-            }
-
-            init_stage = init_stage + steps_stage;
-        }
-
-        joints_pos_vel_acc.close();
-    }
-
-
-
     // hand velocity
     if(!this->handVelocityNorm_mov.empty())
     {
@@ -3682,60 +3588,6 @@ void MainWindow::on_pushButton_save_res_task_clicked()
             hand_pos << x_str+string(", ")+y_str+string(", ")+z_str+string("\n");
         }
         hand_pos.close();
-    }
-
-
-
-    //Joints position, velocity and acceleration
-    if(!this->jointsPosition_task.empty() && !this->jointsVelocity_task.empty() && !this->jointsAcceleration_task.empty())
-    {
-        string filename_joints_pos("joints_pos_vel_acc_mov.txt");
-        ofstream joints_pos_vel_acc;
-        joints_pos_vel_acc.open(path.toStdString()+filename_joints_pos);
-
-        for(int i = 0; i < ui.listWidget_movs->count(); ++i)
-            joints_pos_vel_acc << string("# ") << ui.listWidget_movs->item(i)->text().toStdString().c_str() << string("\n");
-
-        joints_pos_vel_acc << string("*****************************************************************") +
-                              string("******************************************************\n");
-
-
-        //Number of movements
-        joints_pos_vel_acc << string("# NUMBER OF MOVEMENTS\n");
-        string n_mov_str = boost::str(boost::format("%.d") % (this->jointsPosition_task.size()));
-        joints_pos_vel_acc << n_mov_str + string("\n");
-
-        //Number of stages
-        vector <MatrixXd> jointsPos_mov;
-        joints_pos_vel_acc << string("# NUMBER OF STAGES\n");
-        for(size_t m = 0; m < this->jointsPosition_task.size(); ++m)
-        {
-            jointsPos_mov = this->jointsPosition_task.at(m);
-            string n_stages_str = boost::str(boost::format("%.d") % (jointsPos_mov.size()));
-
-            if(m == this->jointsPosition_task.size() - 1)
-                joints_pos_vel_acc << n_stages_str + string("\n");
-            else
-                joints_pos_vel_acc << n_stages_str + string(", ");
-        }
-
-        //Number of steps
-        joints_pos_vel_acc << string("# NUMBER OF STEPS\n");
-        for(size_t m = 0; m < this->jointsPosition_task.size(); ++m)
-        {
-            jointsPos_mov = this->jointsPosition_task.at(m);
-
-            for(size_t i = 0; i < jointsPos_mov.size(); ++i)
-            {
-                MatrixXd jointsPos_stage = jointsPos_mov.at(i);
-                string n_steps_str =  boost::str(boost::format("%.d") % (jointsPos_stage.rows()));
-
-                if((m == this->jointsPosition_task.size() - 1) && (i == jointsPos_mov.size() - 1))
-                    joints_pos_vel_acc << n_steps_str + string("\n");
-                else
-                    joints_pos_vel_acc << n_steps_str + string(", ");
-            }
-        }
     }
 
 
@@ -4065,3 +3917,5 @@ double MainWindow::getThirdQuartile(vector<int> v)
     return third_quartile;
 }
 }  // namespace motion_manager
+
+

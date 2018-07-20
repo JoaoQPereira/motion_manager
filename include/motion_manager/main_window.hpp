@@ -418,7 +418,6 @@ public Q_SLOTS:
         void on_pushButton_save_res_task_clicked();
 
 
-
 private:
         Ui::MainWindowDesign ui; /**< handles of the main user interface */
         QNode qnode; /**< ROS node handle */

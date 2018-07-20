@@ -10,6 +10,7 @@
 #include <std_msgs/Float64.h>
 #include <sstream>
 #include <time.h>
+#include <QProcess>
 #include "../include/motion_manager/qnode.hpp"
 #include <vrep_common/simRosLoadScene.h>
 #include <vrep_common/simRosCloseScene.h>
@@ -30,9 +31,9 @@
 #include <vrep_common/simRosReadProximitySensor.h>
 #include <vrep_common/simRosSetObjectParent.h>
 #include <vrep_common/JointSetStateData.h>
-#include<vrep_common/simRosSetObjectIntParameter.h>
-#include<vrep_common/simRosSetJointForce.h>
-#include<vrep_common/simRosSetJointPosition.h>
+#include <vrep_common/simRosSetObjectIntParameter.h>
+#include <vrep_common/simRosSetJointForce.h>
+#include <vrep_common/simRosSetJointPosition.h>
 
 #include <geometric_shapes/solid_primitive_dims.h>
 
@@ -48,8 +49,8 @@ namespace motion_manager {
 
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
-	init_argv(argv)
-    {
+    init_argv(argv)
+{
     nodeName = "motion_manager";
     TotalTime = 0.0;
     right_hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
@@ -87,9 +88,10 @@ QNode::~QNode()
 bool QNode::on_init()
 {
     ros::init(init_argc,init_argv,"motion_manager");
-	if ( ! ros::master::check() ) {
+
+    if (!ros::master::check())
 		return false;
-	}
+
     ros::start();
     start();
 	return true;
@@ -99,11 +101,13 @@ bool QNode::on_init_url(const std::string &master_url, const std::string &host_u
 {
 	std::map<std::string,std::string> remappings;
 	remappings["__master"] = master_url;
-	remappings["__hostname"] = host_url;
+    remappings["__hostname"] = host_url;
+
     ros::init(remappings,"motion_manager");
-	if ( ! ros::master::check() ) {
+
+    if (!ros::master::check())
 		return false;
-	}
+
     ros::start();
     start();
 	return true;
@@ -117,7 +121,6 @@ void QNode::on_end()
 
 bool  QNode::loadScenario(const std::string& path,int id)
 {
-
     ros::NodeHandle n;
 
     // pause simulations
@@ -6150,7 +6153,6 @@ void QNode::stopSim()
 
 bool QNode::checkRViz()
 {
-
     FILE *fp;
     const int length=1000;
     char result[length]; // line to read
@@ -6160,23 +6162,26 @@ bool QNode::checkRViz()
     fp = popen("rosnode ping -c 1 /move_group", "r");
 
     int cnt=0;
-    while (fgets(result, length, fp) != NULL){
+    while (fgets(result, length, fp) != NULL)
+    {
      //   printf("%s", result)
-        if (cnt==1){
+        if (cnt==1)
+        {
             // second line
             std::string s1(result);
 
-            if (s1.find(s2) != std::string::npos){
+            if (s1.find(s2) != std::string::npos)
+            {
                 // V-REP is off-line
                 online=false;
-            }else{
+            }
+            else
+            {
                 // V-REP is on-line
                 online=true;
             }
-
         }
         cnt++;
-
     }
     return online;
 
@@ -6185,36 +6190,36 @@ bool QNode::checkRViz()
 
 bool QNode::checkVrep()
 {
-
     FILE *fp;
     const int length=1000;
     char result[length]; // line to read
     std::string s2("unknown node");
-    bool online=false;
+    bool online = false;
 
     fp = popen("rosnode ping -c 1 /vrep", "r");
 
     int cnt=0;
-    while (fgets(result, length, fp) != NULL){
-     //   printf("%s", result)
-        if (cnt==1){
+    while (fgets(result, length, fp) != NULL)
+    {
+        if (cnt==1)
+        {
             // second line
             std::string s1(result);
 
-            if (s1.find(s2) != std::string::npos){
+            if (s1.find(s2) != std::string::npos)
+            {
                 // V-REP is off-line
                 online=false;
-            }else{
+            }
+            else
+            {
                 // V-REP is on-line
                 online=true;
             }
-
         }
         cnt++;
-
     }
     return online;
-
 }
 
 

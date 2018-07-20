@@ -62,6 +62,9 @@ src/problem.cpp
 src/qnode.cpp
 src/results_plan_joints_dialog.cpp
 src/robot.cpp
+src/robotcommdialog.cpp
+src/robotcommdialog.hpp
+src/robotcommdialog.ui
 src/roscommdialog.cpp
 src/rrtconnectdialog.cpp
 src/rrtdialog.cpp
