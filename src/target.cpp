@@ -1,12 +1,12 @@
 #include "../include/motion_manager/target.hpp"
 
-namespace motion_manager{
 
+namespace motion_manager{
 
 Target::Target()
 {
-
 }
+
 
 Target::Target(string name, pos ppos, orient oor)
 {
@@ -19,6 +19,7 @@ Target::Target(string name, pos ppos, orient oor)
     this->m_or.yaw = oor.yaw;
 }
 
+
 Target::Target(const Target &tar)
 {
     this->m_name = tar.m_name;
@@ -30,10 +31,9 @@ Target::Target(const Target &tar)
     this->m_or.yaw = tar.m_or.yaw;
 }
 
+
 Target::~Target()
 {
-
-
 }
 
 } // namespace motion_manager

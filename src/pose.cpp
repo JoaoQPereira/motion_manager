@@ -1,7 +1,7 @@
 #include "../include/motion_manager/pose.hpp"
 
-namespace motion_manager{
 
+namespace motion_manager{
 
 Pose::Pose()
 {
@@ -16,6 +16,7 @@ Pose::Pose()
     this->obj_id = -1;
 }
 
+
 Pose::Pose(string name, pos ppos, orient oor)
 {
     this->m_name = name;
@@ -28,6 +29,7 @@ Pose::Pose(string name, pos ppos, orient oor)
     this->obj_related = false;
     this->obj_id = -1;
 }
+
 
 Pose::Pose(string name, pos ppos, orient oor, bool obj_rel, int id)
 {
@@ -56,10 +58,9 @@ Pose::Pose(const Pose &pose)
     this->obj_id = pose.obj_id;
 }
 
+
 Pose::~Pose()
 {
-
-
 }
 
 
@@ -68,15 +69,18 @@ void Pose::setObjRel(bool obj_rel)
     this->obj_related = obj_rel;
 }
 
+
 void Pose::setObjId(int id)
 {
     this->obj_id = id;
 }
 
+
 bool Pose::getObjRel()
 {
     return this->obj_related;
 }
+
 
 int Pose::getObjId()
 {

@@ -4,7 +4,6 @@
 namespace motion_manager{
 
 #if HAND==0
-
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs)
 {
     this->m_name = name;
@@ -28,7 +27,6 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs)
     this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
-
     this->mat_right = Matrix4d::Constant(1);
     this->mat_left = Matrix4d::Constant(1);
     this->mat_r_hand = Matrix4d::Constant(1);
@@ -37,7 +35,7 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs)
 
 
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-                   vector<double> &r, vector<double> &l)
+             vector<double> &r, vector<double> &l)
 {
     this->m_name = name;
     this->m_torso = torsospecs;
@@ -73,9 +71,9 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
 
 
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-                   vector<double> &r, vector<double> &l,
-                   vector<double> &min_rl, vector<double> &max_rl,
-                   vector<double> &min_ll, vector<double> &max_ll)
+             vector<double> &r, vector<double> &l,
+             vector<double> &min_rl, vector<double> &max_rl,
+             vector<double> &min_ll, vector<double> &max_ll)
 {
     this->m_name = name;
     this->m_torso = torsospecs;
@@ -113,11 +111,7 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
     this->mat_r_hand = Matrix4d::Constant(1);
     this->mat_l_hand = Matrix4d::Constant(1);
 }
-
-
-
-#elif HAND==1
-
+#else
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs)
 {
     this->m_name = name;
@@ -157,7 +151,7 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs
 
 
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
-                   vector<double>& r, vector<double>& l)
+             vector<double>& r, vector<double>& l)
 {
     this->m_name = name;
     this->m_torso = torsospecs;
@@ -201,9 +195,9 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs
 
 
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
-                   vector<double> &r, vector<double> &l,
-                   vector<double> &min_rl, vector<double> &max_rl,
-                   vector<double> &min_ll, vector<double> &max_ll)
+             vector<double> &r, vector<double> &l,
+             vector<double> &min_rl, vector<double> &max_rl,
+             vector<double> &min_ll, vector<double> &max_ll)
 {
     this->m_name = name;
     this->m_torso = torsospecs;
@@ -250,11 +244,12 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs
     this->mat_l_hand = Matrix4d::Identity(4,4);
 }
 
+
 #if HEAD==1
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
-                   robot_part headspecs, vector<double> &r, vector<double> &l,
-                   vector<double> &min_rl, vector<double> &max_rl,
-                   vector<double> &min_ll, vector<double> &max_ll)
+             robot_part headspecs, vector<double> &r, vector<double> &l,
+             vector<double> &min_rl, vector<double> &max_rl,
+             vector<double> &min_ll, vector<double> &max_ll)
 {
     this->m_name = name;
     this->m_torso = torsospecs;
@@ -313,8 +308,7 @@ Robot::Robot(const Robot &hh)
 
 #if HAND==0
     this->m_human_hand_specs = hh.m_human_hand_specs;
-
-#elif HAND==1
+#else
     this->m_barrett_hand_specs = hh.m_barrett_hand_specs;
     this->rk = hh.rk;
     this->jk = hh.jk;
@@ -328,30 +322,6 @@ Robot::Robot(const Robot &hh)
 #if HEAD==1
     this->m_head=hh.m_head;
 #endif
-//#if NECK==1
-  //  this->neck=hh.neck;
-//#endif
-//#if PELVIS==1
-  //  this->pelvis=hh.pelvis;
-//#endif
-//#if RIGHT_UPPER_LEG==1
-  //  this->right_upper_leg=hh.right_upper_leg;
-//#endif
-//#if RIGHT_LOWER_LEG==1
-  //  this->right_lower_leg=hh.right_lower_leg;
-//#endif
-//#if RIGHT_FOOT==1
-  //  this->right_foot=hh.right_foot;
-//#endif
-//#if LEFT_UPPER_LEG==1
-  //  this->left_upper_leg=hh.left_upper_leg;
-//#endif
-//#if LEFT_LOWER_LEG==1
-  //  this->left_lower_leg=hh.left_lower_leg;
-//#endif
-//#if LEFT_FOOT==1
-  //  this->left_foot=hh.left_foot;
-//#endif
 
     this->mat_right = hh.mat_right;
     this->mat_left = hh.mat_left;
@@ -422,8 +392,7 @@ void Robot::setHumanHand(human_hand &specs)
 {
     this->m_human_hand_specs=specs;
 }
-
-#elif HAND==1
+#else
 void Robot::setBarrettHand(barrett_hand& specs)
 {
     this->m_barrett_hand_specs=specs;
@@ -506,43 +475,42 @@ void Robot::setLeftForces(vector<double> &l)
 
 void Robot::setMatRight(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             this->mat_right(i, j) = m(i,j);
-        }
     }
 }
 
 
 void Robot::setMatLeft(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             this->mat_left(i, j) = m(i,j);
-        }
     }
 }
 
 
 void Robot::setMatRightHand(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             this->mat_r_hand(i, j) = m(i,j);
-        }
     }
 }
 
 
 void Robot::setMatLeftHand(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             this->mat_l_hand(i, j) = m(i,j);
-        }
     }
 }
-// robot parts
 
 #if HEAD==1
 void Robot::setHead(robot_part& head)
@@ -550,71 +518,6 @@ void Robot::setHead(robot_part& head)
     this->m_head=head;
 }
 #endif
-
-//#if NECK==1
-
-//void Robot::setNeck(robot_part& neck){
-
-  //  this->neck=neck;
-//}
-//#endif
-
-//#if PELVIS==1
-
-//void Robot::setPelvis(robot_part& pelvis){
-
-  //  this->pelvis=pelvis;
-
-//}
-//#endif
-
-//#if RIGHT_UPPER_LEG==1
-
-//void Robot::setRight_Upper_leg(robot_part& right_upper_leg){
-
-  //  this->right_upper_leg=right_upper_leg;
-//}
-//#endif
-
-//#if RIGHT_LOWER_LEG==1
-
-//void Robot::setRight_Lower_leg(robot_part& right_lower_leg){
-
-  //  this->right_lower_leg=right_lower_leg;
-//}
-//#endif
-
-//#if RIGHT_FOOT==1
-
-//void Robot::setRight_foot(robot_part& right_foot){
-
-  //  this->right_foot=right_foot;
-//}
-//#endif
-
-//#if LEFT_UPPER_LEG==1
-
-//void Robot::setLeft_Upper_leg(robot_part& left_upper_leg){
-
-  //  this->left_upper_leg=left_upper_leg;
-//}
-//#endif
-
-//#if LEFT_LOWER_LEG==1
-
-//void Robot::setLeft_Lower_leg(robot_part& left_lower_leg){
-
-  //  this->left_lower_leg=left_lower_leg;
-//}
-//#endif
-
-//#if LEFT_FOOT==1
-
-//void Robot::setLeft_foot(robot_part& left_foot){
-
-  //  this->left_foot=left_foot;
-//}
-//#endif
 
 
 string Robot::getName()
@@ -633,22 +536,12 @@ robot_part Robot::getTorso()
 void Robot::getRK(vector<int> &rkk)
 {
     rkk = this->rk;
-    /*
-    for (std::size_t i=0; i < this->rk.size(); ++i){
-        rkk.push_back(this->rk.at(i));
-    }
-    */
 }
 
 
 void Robot::getJK(vector<int> &jkk)
 {
     jkk = jk;
-    /*
-    for(std::size_t i=0; i <this->jk.size(); ++i){
-        jkk.push_back(this->jk.at(i));
-    }
-    */
 }
 #endif
 
@@ -658,15 +551,13 @@ arm Robot::getArm()
     return this->m_arm_specs;
 }
 
+
 #if HAND==0
 human_hand Robot::getHumanHand()
 {
-
     return this->m_human_hand_specs;
 }
-#elif HAND==1
-
-
+#else
 barrett_hand Robot::getBarrettHand()
 {
     return this->m_barrett_hand_specs;
@@ -900,40 +791,40 @@ void Robot::getLeftHandForces(vector<double> &p)
 
 void Robot::getMatRight(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             m (i, j) = this->mat_right(i, j);
-        }
     }
 }
 
 
 void Robot::getMatLeft(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             m (i, j) = this->mat_left(i, j);
-        }
     }
 }
 
 
 void Robot::getMatRightHand(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             m (i, j) = this->mat_r_hand(i, j);
-        }
     }
 }
 
 
 void Robot::getMatLeftHand(Matrix4d &m)
 {
-    for (unsigned i = 0; i < m.rows(); ++ i){
-        for (unsigned j = 0; j < m.cols(); ++ j){
+    for (unsigned i = 0; i < m.rows(); ++ i)
+    {
+        for (unsigned j = 0; j < m.cols(); ++ j)
             m (i, j) = this->mat_l_hand(i, j);
-        }
     }
 }
 
@@ -950,10 +841,6 @@ string Robot::getInfoLine()
             XsizeSTR + str(boost::format("%d") % this->m_torso.Xsize) + MILLIMETERS + SEP+
             YsizeSTR + str(boost::format("%d") % this->m_torso.Ysize) + MILLIMETERS + SEP+
             ZsizeSTR + str(boost::format("%d") % this->m_torso.Zsize)+ MILLIMETERS;
-            //L1STR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(0))+ MILLIMETERS + SEP+
-            //LuSTR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(2))+ MILLIMETERS + SEP+
-            //LlSTR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(4)) + MILLIMETERS + SEP+
-            //LhSTR + str(boost::format("%d") % this->m_arm_specs.arm_specs.d.at(6)) + MILLIMETERS;
 }
 
 
@@ -985,7 +872,6 @@ void Robot::getRightShoulderPos(vector<double> &pos)
 double Robot::getRightShoulderNorm()
 {
     vector<double> pos;
-
     this->getRightShoulderPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1017,7 +903,6 @@ void Robot::getRightElbowPos(vector<double> &pos)
 double Robot::getRightElbowNorm()
 {
     vector<double> pos;
-
     this->getRightElbowPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1049,7 +934,6 @@ void Robot::getRightWristPos(vector<double> &pos)
 double Robot::getRightWristNorm()
 {
     vector<double> pos;
-
     this->getRightWristPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1081,7 +965,6 @@ void Robot::getRightHandPos(vector<double> &pos)
 double Robot::getRightHandNorm()
 {
     vector<double> pos;
-
     this->getRightHandPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1110,7 +993,6 @@ void Robot::getRightHandVel(vector<double> &vel)
 double Robot::getRightHandVelNorm()
 {
     std::vector<double> hand_vel;
-
     this->getRightHandVel(hand_vel);
 
     return sqrt(pow(hand_vel.at(0),2)+pow(hand_vel.at(1),2)+pow(hand_vel.at(2),2));
@@ -1131,7 +1013,6 @@ void Robot::getLeftShoulderPos(vector<double> &pos)
 double Robot::getLeftShoulderNorm()
 {
     vector<double> pos;
-
     this->getLeftShoulderPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1163,7 +1044,6 @@ void Robot::getLeftElbowPos(vector<double> &pos)
 double Robot::getLeftElbowNorm()
 {
     vector<double> pos;
-
     this->getLeftElbowPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1195,7 +1075,6 @@ void Robot::getLeftWristPos(vector<double> &pos)
 double Robot::getLeftWristNorm()
 {
     vector<double> pos;
-
     this->getLeftWristPos(pos);
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1227,9 +1106,7 @@ void Robot::getLeftHandPos(vector<double> &pos)
 double Robot::getLeftHandNorm()
 {
     vector<double> pos;
-
     this->getLeftHandPos(pos);
-
     pos = leftHandPos;
 
     return sqrt(pow(pos.at(0),2)+pow(pos.at(1),2)+pow(pos.at(2),2));
@@ -1258,7 +1135,6 @@ void Robot::getLeftHandVel(vector<double> &vel)
 double Robot::getLeftHandVelNorm()
 {
     std::vector<double> hand_vel;
-
     this->getLeftHandVel(hand_vel);
 
     return sqrt(pow(hand_vel.at(0),2)+pow(hand_vel.at(1),2)+pow(hand_vel.at(2),2));
@@ -1283,7 +1159,8 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
     vector<double> handPos = vector<double>(3);
     Matrix3d handOr;
 
-    switch (arm) {
+    switch (arm)
+    {
     case 1: // right arm
         mat_world = this->mat_right;
         mat_hand = this->mat_r_hand;
@@ -1304,32 +1181,40 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
 
     T = mat_world;
 
-    for (size_t i = 0; i < posture.size(); ++i){
+    for (size_t i = 0; i < posture.size(); ++i)
+    {
         this->transfMatrix(m_DH_arm.alpha.at(i), m_DH_arm.a.at(i), m_DH_arm.d.at(i), posture.at(i), T_aux);
         T = T * T_aux;
         Vector3d v;
-        if (i==1){
+        if (i==1)
+        {
             // get the shoulder
             shoulderOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             shoulderPos[0] = v[0];
             shoulderPos[1] = v[1];
             shoulderPos[2] = v[2];
-        }else if (i==3){
+        }
+        else if (i==3)
+        {
             // get the elbow
             elbowOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             elbowPos[0] = v[0];
             elbowPos[1] = v[1];
             elbowPos[2] = v[2];
-        }else if (i==5){
+        }
+        else if (i==5)
+        {
             // get the wrist
             wristOr = T.block(0,0,3,3);
             v = T.block(0,3,3,1);
             wristPos[0] = v[0];
             wristPos[1] = v[1];
             wristPos[2] = v[2];
-        } else if (i==6){
+        }
+        else if (i==6)
+        {
             //get the hand
             T = T * mat_hand;
             handOr = T.block(0,0,3,3);
@@ -1356,7 +1241,6 @@ void Robot::getHandVel(int arm, vector<double> &vel, vector<double> &posture, ve
 double Robot::getHandVelNorm(int arm, vector<double> &posture, vector<double> &velocities)
 {
     std::vector<double> hand_vel;
-
     this->getHandVel(arm,hand_vel,posture,velocities);
 
     return sqrt(pow(hand_vel.at(0),2)+pow(hand_vel.at(1),2)+pow(hand_vel.at(2),2));
@@ -1372,7 +1256,6 @@ void Robot::getWristVel(int arm, vector<double> &vel, vector<double> &posture, v
 double Robot::getWristVelNorm(int arm, vector<double> &posture, vector<double> &velocities)
 {
     std::vector<double> wrist_vel;
-
     this->getWristVel(arm,wrist_vel,posture,velocities);
 
     return sqrt(pow(wrist_vel.at(0),2)+pow(wrist_vel.at(1),2)+pow(wrist_vel.at(2),2));
@@ -1388,7 +1271,6 @@ void Robot::getElbowVel(int arm, vector<double> &vel, vector<double> &posture, v
 double Robot::getElbowVelNorm(int arm, vector<double> &posture, vector<double> &velocities)
 {
     std::vector<double> elbow_vel;
-
     this->getElbowVel(arm,elbow_vel,posture,velocities);
 
     return sqrt(pow(elbow_vel.at(0),2)+pow(elbow_vel.at(1),2)+pow(elbow_vel.at(2),2));
@@ -1404,7 +1286,6 @@ void Robot::getShoulderVel(int arm, vector<double> &vel, vector<double> &posture
 double Robot::getShoulderVelNorm(int arm, vector<double> &posture, vector<double> &velocities)
 {
     std::vector<double> shoulder_vel;
-
     this->getShoulderVel(arm,shoulder_vel,posture,velocities);
 
     return sqrt(pow(shoulder_vel.at(0),2)+pow(shoulder_vel.at(1),2)+pow(shoulder_vel.at(2),2));
@@ -1417,69 +1298,6 @@ robot_part Robot::getHead()
     return this->m_head;
 }
 #endif
-
-//#if NECK==1
-
-//#endif
-
-//#if PELVIS==1
-
-//robot_part Robot::getPelvis(){
-
-  //  return this->pelvis;
-//}
-//#endif
-
-//#if RIGHT_UPPER_LEG==1
-
-//robot_part Robot::getRight_Upper_leg(){
-
-  //  return this->right_upper_leg;
-//}
-//#endif
-
-//#if RIGHT_LOWER_LEG==1
-
-//robot_part Robot::getRight_Lower_leg(){
-
-  //  return this->right_lower_leg;
-//}
-//#endif
-
-//#if RIGHT_FOOT==1
-
-//robot_part Robot::getRight_foot(){
-
-  //  return this->right_foot;
-//}
-//#endif
-
-//#if LEFT_UPPER_LEG==1
-
-//robot_part Robot::getLeft_Upper_leg(){
-
-  //  return this->left_upper_leg;
-
-//}
-//#endif
-
-//#if LEFT_LOWER_LEG==1
-
-//robot_part Robot::getLeft_Lower_leg(){
-
-  //  return this->left_lower_leg;
-
-//}
-//#endif
-
-//#if LEFT_FOOT==1
-
-//robot_part Robot::getLeft_foot(){
-
-  //  return this->left_foot;
-
-//}
-//#endif
 
 
 void Robot::directKinematicsDualArm()
@@ -1502,19 +1320,16 @@ void Robot::computeRightArmDHparams()
     this->m_DH_rightArm.alpha.clear();
     this->m_DH_rightArm.theta.clear();
 
-    for (int i = 0; i < JOINTS_ARM; ++i){
-
-    // d [mm]
-    m_DH_rightArm.d.push_back(m_arm_specs.arm_specs.d.at(i));
-
-    //a [mm]
-    m_DH_rightArm.a.push_back(m_arm_specs.arm_specs.a.at(i));
-
-    //alpha [rad]
-    m_DH_rightArm.alpha.push_back(m_arm_specs.arm_specs.alpha.at(i));
-
-    //theta [rad]
-    m_DH_rightArm.theta.push_back(rightPosture.at(i));
+    for (int i = 0; i < JOINTS_ARM; ++i)
+    {
+        // d [mm]
+        m_DH_rightArm.d.push_back(m_arm_specs.arm_specs.d.at(i));
+        //a [mm]
+        m_DH_rightArm.a.push_back(m_arm_specs.arm_specs.a.at(i));
+        //alpha [rad]
+        m_DH_rightArm.alpha.push_back(m_arm_specs.arm_specs.alpha.at(i));
+        //theta [rad]
+        m_DH_rightArm.theta.push_back(rightPosture.at(i));
     }
 }
 
@@ -1526,24 +1341,19 @@ void Robot::computeLeftArmDHparams()
     this->m_DH_leftArm.alpha.clear();
     this->m_DH_leftArm.theta.clear();
 
-    for (int i = 0; i < JOINTS_ARM; ++i){
-
-    // d [mm]
-    m_DH_leftArm.d.push_back(-m_arm_specs.arm_specs.d.at(i));
-
-    //a [mm]
-    m_DH_leftArm.a.push_back(m_arm_specs.arm_specs.a.at(i));
-
-    //alpha [rad]
-    if ((i == 0)){
-        m_DH_leftArm.alpha.push_back(m_arm_specs.arm_specs.alpha.at(i));
-    }else{
-        m_DH_leftArm.alpha.push_back(-m_arm_specs.arm_specs.alpha.at(i));
-    }
-
-    //theta [rad]
-    m_DH_leftArm.theta.push_back(leftPosture.at(i));
-
+    for (int i = 0; i < JOINTS_ARM; ++i)
+    {
+        // d [mm]
+        m_DH_leftArm.d.push_back(-m_arm_specs.arm_specs.d.at(i));
+        //a [mm]
+        m_DH_leftArm.a.push_back(m_arm_specs.arm_specs.a.at(i));
+        //alpha [rad]
+        if ((i == 0))
+            m_DH_leftArm.alpha.push_back(m_arm_specs.arm_specs.alpha.at(i));
+        else
+            m_DH_leftArm.alpha.push_back(-m_arm_specs.arm_specs.alpha.at(i));
+        //theta [rad]
+        m_DH_leftArm.theta.push_back(leftPosture.at(i));
     }
 }
 
@@ -1552,18 +1362,15 @@ void Robot::computeRightHandDHparams()
 {
     this->m_DH_rightHand.clear();
 
-    for (int i = 0; i< HAND_FINGERS; ++i){
-
+    for (int i = 0; i< HAND_FINGERS; ++i)
+    {
         vector<double> t;
         this->getRightHandPosture(t);
-
         DHparams f;
         vector<double> fing_pos;
-
 #if HAND==0
-        if (i==0){
-
-
+        if (i==0)
+        {
             f.a = vector<double>(4);
             f.d = vector<double>(4);
             f.alpha = vector<double>(4);
@@ -1593,9 +1400,9 @@ void Robot::computeRightHandDHparams()
             f.theta.at(1) = fing.finger_specs.theta.at(1);
             f.theta.at(2) = fing.finger_specs.theta.at(2);
             f.theta.at(3) = fing.finger_specs.theta.at(3);
-
-
-        }else if(i==1){
+        }
+        else if(i==1)
+        {
             f.a = vector<double>(4);
             f.d = vector<double>(4);
             f.alpha = vector<double>(4);
@@ -1626,9 +1433,9 @@ void Robot::computeRightHandDHparams()
             f.theta.at(1) = fing.finger_specs.theta.at(1);
             f.theta.at(2) = fing.finger_specs.theta.at(2);
             f.theta.at(3) = fing.finger_specs.theta.at(3);
-
-        }else if(i==2){
-
+        }
+        else if(i==2)
+        {
             f.a = vector<double>(5);
             f.d = vector<double>(5);
             f.alpha = vector<double>(5);
@@ -1663,13 +1470,8 @@ void Robot::computeRightHandDHparams()
             f.theta.at(2) = thumb.thumb_specs.theta.at(2);
             f.theta.at(3) = thumb.thumb_specs.theta.at(3);
             f.theta.at(4) = thumb.thumb_specs.theta.at(4);
-
-
-
         }
-
-#elif HAND==1
-
+#else
         f.a = vector<double>(4);
         f.d = vector<double>(4);
         f.alpha = vector<double>(4);
@@ -1705,9 +1507,8 @@ void Robot::computeRightHandDHparams()
         f.theta.at(3) = 0.0;
 
 #endif
-
-          m_DH_rightHand.push_back(f);
-          right_fing_pos.push_back(fing_pos);
+        m_DH_rightHand.push_back(f);
+        right_fing_pos.push_back(fing_pos);
     }
 }
 
@@ -1716,19 +1517,16 @@ void Robot::computeLeftHandDHparams()
 {
     this->m_DH_leftHand.clear();
 
-
-    for (int i = 0; i< HAND_FINGERS; ++i){
-
+    for (int i = 0; i< HAND_FINGERS; ++i)
+    {
         DHparams f;
         vector<double> fing_pos;
-
         vector<double> t;
         this->getLeftHandPosture(t);
 
-
 #if HAND==0
-        if (i==0){
-
+        if (i==0)
+        {
             f.a = vector<double>(4);
             f.d = vector<double>(4);
             f.alpha = vector<double>(4);
@@ -1758,9 +1556,9 @@ void Robot::computeLeftHandDHparams()
             f.theta.at(1) = fing.finger_specs.theta.at(1);
             f.theta.at(2) = fing.finger_specs.theta.at(2);
             f.theta.at(3) = fing.finger_specs.theta.at(3);
-
-
-        }else if(i==1){
+        }
+        else if(i==1)
+        {
             f.a = vector<double>(4);
             f.d = vector<double>(4);
             f.alpha = vector<double>(4);
@@ -1791,9 +1589,9 @@ void Robot::computeLeftHandDHparams()
             f.theta.at(1) = fing.finger_specs.theta.at(1);
             f.theta.at(2) = fing.finger_specs.theta.at(2);
             f.theta.at(3) = fing.finger_specs.theta.at(3);
-
-        }else if(i==2){
-
+        }
+        else if(i==2)
+        {
             f.a = vector<double>(5);
             f.d = vector<double>(5);
             f.alpha = vector<double>(5);
@@ -1828,13 +1626,8 @@ void Robot::computeLeftHandDHparams()
             f.theta.at(2) = thumb.thumb_specs.theta.at(2);
             f.theta.at(3) = thumb.thumb_specs.theta.at(3);
             f.theta.at(4) = thumb.thumb_specs.theta.at(4);
-
-
-
         }
-
-#elif HAND==1
-
+#else
         f.a = vector<double>(4);
         f.d = vector<double>(4);
         f.alpha = vector<double>(4);
@@ -1869,7 +1662,6 @@ void Robot::computeLeftHandDHparams()
         f.theta.at(2) = m_barrett_hand_specs.phi3+(1/3)*t.at(i+1);
         f.theta.at(3) = 0.0;
 #endif
-
         m_DH_leftHand.push_back(f);
         left_fing_pos.push_back(fing_pos);
     }
@@ -1918,7 +1710,6 @@ void Robot::directKinematicsSingleArm(int arm, std::vector<double>& posture)
 
 
     T = mat_world;
-
     for (int i = 0; i < posture.size(); ++i)
     {
         this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), T_aux);
@@ -2078,7 +1869,8 @@ void Robot::directDiffKinematicsSingleArm(int arm,vector<double> posture, vector
     vector<double> handPos; Vector3d pos_hand;
     this->getHandPos(arm,handPos,posture);
 
-    switch (arm) {
+    switch (arm)
+    {
     case 1: // right arm
         mat_world = this->mat_right;
         mat_hand = this->mat_r_hand;
@@ -2101,13 +1893,15 @@ void Robot::directDiffKinematicsSingleArm(int arm,vector<double> posture, vector
     pos_hand << handPos.at(0), handPos.at(1), handPos.at(2);
     joint_velocities.resize(velocities.size());
 
-    for (int i = 0; i < posture.size(); ++i){
+    for (int i = 0; i < posture.size(); ++i)
+    {
         this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i),T_aux);
         T = T * T_aux;
         Vector3d diff;
         Vector3d cross;
         Vector3d zi;
-        switch(i){
+        switch(i)
+        {
         case 0:
             z0 = T.block(0,2,3,1);
             pos0 = T.block(0,3,3,1);
@@ -2178,7 +1972,8 @@ void Robot::directDiffKinematicsSingleArm(int arm,vector<double> posture, vector
     // hand velocity
     VectorXd hand_vel_xd = JacobianArm*joint_velocities;
 
-    switch(mod){
+    switch(mod)
+    {
     case 0: // shoulder
         vel.clear();
         vel.resize(shoulder_vel_xd.size());
@@ -2237,7 +2032,8 @@ void Robot::inverseDiffKinematicsSingleArm(int arm, vector<double> posture, vect
     vector<double> handPos; Vector3d pos_hand;
     this->getHandPos(arm,handPos,posture);
 
-    switch (arm) {
+    switch (arm)
+    {
     case 1: // right arm
         mat_world = this->mat_right;
         mat_hand = this->mat_r_hand;
@@ -2259,8 +2055,8 @@ void Robot::inverseDiffKinematicsSingleArm(int arm, vector<double> posture, vect
     T = mat_world;
     pos_hand << handPos.at(0), handPos.at(1), handPos.at(2);
 
-
-    for (int i = 0; i < posture.size(); ++i){
+    for (int i = 0; i < posture.size(); ++i)
+    {
         this->transfMatrix(m_DH_arm.alpha.at(i),m_DH_arm.a.at(i),m_DH_arm.d.at(i), posture.at(i), T_aux);
         T = T * T_aux;
         Vector3d diff;
@@ -2325,11 +2121,10 @@ void Robot::inverseDiffKinematicsSingleArm(int arm, vector<double> posture, vect
     MatrixXd I = MatrixXd::Identity(6,6);
     MatrixXd JacobianArmT = JacobianArm.transpose();
     MatrixXd JJ = JacobianArm*JacobianArmT;
-    if(abs(JJ.determinant())<0.001){
+    if(abs(JJ.determinant())<0.001)
         k = 0.01;
-    }else{
+    else
         k=0.0;
-    }
     MatrixXd JT = JacobianArmT*(JJ+pow(k,2)*I);
     VectorXd hand_vel_xd(6);
     hand_vel_xd << hand_vel.at(0),hand_vel.at(1),hand_vel.at(2),hand_vel.at(3),hand_vel.at(4),hand_vel.at(5);
@@ -2357,10 +2152,10 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
      vector<double> pos = vector<double>(3);
      Matrix4d T_aux;
 
-     for(int i =0; i<T_aux.rows();++i){
-         for(int j=0; j<T_aux.cols();++j){
+     for(int i =0; i<T_aux.rows();++i)
+     {
+         for(int j=0; j<T_aux.cols();++j)
              T_aux(i,j)=T_ext(i,j);
-         }
      }
 
      // translate to the begenning of each finger
@@ -2368,16 +2163,18 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
 
 #if HAND == 0
      int cnt;
-     if (id_fing == 3){
+     if (id_fing == 3)
          // thumb
          cnt = N_PHALANGE+2;
-     }else{
+     else
          cnt = N_PHALANGE+1;
-     }
-     for (int i=0; i< cnt; ++i){
-#elif HAND == 1
 
-     for (int i=0; i< N_PHALANGE+1; ++i){
+     for (int i=0; i< cnt; ++i)
+     {
+#else
+
+     for (int i=0; i< N_PHALANGE+1; ++i)
+     {
 #endif
 
          double a = p.a.at(i);
@@ -2386,13 +2183,11 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
          double theta = p.theta.at(i);
 
 #if HAND == 0
-
          T(0,0) = cos(theta); T(0,1) = -sin(theta)*cos(alpha);  T(0,2) = sin(theta)*cos(alpha);  T(0,3) = a*cos(theta);
          T(1,0) = sin(theta); T(1,1) = cos(theta)*cos(alpha);   T(1,2) = -cos(theta)*sin(alpha); T(1,3) = a*sin(theta);
          T(2,0) = 0.0;        T(2,1) = sin(alpha);              T(2,2) = cos(alpha);             T(2,3) = d;
          T(3,0) = 0.0;        T(3,1) = 0.0;                     T(3,2) = 0.0;                    T(3,3) = 1.0;
-
-#elif HAND == 1
+#else
 
          T(0,0) = cos(theta);            T(0,1) = -sin(theta);            T(0,2) = 0.0;         T(0,3) = a;
          T(1,0) = sin(theta)*cos(alpha); T(1,1) = cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
@@ -2401,9 +2196,7 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
 
 #endif
 
-
          T_aux = T_aux * T;
-
          pos[0] = T_aux(0,3);
          pos[1] = T_aux(1,3);
          pos[2] = T_aux(2,3);
@@ -2411,7 +2204,5 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
          Fingers(id_fing,3*i) = pos[0]; Fingers(id_fing,3*i+1) = pos[1]; Fingers(id_fing,3*i+2) = pos[2];
      }
 }
-
-
 
 } // namespace motion_manager

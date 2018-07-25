@@ -17,10 +17,12 @@ Task_ExecuteDialog::Task_ExecuteDialog(QNode *q, QWidget *parent) :
 #endif
 }
 
+
 Task_ExecuteDialog::~Task_ExecuteDialog()
 {
     delete ui;
 }
+
 
 void Task_ExecuteDialog::on_pushButtonOK_clicked()
 {
@@ -36,8 +38,8 @@ void Task_ExecuteDialog::on_pushButtonOK_clicked()
         check = true;
 
     Q_EMIT addPlat_execTask(platform, check);
-
 }
+
 
 void Task_ExecuteDialog::on_pushButtonOK_pressed()
 {
@@ -46,4 +48,5 @@ void Task_ExecuteDialog::on_pushButtonOK_pressed()
     else if(ui->radioButton_execTask_Robot->isChecked())
         qnode->log(QNode::Info,std::string("Executing the task in Robot . . ."));
 }
+
 } // namespace motion_manager

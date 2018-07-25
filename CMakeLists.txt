@@ -37,7 +37,7 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 # Use this to define what the package will export (e.g. libs, headers).
 # Since the default here is to produce only a binary, we don't worry about
-# exporting anything. 
+# exporting anything.
 catkin_package()
 
 set(Boost_USE_STATIC_LIBS ON)
@@ -55,7 +55,7 @@ include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} ${QT_QTOPENGL_
 # Qt Environment
 ##############################################################################
 
-# this comes from qt_build's qt-ros.cmake which is automatically 
+# this comes from qt_build's qt-ros.cmake which is automatically
 # included via the dependency call in package.xml
 rosbuild_prepare_qt4(QtCore QtGui) # Add the appropriate components to the component list here
 
@@ -337,7 +337,3 @@ install(TARGETS ${PROJECT_NAME}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-
-
-
-

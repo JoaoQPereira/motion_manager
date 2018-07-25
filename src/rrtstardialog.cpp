@@ -1,5 +1,6 @@
 #include "../include/motion_manager/rrtstardialog.hpp"
 
+
 namespace motion_manager {
 
 RRTstarDialog::RRTstarDialog(QWidget *parent) :
@@ -15,10 +16,12 @@ RRTstarDialog::RRTstarDialog(QWidget *parent) :
     this->config = std::string("RRTstarkConfigDefault");
 }
 
+
 RRTstarDialog::~RRTstarDialog()
 {
     delete ui;
 }
+
 
 void RRTstarDialog::getPreGraspApproach(std::vector<double> &pre_grasp)
 {
@@ -29,6 +32,7 @@ void RRTstarDialog::getPreGraspApproach(std::vector<double> &pre_grasp)
     pre_grasp.push_back(ui->lineEdit_pre_grasp_dist->text().toDouble()/1000);
 }
 
+
 void RRTstarDialog::getPostGraspRetreat(std::vector<double> &post_grasp)
 {
     post_grasp.clear();
@@ -37,6 +41,7 @@ void RRTstarDialog::getPostGraspRetreat(std::vector<double> &post_grasp)
     post_grasp.push_back(ui->lineEdit_post_grasp_z->text().toDouble());
     post_grasp.push_back(ui->lineEdit_post_grasp_dist->text().toDouble()/1000);
 }
+
 
 void RRTstarDialog::getPrePlaceApproach(std::vector<double> &pre_place)
 {
@@ -47,6 +52,7 @@ void RRTstarDialog::getPrePlaceApproach(std::vector<double> &pre_place)
     pre_place.push_back(ui->lineEdit_pre_place_dist->text().toDouble()/1000);
 }
 
+
 void RRTstarDialog::getPostPlaceRetreat(std::vector<double> &post_place)
 {
     post_place.clear();
@@ -56,29 +62,26 @@ void RRTstarDialog::getPostPlaceRetreat(std::vector<double> &post_place)
     post_place.push_back(ui->lineEdit_post_place_dist->text().toDouble()/1000);
 }
 
+
 std::string RRTstarDialog::getConfig()
 {
-
-    if(ui->radioButton_default->isChecked()){
+    if(ui->radioButton_default->isChecked())
         this->config = std::string("RRTstarkConfigDefault");
-    }
-    if(ui->radioButton_1->isChecked()){
+    if(ui->radioButton_1->isChecked())
         this->config = std::string("RRTstarkConfig1");
-    }
-    if(ui->radioButton_2->isChecked()){
+    if(ui->radioButton_2->isChecked())
         this->config = std::string("RRTstarkConfig2");
-    }
-    if(ui->radioButton_3->isChecked()){
+    if(ui->radioButton_3->isChecked())
         this->config = std::string("RRTstarkConfig3");
-    }
 
     return this->config;
-
 }
+
 
 void RRTstarDialog::setConfig(int conf)
 {
-    switch (conf) {
+    switch (conf)
+    {
     case 0: // PathLengthOptimizationObjective
         ui->radioButton_default->setChecked(true);
         break;
@@ -97,6 +100,7 @@ void RRTstarDialog::setConfig(int conf)
     }
 }
 
+
 void RRTstarDialog::getTargetMove(std::vector<double> &target)
 {
     target.clear();
@@ -108,6 +112,7 @@ void RRTstarDialog::getTargetMove(std::vector<double> &target)
     target.push_back(ui->lineEdit_target_yaw->text().toDouble());
 }
 
+
 void RRTstarDialog::setTargetMove(std::vector<double> &target)
 {
     ui->lineEdit_target_x->setText(QString::number(target.at(0)));
@@ -116,8 +121,8 @@ void RRTstarDialog::setTargetMove(std::vector<double> &target)
     ui->lineEdit_target_roll->setText(QString::number(target.at(3)));
     ui->lineEdit_target_pitch->setText(QString::number(target.at(4)));
     ui->lineEdit_target_yaw->setText(QString::number(target.at(5)));
-
 }
+
 
 void RRTstarDialog::getFinalArm(std::vector<double> &finalArm)
 {
@@ -131,6 +136,7 @@ void RRTstarDialog::getFinalArm(std::vector<double> &finalArm)
     finalArm.push_back(ui->lineEdit_final_arm_7->text().toDouble());
 }
 
+
 void RRTstarDialog::getFinalHand(std::vector<double> &finalHand)
 {
     finalHand.clear();
@@ -143,7 +149,8 @@ void RRTstarDialog::getFinalHand(std::vector<double> &finalHand)
 
 void RRTstarDialog::setPlaneParameters(std::vector<double> &point1,std::vector<double> &point2,std::vector<double> &point3)
 {
-    if(!point1.empty() && !point2.empty() && !point3.empty()){
+    if(!point1.empty() && !point2.empty() && !point3.empty())
+    {
         ui->lineEdit_point_1_x->setText(QString::number(point1.at(0)/1000));
         ui->lineEdit_point_1_y->setText(QString::number(point1.at(1)/1000));
         ui->lineEdit_point_1_z->setText(QString::number(point1.at(2)/1000));
@@ -158,9 +165,9 @@ void RRTstarDialog::setPlaneParameters(std::vector<double> &point1,std::vector<d
 
 
 void RRTstarDialog::getPlaneParameters(std::vector<double> &params,
-                                   std::vector<double> &point1,
-                                   std::vector<double> &point2,
-                                   std::vector<double> &point3)
+                                       std::vector<double> &point1,
+                                       std::vector<double> &point2,
+                                       std::vector<double> &point3)
 {
     params.clear(); double a,b,c,d;
     point1.clear(); point2.clear(); point3.clear();
@@ -185,7 +192,8 @@ void RRTstarDialog::getPlaneParameters(std::vector<double> &params,
 
     det = D.determinant();
 
-    if(det!=0){
+    if(det!=0)
+    {
         d=1;
 
         Matrix3d A;
@@ -213,17 +221,18 @@ void RRTstarDialog::getPlaneParameters(std::vector<double> &params,
     }
 }
 
+
 bool RRTstarDialog::getApproach()
 {
     return !ui->checkBox_approach->isChecked();
 }
+
 
 bool RRTstarDialog::getRetreat()
 {
     return !ui->checkBox_retreat->isChecked();
 }
 
-// Q_SLOTS
 
 void RRTstarDialog::on_pushButton_save_clicked()
 {
@@ -232,7 +241,8 @@ void RRTstarDialog::on_pushButton_save_clicked()
                                                     QString(MAIN_PATH)+"/Tols",
                                                     "All Files (*.*);;Tol Files (*.tol)");
     QFile f( filename );
-    if(f.open( QIODevice::WriteOnly )){
+    if(f.open( QIODevice::WriteOnly ))
+    {
         QTextStream stream( &f );
         stream << "### Parameters of the RRT Star planner in MoveIt! ###" << endl;
         stream << "# "<< this->infoLine.c_str() << endl;
@@ -274,7 +284,10 @@ void RRTstarDialog::on_pushButton_save_clicked()
         stream << "final_hand_2=" << ui->lineEdit_final_hand_2->text().toStdString().c_str() << endl;
         stream << "final_hand_3=" << ui->lineEdit_final_hand_3->text().toStdString().c_str() << endl;
         stream << "final_hand_4=" << ui->lineEdit_final_hand_4->text().toStdString().c_str() << endl;
-        if (ui->checkBox_sel_final_posture->isChecked()){ stream << "sel_final=true"<< endl;}else{stream << "sel_final=false"<< endl;}
+        if (ui->checkBox_sel_final_posture->isChecked())
+            stream << "sel_final=true"<< endl;
+        else
+            stream << "sel_final=false"<< endl;
         stream << "plane_point1_x=" << ui->lineEdit_point_1_x->text().toStdString().c_str() << endl;
         stream << "plane_point1_y=" << ui->lineEdit_point_1_y->text().toStdString().c_str() << endl;
         stream << "plane_point1_z=" << ui->lineEdit_point_1_z->text().toStdString().c_str() << endl;
@@ -284,13 +297,22 @@ void RRTstarDialog::on_pushButton_save_clicked()
         stream << "plane_point3_x=" << ui->lineEdit_point_3_x->text().toStdString().c_str() << endl;
         stream << "plane_point3_y=" << ui->lineEdit_point_3_y->text().toStdString().c_str() << endl;
         stream << "plane_point3_z=" << ui->lineEdit_point_3_z->text().toStdString().c_str() << endl;
-        if (ui->checkBox_add_plane->isChecked()){ stream << "add_plane=true"<< endl;}else{stream << "add_plane=false"<< endl;}
-        if(ui->checkBox_approach->isChecked()){stream << "approach=false"<<endl;}else{stream << "approach=true"<<endl;}
-        if(ui->checkBox_retreat->isChecked()){stream << "retreat=false"<<endl;}else{stream << "retreat=true"<<endl;}
+        if (ui->checkBox_add_plane->isChecked())
+            stream << "add_plane=true"<< endl;
+        else
+            stream << "add_plane=false"<< endl;
+        if(ui->checkBox_approach->isChecked())
+            stream << "approach=false"<<endl;
+        else
+            stream << "approach=true"<<endl;
+        if(ui->checkBox_retreat->isChecked())
+            stream << "retreat=false"<<endl;
+        else
+            stream << "retreat=true"<<endl;
         stream << "# Others" << endl;
-
     }
 }
+
 
 void RRTstarDialog::on_pushButton_load_clicked()
 {
@@ -298,177 +320,186 @@ void RRTstarDialog::on_pushButton_load_clicked()
                                                     tr("Load the file of tolerances"),
                                                     QString(MAIN_PATH)+"/Tols",
                                                     "All Files (*.*);; Tol Files (*.tol)");
-    QFile f( filename );
-    if(f.open( QIODevice::ReadOnly )){
-
-        QTextStream stream( &f );
+    QFile f(filename);
+    if(f.open(QIODevice::ReadOnly))
+    {
+        QTextStream stream(&f);
         QString line;
-        while(!stream.atEnd()){
+
+        while(!stream.atEnd())
+        {
             line = f.readLine();
-            if(line.at(0)!=QChar('#')){
+            if(line.at(0)!=QChar('#'))
+            {
                 QStringList fields = line.split("=");
-                if(QString::compare(fields.at(0),QString("config"),Qt::CaseInsensitive)==0){
+                if(QString::compare(fields.at(0),QString("config"),Qt::CaseInsensitive)==0)
                     this->config = fields.at(1).simplified().toStdString();
-                }else if(QString::compare(fields.at(0),QString("pre_grasp_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_grasp_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_grasp_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_grasp_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_grasp_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_grasp_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_grasp_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_grasp_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_grasp_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_grasp_dist"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_grasp_dist"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_grasp_dist->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_grasp_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_grasp_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_grasp_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_grasp_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_grasp_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_grasp_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_grasp_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_grasp_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_grasp_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_grasp_dist"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_grasp_dist"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_grasp_dist->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_place_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_place_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_place_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_place_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_place_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_place_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_place_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_place_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_place_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("pre_place_dist"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("pre_place_dist"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_pre_place_dist->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_place_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_place_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_place_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_place_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_place_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_place_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_place_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_place_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_place_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("post_place_dist"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("post_place_dist"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_post_place_dist->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("target_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("target_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_target_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("target_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("target_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_target_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("target_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("target_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_target_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("target_roll"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("target_roll"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_target_roll->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("target_pitch"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("target_pitch"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_target_pitch->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("target_yaw"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("target_yaw"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_target_yaw->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_1"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_1"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_1->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_2"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_2"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_2->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_3"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_3"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_3->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_4"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_4"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_4->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_5"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_5"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_5->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_6"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_6"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_6->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_arm_7"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_arm_7"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_arm_7->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_hand_1"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_hand_1"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_hand_1->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_hand_2"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_hand_2"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_hand_2->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_hand_3"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_hand_3"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_hand_3->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("final_hand_4"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("final_hand_4"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_final_hand_4->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("sel_final"),Qt::CaseInsensitive)==0){
-                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("sel_final"),Qt::CaseInsensitive)==0)
+                {
+                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0)
                         ui->checkBox_sel_final_posture->setChecked(false);
-                    }else{
+                    else
                         ui->checkBox_sel_final_posture->setChecked(true);
-                    }
-                }else if(QString::compare(fields.at(0),QString("plane_point1_x"),Qt::CaseInsensitive)==0){
+                }
+                else if(QString::compare(fields.at(0),QString("plane_point1_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_1_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point1_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point1_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_1_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point1_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point1_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_1_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point2_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point2_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_2_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point2_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point2_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_2_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point2_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point2_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_2_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point3_x"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point3_x"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_3_x->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point3_y"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point3_y"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_3_y->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("plane_point3_z"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("plane_point3_z"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_point_3_z->setText(fields.at(1));
-                }else if(QString::compare(fields.at(0),QString("add_plane"),Qt::CaseInsensitive)==0){
-                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
+                else if(QString::compare(fields.at(0),QString("add_plane"),Qt::CaseInsensitive)==0)
+                {
+                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0)
                         ui->checkBox_add_plane->setChecked(false);
-                    }else{
+                    else
                         ui->checkBox_add_plane->setChecked(true);
-                    }
-                }else if(QString::compare(fields.at(0),QString("approach"),Qt::CaseInsensitive)==0){
-                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
+                }
+                else if(QString::compare(fields.at(0),QString("approach"),Qt::CaseInsensitive)==0)
+                {
+                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0)
                         ui->checkBox_approach->setChecked(true);
-                    }else{
+                    else
                         ui->checkBox_approach->setChecked(false);
-                    }
-                }else if(QString::compare(fields.at(0),QString("retreat"),Qt::CaseInsensitive)==0){
-                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0){
+                }
+                else if(QString::compare(fields.at(0),QString("retreat"),Qt::CaseInsensitive)==0)
+                {
+                    if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0)
                         ui->checkBox_retreat->setChecked(true);
-                    }else{
+                    else
                         ui->checkBox_retreat->setChecked(false);
-                    }
                 }
             }
-
         }
 
-        if(strcmp(this->config.c_str(),"RRTstarkConfigDefault")==0){
+        if(strcmp(this->config.c_str(),"RRTstarkConfigDefault")==0)
             ui->radioButton_default->setChecked(true);
-        }else if(strcmp(this->config.c_str(),"RRTstarkConfig1")==0){
+        else if(strcmp(this->config.c_str(),"RRTstarkConfig1")==0)
             ui->radioButton_1->setChecked(true);
-        }else if(strcmp(this->config.c_str(),"RRTstarkConfig2")==0){
+        else if(strcmp(this->config.c_str(),"RRTstarkConfig2")==0)
             ui->radioButton_2->setChecked(true);
-        }else if(strcmp(this->config.c_str(),"RRTstarkConfig3")==0){
+        else if(strcmp(this->config.c_str(),"RRTstarkConfig3")==0)
             ui->radioButton_3->setChecked(true);
-        }
-
-    } // while loop
+    }
 }
+
 
 void RRTstarDialog::setInfo(std::string info)
 {
-
     this->infoLine = info;
 }
 
+
 void RRTstarDialog::checkFinalPosture(int state)
 {
-    if(state==0){
+    if(state==0)
+    {
         // unchecked
         ui->groupBox_target->setEnabled(true);
         ui->groupBox_final_arm->setEnabled(false);
-    }else{
+    }
+    else
+    {
         //checked
         ui->groupBox_target->setEnabled(false);
         ui->groupBox_final_arm->setEnabled(true);
     }
 }
 
+
 void RRTstarDialog::checkAddPlane(int state)
 {
-    if(state==0){
+    if(state==0)
         //unchecked
         ui->groupBox_plane->setEnabled(false);
-    }else{
+    else
         //checked
         ui->groupBox_plane->setEnabled(true);
-    }
 }
+
 
 bool RRTstarDialog::get_use_final_posture()
 {
     return ui->checkBox_sel_final_posture->isChecked();
 }
+
 
 bool RRTstarDialog::get_add_plane()
 {
@@ -481,14 +512,18 @@ void RRTstarDialog::set_add_plane(bool plane)
     ui->checkBox_add_plane->setChecked(plane);
 }
 
+
 void RRTstarDialog::checkApproach(int state)
 {
-    if(state==0){
+    if(state==0)
+    {
         // unchecked
         ui->groupBox_pre_grasp->setEnabled(true);
         ui->groupBox_pre_place->setEnabled(true);
         ui->label_pick->setEnabled(true);
-    }else{
+    }
+    else
+    {
         //checked
         ui->groupBox_pre_grasp->setEnabled(false);
         ui->groupBox_pre_place->setEnabled(false);
@@ -496,21 +531,23 @@ void RRTstarDialog::checkApproach(int state)
     }
 }
 
+
 void RRTstarDialog::checkRetreat(int state)
 {
-    if(state==0){
+    if(state==0)
+    {
         // unchecked
         ui->groupBox_post_grasp->setEnabled(true);
         ui->groupBox_post_place->setEnabled(true);
         ui->label_pick->setEnabled(true);
-    }else{
+    }
+    else
+    {
         //checked
         ui->groupBox_post_grasp->setEnabled(false);
         ui->groupBox_post_place->setEnabled(false);
         ui->label_pick->setEnabled(false);
     }
 }
-
-
 
 } // namespace motion_manager

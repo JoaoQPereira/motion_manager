@@ -1,5 +1,6 @@
 #include "../include/motion_manager/results_plan_joints_dialog.hpp"
 
+
 namespace motion_manager {
 
 ResultsJointsDialog::ResultsJointsDialog(QWidget *parent) :
@@ -8,6 +9,7 @@ ResultsJointsDialog::ResultsJointsDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 }
+
 
 ResultsJointsDialog::~ResultsJointsDialog()
 {
@@ -32,24 +34,29 @@ void ResultsJointsDialog::setupPlots(vector<MatrixXd> &pos, vector<MatrixXd> &ve
     QVector<double> pos_joint10, vel_joint10, acc_joint10;
     QVector<double> pos_joint11, vel_joint11, acc_joint11;
 
-    for(size_t i=0; i<pos.size();++i){
+    for(size_t i=0; i<pos.size();++i)
+    {
         MatrixXd pos_stage = pos.at(i);
         MatrixXd vel_stage = vel.at(i);
         MatrixXd acc_stage = acc.at(i);
         vector<double> tsteps_stage = timesteps.at(i);
         double time_init;
-        if(time.empty()){
+        if(time.empty())
             time_init=0.0;
-        }else{
+        else
             time_init=time.at(time.size()-1);
-        }
+
         vector<double> time_stage(tsteps_stage.size());
         time_stage.at(0) = time_init;
 
-        for(int k=0;k<pos_stage.rows();++k){
-            if(k>0){time_stage.at(k) = time_stage.at(k-1) + tsteps_stage.at(k-1);}
-            for(int j=0;j<pos_stage.cols();++j){
-                switch(j){
+        for(int k=0;k<pos_stage.rows();++k)
+        {
+            if(k>0)
+                time_stage.at(k) = time_stage.at(k-1) + tsteps_stage.at(k-1);
+            for(int j=0;j<pos_stage.cols();++j)
+            {
+                switch(j)
+                {
                 case 0:// joint 1
                     pos_joint1.push_back(radtodeg*pos_stage(k,j));
                     vel_joint1.push_back(radtodeg*vel_stage(k,j));
@@ -111,8 +118,8 @@ void ResultsJointsDialog::setupPlots(vector<MatrixXd> &pos, vector<MatrixXd> &ve
         time.reserve(time_stage.size());
         std::copy (time_stage.begin(), time_stage.end(), std::back_inserter(time));
     }
-    QVector<double> qtime = QVector<double>::fromStdVector(time);
 
+    QVector<double> qtime = QVector<double>::fromStdVector(time);
     plotJoint(ui->plot_joint_1,QString("Joint 1"),qtime,pos_joint1,vel_joint1,acc_joint1); // plot joint 1
     plotJoint(ui->plot_joint_2,QString("Joint 2"),qtime,pos_joint2,vel_joint2,acc_joint2); // plot joint 2
     plotJoint(ui->plot_joint_3,QString("Joint 3"),qtime,pos_joint3,vel_joint3,acc_joint3); // plot joint 3
@@ -124,13 +131,11 @@ void ResultsJointsDialog::setupPlots(vector<MatrixXd> &pos, vector<MatrixXd> &ve
     plotJoint(ui->plot_joint_9,QString("Joint 9"),qtime,pos_joint9,vel_joint9,acc_joint9); // plot joint 9
     plotJoint(ui->plot_joint_10,QString("Joint 10"),qtime,pos_joint10,vel_joint10,acc_joint10); // plot joint 10
     plotJoint(ui->plot_joint_11,QString("Joint 11"),qtime,pos_joint11,vel_joint11,acc_joint11); // plot joint 11
-
-
 }
+
 
 void ResultsJointsDialog::setupPlots(vector<vector<MatrixXd> > &pos, vector<vector<MatrixXd> > &vel, vector<vector<MatrixXd> > &acc, vector<vector<vector<double> > > &timesteps)
 {
-
     const double radtodeg = 180.0/static_cast<double>(M_PI);
 
     vector<double> time;
@@ -146,29 +151,35 @@ void ResultsJointsDialog::setupPlots(vector<vector<MatrixXd> > &pos, vector<vect
     QVector<double> pos_joint10, vel_joint10, acc_joint10;
     QVector<double> pos_joint11, vel_joint11, acc_joint11;
 
-    for(size_t h=0; h<pos.size();++h){
+    for(size_t h=0; h<pos.size();++h)
+    {
         vector<MatrixXd> pos_mov = pos.at(h);
         vector<MatrixXd> vel_mov = vel.at(h);
         vector<MatrixXd> acc_mov = acc.at(h);
         vector<vector<double>> tstep_mov = timesteps.at(h);
 
-        for(size_t i=0; i<pos_mov.size();++i){
+        for(size_t i=0; i<pos_mov.size();++i)
+        {
             MatrixXd pos_stage = pos_mov.at(i);
             MatrixXd vel_stage = vel_mov.at(i);
             MatrixXd acc_stage = acc_mov.at(i);
             vector<double> tsteps_stage = tstep_mov.at(i);
             vector<double> time_stage(tsteps_stage.size());
             double time_init;
-            if(time.empty()){
+            if(time.empty())
                 time_init=0.0;
-            }else{
+            else
                 time_init=time.at(time.size()-1);
-            }
+
             time_stage.at(0) = time_init;
-            for(int k=0;k<pos_stage.rows();++k){
-                if(k>0){time_stage.at(k) = time_stage.at(k-1) + tsteps_stage.at(k-1);}
-                for(int j=0;j<pos_stage.cols();++j){
-                    switch(j){
+            for(int k=0;k<pos_stage.rows();++k)
+            {
+                if(k>0)
+                    time_stage.at(k) = time_stage.at(k-1) + tsteps_stage.at(k-1);
+                for(int j=0;j<pos_stage.cols();++j)
+                {
+                    switch(j)
+                    {
                     case 0:// joint 1
                         pos_joint1.push_back(radtodeg*pos_stage(k,j));
                         vel_joint1.push_back(radtodeg*vel_stage(k,j));
@@ -226,13 +237,13 @@ void ResultsJointsDialog::setupPlots(vector<vector<MatrixXd> > &pos, vector<vect
                         break;
                     }
                 }
-            }// stage
+            }
             time.reserve(time_stage.size());
             std::copy (time_stage.begin(), time_stage.end(), std::back_inserter(time));
-        }// mov
-    }// task
-    QVector<double> qtime = QVector<double>::fromStdVector(time);
+        }
+    }
 
+    QVector<double> qtime = QVector<double>::fromStdVector(time);
     plotJoint(ui->plot_joint_1,QString("Joint 1"),qtime,pos_joint1,vel_joint1,acc_joint1); // plot joint 1
     plotJoint(ui->plot_joint_2,QString("Joint 2"),qtime,pos_joint2,vel_joint2,acc_joint2); // plot joint 2
     plotJoint(ui->plot_joint_3,QString("Joint 3"),qtime,pos_joint3,vel_joint3,acc_joint3); // plot joint 3
@@ -244,10 +255,8 @@ void ResultsJointsDialog::setupPlots(vector<vector<MatrixXd> > &pos, vector<vect
     plotJoint(ui->plot_joint_9,QString("Joint 9"),qtime,pos_joint9,vel_joint9,acc_joint9); // plot joint 9
     plotJoint(ui->plot_joint_10,QString("Joint 10"),qtime,pos_joint10,vel_joint10,acc_joint10); // plot joint 10
     plotJoint(ui->plot_joint_11,QString("Joint 11"),qtime,pos_joint11,vel_joint11,acc_joint11); // plot joint 11
-
-
-
 }
+
 
 void ResultsJointsDialog::plotJoint(QCustomPlot *plot, QString title, QVector<double> &time, QVector<double> &pos, QVector<double> &vel, QVector<double> &acc)
 {
@@ -263,11 +272,11 @@ void ResultsJointsDialog::plotJoint(QCustomPlot *plot, QString title, QVector<do
     // move newly created axes on "axes" layer and grids on "grid" layer:
     for (QCPAxisRect *rect : plot->axisRects())
     {
-      for (QCPAxis *axis : rect->axes())
-      {
-        axis->setLayer("axes");
-        axis->grid()->setLayer("grid");
-      }
+        for (QCPAxis *axis : rect->axes())
+        {
+            axis->setLayer("axes");
+            axis->grid()->setLayer("grid");
+        }
     }
 
     plot->plotLayout()->addElement(0,0, new QCPPlotTitle(plot,title));
@@ -326,27 +335,21 @@ void ResultsJointsDialog::plotJoint(QCustomPlot *plot, QString title, QVector<do
     connect(plot->graph(0)->valueAxis(), SIGNAL(rangeChanged(QCPRange)), plot->graph(1)->valueAxis(), SLOT(setRange(QCPRange)));
     connect(plot->graph(0)->valueAxis(), SIGNAL(rangeChanged(QCPRange)), plot->graph(2)->valueAxis(), SLOT(setRange(QCPRange)));
     plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
-
-
     plot->replot();
 }
 
-
-// Q_SLOTS
 
 void ResultsJointsDialog::on_pushButton_save_joints_plots_clicked()
 {
 
     struct stat st = {0};
-    if (stat("results", &st) == -1) {
+    if (stat("results", &st) == -1)
         mkdir("results", 0700);
-    }
-    if (stat("results/planning", &st) == -1) {
+    if (stat("results/planning", &st) == -1)
         mkdir("results/planning", 0700);
-    }
-    if (stat("results/planning/joints", &st) == -1) {
+    if (stat("results/planning/joints", &st) == -1)
         mkdir("results/planning/joints", 0700);
-    }
+
     QString path("results/planning/joints/");
 
     ui->plot_joint_1->savePdf(path+QString("joint1.pdf"),true,0,0,QString(),QString("Kinematics of the joint 1"));
@@ -419,13 +422,6 @@ void ResultsJointsDialog::on_pushButton_save_joints_plots_clicked()
     svg_qstr = path+QString("joint11.svg"); svg_str = svg_qstr.toStdString();
     cmdLine = string("pdftocairo -svg ")+pdf_str+string(" ")+svg_str;
     system(cmdLine.c_str());
-
 }
-
-
-
-
-
-
 
 } // namespace motion_manager

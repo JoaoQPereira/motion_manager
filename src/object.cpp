@@ -1,11 +1,10 @@
 #include "../include/motion_manager/object.hpp"
 
-namespace motion_manager{
 
+namespace motion_manager{
 
 Object::Object()
 {
-
     this->m_name = "";
     this->m_pos.Xpos=0;this->m_pos.Ypos=0;this->m_pos.Zpos=0;
     this->m_or.pitch = 0; this->m_or.roll = 0; this->m_or.yaw = 0;
@@ -42,7 +41,6 @@ Object::Object()
     this->eng_tar_left.resize(eng_to_tar_l.size());
     VectorXd::Map(&this->eng_tar_left[0], eng_to_tar_l.size()) = eng_to_tar_l;
 
-
     Matrix3d Rot_obj; this->RPY_matrix(Rot_obj);
     Matrix3d Rot_obj_inv = Rot_obj.inverse();
     // tar right to obj
@@ -72,18 +70,14 @@ Object::Object()
     this->eng_obj.resize(eng_to_obj.size());
     VectorXd::Map(&this->eng_obj[0], eng_to_obj.size()) = eng_to_obj;
 
-
     this->m_targetRightEnabled = false;
     this->m_targetLeftEnabled = false;
-
     this->setup_features = true;
-
 }
 
 
 Object::Object(string name)
 {
-
     this->m_name = name;
     this->m_pos.Xpos=0;this->m_pos.Ypos=0;this->m_pos.Zpos=0;
     this->m_or.pitch = 0; this->m_or.roll = 0; this->m_or.yaw = 0;
@@ -149,16 +143,14 @@ Object::Object(string name)
 
     this->m_targetRightEnabled = false;
     this->m_targetLeftEnabled = false;
-
     this->setup_features = true;
-
 }
+
 
 Object::Object(string name, pos ppos, orient oor, dim ssize,
                Target* pTR, Target* pTL,
                EngagePoint* pEng)
 {
-
     this->m_name = name;
     this->m_pos = ppos;
     this->m_or = oor;
@@ -222,18 +214,14 @@ Object::Object(string name, pos ppos, orient oor, dim ssize,
     this->eng_obj.resize(eng_to_obj.size());
     VectorXd::Map(&this->eng_obj[0], eng_to_obj.size()) = eng_to_obj;
 
-
     this->m_targetRightEnabled = false;
     this->m_targetLeftEnabled = false;
-
     this->setup_features = false;
-
 }
 
 
 Object::Object(const Object &obj)
 {
-
     this->m_name = obj.m_name;
     this->m_pos = obj.m_pos;
     this->m_or = obj.m_or;
@@ -257,25 +245,18 @@ Object::Object(const Object &obj)
     this->m_targetLeftEnabled = obj.m_targetLeftEnabled;
 
     this->setup_features = obj.setup_features;
-
-
 }
 
 
 Object::~Object()
 {
-
 }
-
-
 
 
 void Object::setPos(pos& ppos, bool update_features)
 {
-
-
-    if (update_features){
-
+    if (update_features)
+    {
         double x;
         double y;
         double z;
@@ -305,12 +286,10 @@ void Object::setPos(pos& ppos, bool update_features)
         this->getTar_left_matrix(trans_tar_left);
         this->getEngage_matrix(trans_engage);
 
-
         inv_trans_obj = trans_obj.inverse();
         trans_obj_tar_right=inv_trans_obj * trans_tar_right; // transformation matrix object - target right
         trans_obj_tar_left=inv_trans_obj * trans_tar_left; // transformation matrix object - target left
         trans_obj_engage=inv_trans_obj * trans_engage; // transformation matrix object - engage
-
 
         // set the new position of the object and update the features
         this->m_pos = ppos;
@@ -338,19 +317,16 @@ void Object::setPos(pos& ppos, bool update_features)
         new_engage_pos.Ypos = trans_engage(1,3);
         new_engage_pos.Zpos = trans_engage(2,3);
         this->p_engage->setPos(new_engage_pos);
-
-
-    }else{
-        this->m_pos = ppos;
-
     }
+    else
+        this->m_pos = ppos;
 }
+
 
 void Object::setOr(orient& oor, bool update_features)
 {
-
-    if (update_features){
-
+    if (update_features)
+    {
         Matrix4d trans_tar_right;
         Matrix4d trans_tar_left;
         Matrix4d trans_engage;
@@ -366,7 +342,6 @@ void Object::setOr(orient& oor, bool update_features)
         this->getTar_right_matrix(trans_tar_right);
         this->getTar_left_matrix(trans_tar_left);
         this->getEngage_matrix(trans_engage);
-
 
         inv_trans_obj = trans_obj.inverse();
         trans_obj_tar_right=inv_trans_obj * trans_tar_right; // transformation matrix object - target right
@@ -397,145 +372,133 @@ void Object::setOr(orient& oor, bool update_features)
         orient new_engage_or;
         new_engage_or.roll = rpy_engage.at(0); new_engage_or.pitch = rpy_engage.at(1); new_engage_or.yaw = rpy_engage.at(2);
         this->p_engage->setOr(new_engage_or);
-
-
-
-    }else{
-        this->m_or = oor;
-
     }
+    else
+        this->m_or = oor;
 }
-
 
 
 void Object::setSize(dim ssize)
 {
-
     this->m_size = ssize;
 }
 
+
 bool Object::setTargetRight(targetPtr tr)
 {
-
-    if (this->setup_features){
+    if (this->setup_features)
+    {
         this->p_targetRight = targetPtr(new Target(*tr.get()));
         return true;
-    }else{
-        return false;
     }
+    else
+        return false;
 }
+
 
 void Object::setHandle(int h)
 {
-
     this->handle = h;
 }
 
+
 void Object::setHandleBody(int h)
 {
-
     this->handle_body = h;
 }
 
 
 bool Object::setTargetLeft(targetPtr tl)
 {
-
-    if (this->setup_features){
+    if (this->setup_features)
+    {
         this->p_targetLeft = targetPtr(new Target(*tl.get()));
         return true;
-    }else{
-        return false;
     }
+    else
+        return false;
 }
+
 
 bool Object::setEngagePoint(engagePtr eng)
 {
-
-    if (this->setup_features){
+    if (this->setup_features)
+    {
         this->p_engage = engagePtr(new EngagePoint(*eng.get()));
         return true;
-    }else{
-        return false;
     }
+    else
+        return false;
 }
 
 
 void Object::setTargetRightEnabled(bool c)
 {
-
     this->m_targetRightEnabled = c;
 }
 
 void Object::setTargetLeftEnabled(bool c)
 {
-
     this->m_targetLeftEnabled = c;
 }
 
 
 dim Object::getSize()
 {
-
     return this->m_size;
 }
 
+
 int Object::getHandle()
 {
-
     return this->handle;
 }
 
 
 int Object::getHandleBody()
 {
-
     return this->handle_body;
 }
 
 
 targetPtr Object::getTargetRight()
 {
-
     return p_targetRight;
 }
 
+
 targetPtr Object::getTargetLeft()
 {
-
     return p_targetLeft;
 }
 
+
 engagePtr Object::getEngagePoint()
 {
-
    return p_engage;
 }
 
 
 double Object::getRadius()
 {
-
     return (max(this->m_size.Xsize,this->m_size.Ysize)/2.0);
 }
 
+
 bool Object::isTargetRightEnabled()
 {
-
     return this->m_targetRightEnabled;
 }
 
+
 bool Object::isTargetLeftEnabled()
 {
-
     return this->m_targetLeftEnabled;
 }
 
 
-
 string Object::getInfoLine()
 {
-
     return  this->m_name + COLUMN + SPACE +
             XposSTR + str(boost::format("%d") % this->m_pos.Xpos) + MILLIMETERS + SEP +
             YposSTR + str(boost::format("%d") % this->m_pos.Ypos) + MILLIMETERS + SEP+
@@ -546,8 +509,6 @@ string Object::getInfoLine()
             XsizeSTR + str(boost::format("%d") % this->m_size.Xsize) + MILLIMETERS + SEP+
             YsizeSTR + str(boost::format("%d") % this->m_size.Ysize) + MILLIMETERS + SEP+
             ZsizeSTR + str(boost::format("%d") % this->m_size.Zsize)+ MILLIMETERS;
-
-
 }
 
 
@@ -555,6 +516,7 @@ void Object::getTar_right_matrix(Matrix4d& mat)
 {
     this->p_targetRight->Trans_matrix(mat);
 }
+
 
 void Object::getTar_right_RPY_matrix(Matrix3d &mat)
 {
@@ -564,10 +526,9 @@ void Object::getTar_right_RPY_matrix(Matrix3d &mat)
 
 void Object::getTar_left_matrix(Matrix4d &mat)
 {
-
     this->p_targetLeft->Trans_matrix(mat);
-
 }
+
 
 void Object::getTar_left_RPY_matrix(Matrix3d &mat)
 {
@@ -577,60 +538,58 @@ void Object::getTar_left_RPY_matrix(Matrix3d &mat)
 
 void Object::getEngage_matrix(Matrix4d &mat)
 {
-
     this->p_engage->Trans_matrix(mat);
 }
 
 
-
 void Object::getRPY(Matrix4d Trans, vector<double>& rpy)
 {
-
     rpy = std::vector<double>(3);
 
-    if(abs(Trans(0,0) < 1e-10) && (abs(Trans(1,0) < 1e-10))){
-
+    if(abs(Trans(0,0) < 1e-10) && (abs(Trans(1,0) < 1e-10)))
+    {
         rpy.at(0) = 0; // [rad]
         rpy.at(1) = atan2(-Trans(2,0),Trans(0,0)); // [rad]
         rpy.at(2) = atan2(-Trans(1,2),Trans(1,1)); // [rad]
-
-    }else{
-
+    }
+    else
+    {
         rpy.at(0) = atan2(Trans(1,0),Trans(0,0)); // [rad]
         double sp = sin(rpy.at(0));
         double cp = cos(rpy.at(0));
         rpy.at(1) = atan2(-Trans(2,0), cp*Trans(0,0)+sp*Trans(1,0)); // [rad]
         rpy.at(2) = atan2(sp*Trans(0,2)-cp*Trans(1,2),cp*Trans(1,1)-sp*Trans(0,1)); // [rad]
-
     }
-
-
 }
+
 
 void Object::getEngTarRight(std::vector<double> &eng_to_tar)
 {
     eng_to_tar = this->eng_tar_right;
 }
 
+
 void Object::getEngTarLeft(std::vector<double> &eng_to_tar)
 {
     eng_to_tar = this->eng_tar_left;
 }
+
 
 void Object::getTarRightObj(std::vector<double> &tar_to_obj)
 {
     tar_to_obj = this->tar_right_obj;
 }
 
+
 void Object::getTarLeftObj(std::vector<double> &tar_to_obj)
 {
     tar_to_obj = this->tar_left_obj;
 }
 
+
 void Object::getEngObj(std::vector<double> &eng_to_obj)
 {
     eng_to_obj = this->eng_obj;
 }
-
 
 } // namespace motion_manager

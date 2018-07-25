@@ -1,12 +1,13 @@
 #include "../include/motion_manager/engagepoint.hpp"
 
-namespace motion_manager{
 
+namespace motion_manager{
 
 EngagePoint::EngagePoint()
 {
 
 }
+
 
 EngagePoint::EngagePoint(string name, pos ppos, orient oor)
 {
@@ -19,6 +20,7 @@ EngagePoint::EngagePoint(string name, pos ppos, orient oor)
     this->m_or.yaw = oor.yaw;
 }
 
+
 EngagePoint::EngagePoint(const EngagePoint &eng)
 {
     this->m_name = eng.m_name;
@@ -30,10 +32,9 @@ EngagePoint::EngagePoint(const EngagePoint &eng)
     this->m_or.yaw = eng.m_or.yaw;
 }
 
+
 EngagePoint::~EngagePoint()
 {
-
-
 }
 
 } // namespace motion_manager

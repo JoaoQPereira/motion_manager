@@ -1,5 +1,6 @@
 #include "../include/motion_manager/comp_velocity_dialog.hpp"
 
+
 namespace motion_manager {
 
 CompVelocityDialog::CompVelocityDialog(QWidget *parent) :
@@ -9,6 +10,7 @@ CompVelocityDialog::CompVelocityDialog(QWidget *parent) :
     ui->setupUi(this);
 }
 
+
 CompVelocityDialog::~CompVelocityDialog()
 {
     delete ui;
@@ -17,13 +19,12 @@ CompVelocityDialog::~CompVelocityDialog()
 
 void CompVelocityDialog::setupPlots(vector<vector<double>> &linear_velocity,vector<vector<double>> &angular_velocity,QVector<double> &time, int mod)
 {
-    //const double radtodeg = 180.0/static_cast<double>(M_PI);
-
     QVector<double> linear_vel_x; QVector<double> linear_vel_y; QVector<double> linear_vel_z;
     QVector<double> angular_vel_x; QVector<double> angular_vel_y; QVector<double> angular_vel_z;
     QVector<double> linear_vel_norm; QVector<double> angular_vel_norm;
 
-    for(size_t i=0;i<linear_velocity.size();++i){
+    for(size_t i=0;i<linear_velocity.size();++i)
+    {
         vector<double> linear = linear_velocity.at(i);
         vector<double> angular = angular_velocity.at(i);
         linear_vel_x.push_back(linear.at(0));
@@ -36,7 +37,8 @@ void CompVelocityDialog::setupPlots(vector<vector<double>> &linear_velocity,vect
         angular_vel_norm.push_back(sqrt(pow(angular.at(0),2)+pow(angular.at(1),2)+pow(angular.at(2),2)));
     }
 
-    switch(mod){
+    switch(mod)
+    {
     case 0: // shoulder
         plotComp(ui->plot_shoulder_x,QString("Shoulder linear velocity x"),time,linear_vel_x,true); // plot linear vel x
         plotComp(ui->plot_shoulder_y,QString("Shoulder linear velocity y"),time,linear_vel_y,true); // plot linear vel y
@@ -90,14 +92,15 @@ void CompVelocityDialog::plotComp(QCustomPlot *plot, QString title, QVector<doub
     wideAxisRect->setupFullAxesBox(true);
     QCPMarginGroup *marginGroup = new QCPMarginGroup(plot);
     wideAxisRect->setMarginGroup(QCP::msLeft | QCP::msRight, marginGroup);
+
     // move newly created axes on "axes" layer and grids on "grid" layer:
     for (QCPAxisRect *rect : plot->axisRects())
     {
-      for (QCPAxis *axis : rect->axes())
-      {
-        axis->setLayer("axes");
-        axis->grid()->setLayer("grid");
-      }
+        for (QCPAxis *axis : rect->axes())
+        {
+            axis->setLayer("axes");
+            axis->grid()->setLayer("grid");
+        }
     }
 
     QFont *title_font = new QFont(); title_font->setPointSize(12);
@@ -106,11 +109,11 @@ void CompVelocityDialog::plotComp(QCustomPlot *plot, QString title, QVector<doub
     plot->plotLayout()->addElement(1, 0, wideAxisRect);
 
     QString name;
-    if(lin){
+    if(lin)
         name="[mm/s]";
-    }else{
+    else
         name="[rad/s]";
-    }
+
     plot->addGraph(wideAxisRect->axis(QCPAxis::atBottom), wideAxisRect->axis(QCPAxis::atLeft));
     plot->graph(0)->setPen(QPen(Qt::blue));
     plot->graph(0)->setName(name);
@@ -127,23 +130,17 @@ void CompVelocityDialog::plotComp(QCustomPlot *plot, QString title, QVector<doub
 }
 
 
-// Q_SLOTS
-
 void CompVelocityDialog::on_pushButton_save_shoulder_clicked()
 {
-
     struct stat st = {0};
-    if (stat("results", &st) == -1) {
+    if (stat("results", &st) == -1)
         mkdir("results", 0700);
-    }
-    if (stat("results/planning", &st) == -1) {
+    if (stat("results/planning", &st) == -1)
         mkdir("results/planning", 0700);
-    }
-    if (stat("results/planning/shoulder", &st) == -1) {
+    if (stat("results/planning/shoulder", &st) == -1)
         mkdir("results/planning/shoulder", 0700);
-    }
-    QString path = QString("results/planning/shoulder/");
 
+    QString path = QString("results/planning/shoulder/");
     ui->plot_shoulder_x->savePdf(path+QString("shoulder_vel_x.pdf"),true,0,0,QString(),QString("Shoulder Linear Velocity x"));
     ui->plot_shoulder_y->savePdf(path+QString("shoulder_vel_y.pdf"),true,0,0,QString(),QString("Shoulder Linear Velocity y"));
     ui->plot_shoulder_z->savePdf(path+QString("shoulder_vel_z.pdf"),true,0,0,QString(),QString("Shoulder Linear Velocity z"));
@@ -152,24 +149,20 @@ void CompVelocityDialog::on_pushButton_save_shoulder_clicked()
     ui->plot_shoulder_wy->savePdf(path+QString("shoulder_vel_wy.pdf"),true,0,0,QString(),QString("Shoulder Angular Velocity x"));
     ui->plot_shoulder_wz->savePdf(path+QString("shoulder_vel_wz.pdf"),true,0,0,QString(),QString("Shoulder Angular Velocity x"));
     ui->plot_shoulder_ang_vel->savePdf(path+QString("shoulder_ang_vel.pdf"),true,0,0,QString(),QString("Shoulder Angular Velocity Norm"));
-
 }
+
 
 void CompVelocityDialog::on_pushButton_save_elbow_clicked()
 {
-
     struct stat st = {0};
-    if (stat("results", &st) == -1) {
+    if (stat("results", &st) == -1)
         mkdir("results", 0700);
-    }
-    if (stat("results/planning", &st) == -1) {
+    if (stat("results/planning", &st) == -1)
         mkdir("results/planning", 0700);
-    }
-    if (stat("results/planning/elbow", &st) == -1) {
+    if (stat("results/planning/elbow", &st) == -1)
         mkdir("results/planning/elbow", 0700);
-    }
-    QString path = QString("results/planning/elbow/");
 
+    QString path = QString("results/planning/elbow/");
     ui->plot_elbow_x->savePdf(path+QString("elbow_vel_x.pdf"),true,0,0,QString(),QString("Elbow Linear Velocity x"));
     ui->plot_elbow_y->savePdf(path+QString("elbow_vel_y.pdf"),true,0,0,QString(),QString("Elbow Linear Velocity y"));
     ui->plot_elbow_z->savePdf(path+QString("elbow_vel_z.pdf"),true,0,0,QString(),QString("Elbow Linear Velocity z"));
@@ -180,20 +173,18 @@ void CompVelocityDialog::on_pushButton_save_elbow_clicked()
     ui->plot_elbow_ang_vel->savePdf(path+QString("elbow_ang_vel.pdf"),true,0,0,QString(),QString("Elbow Angular Velocity Norm"));
 }
 
+
 void CompVelocityDialog::on_pushButton_save_wrist_clicked()
 {
     struct stat st = {0};
-    if (stat("results", &st) == -1) {
+    if (stat("results", &st) == -1)
         mkdir("results", 0700);
-    }
-    if (stat("results/planning", &st) == -1) {
+    if (stat("results/planning", &st) == -1)
         mkdir("results/planning", 0700);
-    }
-    if (stat("results/planning/wrist", &st) == -1) {
+    if (stat("results/planning/wrist", &st) == -1)
         mkdir("results/planning/wrist", 0700);
-    }
-    QString path = QString("results/planning/wrist/");
 
+    QString path = QString("results/planning/wrist/");
     ui->plot_wrist_x->savePdf(path+QString("wrist_vel_x.pdf"),true,0,0,QString(),QString("Wrist Linear Velocity x"));
     ui->plot_wrist_y->savePdf(path+QString("wrist_vel_y.pdf"),true,0,0,QString(),QString("Wrist Linear Velocity y"));
     ui->plot_wrist_z->savePdf(path+QString("wrist_vel_z.pdf"),true,0,0,QString(),QString("Wrist Linear Velocity z"));
@@ -204,21 +195,18 @@ void CompVelocityDialog::on_pushButton_save_wrist_clicked()
     ui->plot_wrist_ang_vel->savePdf(path+QString("wrist_ang_vel.pdf"),true,0,0,QString(),QString("Wrist Angular Velocity Norm"));
 }
 
+
 void CompVelocityDialog::on_pushButton_save_hand_clicked()
 {
-
     struct stat st = {0};
-    if (stat("results", &st) == -1) {
+    if (stat("results", &st) == -1)
         mkdir("results", 0700);
-    }
-    if (stat("results/planning", &st) == -1) {
+    if (stat("results/planning", &st) == -1)
         mkdir("results/planning", 0700);
-    }
-    if (stat("results/planning/hand", &st) == -1) {
+    if (stat("results/planning/hand", &st) == -1)
         mkdir("results/planning/hand", 0700);
-    }
-    QString path = QString("results/planning/hand/");
 
+    QString path = QString("results/planning/hand/");
     ui->plot_hand_x->savePdf(path+QString("hand_vel_x.pdf"),true,0,0,QString(),QString("Hand Linear Velocity x"));
     ui->plot_hand_y->savePdf(path+QString("hand_vel_y.pdf"),true,0,0,QString(),QString("Hand Linear Velocity y"));
     ui->plot_hand_z->savePdf(path+QString("hand_vel_z.pdf"),true,0,0,QString(),QString("Hand Linear Velocity z"));
@@ -227,13 +215,6 @@ void CompVelocityDialog::on_pushButton_save_hand_clicked()
     ui->plot_hand_wy->savePdf(path+QString("hand_vel_wy.pdf"),true,0,0,QString(),QString("Hand Angular Velocity x"));
     ui->plot_hand_wz->savePdf(path+QString("hand_vel_wz.pdf"),true,0,0,QString(),QString("Hand Angular Velocity x"));
     ui->plot_hand_ang_vel->savePdf(path+QString("hand_ang_vel.pdf"),true,0,0,QString(),QString("Hand Angular Velocity Norm"));
-
 }
-
-
-
-
-
-
 
 } // namespace motion_manager

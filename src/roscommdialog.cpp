@@ -2,7 +2,6 @@
 #include "../include/motion_manager/roscommdialog.hpp"
 
 
-
 namespace motion_manager {
 
 using namespace Qt;
@@ -13,94 +12,81 @@ RosCommDialog::RosCommDialog():
     ui->setupUi(this);
 }
 
+
 RosCommDialog::RosCommDialog(QNode *q, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::RosCommDialogDesign)
 {
     ui->setupUi(this);
     qnode = q;
-
 }
 
 
 RosCommDialog::~RosCommDialog()
 {
     delete ui;
-
 }
+
 
 void RosCommDialog::setMasterUrl(QString& master_url)
 {
-
     ui->line_edit_master->setText(master_url);
 }
 
+
 void RosCommDialog::setHostUrl(QString& host_url)
 {
-
     ui->line_edit_host->setText(host_url);
 }
 
+
 void RosCommDialog::setRememberCheckbox(bool r)
 {
-
     ui->checkbox_remember_settings->setChecked(r);
 }
 
+
 void RosCommDialog::setUseEnvCheckbox(bool r)
 {
-
     ui->checkbox_use_environment->setChecked(r);
-
 }
-
 
 
 void RosCommDialog::enableMasterUrl(bool e)
 {
-
     ui->line_edit_master->setEnabled(e);
 }
 
 
-void RosCommDialog::enableHostUrl(bool e){
-
+void RosCommDialog::enableHostUrl(bool e)
+{
     ui->line_edit_host->setEnabled(e);
 }
 
 
 QString RosCommDialog::getMasterUrl()
 {
-
-
    return ui->line_edit_master->text();
-
 }
+
 
 QString RosCommDialog::getHostUrl()
 {
-
-
    return ui->line_edit_host->text();
-
 }
+
 
 bool RosCommDialog::getRememberCheckbox()
 {
-
-
     return ui->checkbox_remember_settings->isChecked();
 }
 
+
 bool RosCommDialog::getUseEnvCheckbox()
 {
-
     return ui->checkbox_use_environment->isChecked();
 }
 
-/*****************************************************************************
-** Implementation [Slots]
-*****************************************************************************/
 
 void RosCommDialog::showNoMasterMessage()
 {
@@ -109,13 +95,11 @@ void RosCommDialog::showNoMasterMessage()
     msgBox.setIcon(QMessageBox::Critical);
     msgBox.setText("Couldn't find the ros master.");
     msgBox.exec();
-    //qnode->on_end();
-    //close();
 }
+
 
 void RosCommDialog::on_button_connect_clicked(bool check)
 {
-
     std::string status;
     bool bstatus;
 
@@ -138,14 +122,9 @@ void RosCommDialog::on_button_connect_clicked(bool check)
                 ui->checkbox_remember_settings->setEnabled(true);
                 ui->checkbox_use_environment->setEnabled(true);
                 qnode->on_end();
-
-                //status = "Node disconnected from ROS" ;
-                //bstatus=false;
-
             }
             else
             {
-
                 ui->button_connect->setChecked(true);
                 ui->line_edit_master->setEnabled(false);
                 ui->line_edit_host->setEnabled(false);
@@ -163,7 +142,7 @@ void RosCommDialog::on_button_connect_clicked(bool check)
         else
         {
             if (!qnode->on_init_url(ui->line_edit_master->text().toStdString(),
-                       ui->line_edit_host->text().toStdString()))
+                                    ui->line_edit_host->text().toStdString()))
             {
                 showNoMasterMessage();
 
@@ -176,9 +155,6 @@ void RosCommDialog::on_button_connect_clicked(bool check)
                 ui->checkbox_remember_settings->setEnabled(true);
                 ui->checkbox_use_environment->setEnabled(true);
                 qnode->on_end();
-
-                //status = "Node disconnected from ROS" ;
-                //bstatus=false;
             }
             else
             {
@@ -218,6 +194,5 @@ void RosCommDialog::on_button_connect_clicked(bool check)
         Q_EMIT rosConnected(bstatus);
     }
 }
-
 
 } // namespace motion_manager

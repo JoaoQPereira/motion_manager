@@ -5,7 +5,6 @@ namespace motion_manager {
 
 using namespace Qt;
 
-
 VrepCommDialog::VrepCommDialog(QNode *q, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::VrepCommDialogDesign)
@@ -20,27 +19,22 @@ VrepCommDialog::~VrepCommDialog()
     delete ui;
 }
 
-/*****************************************************************************
-** Implementation [Slots]
-*****************************************************************************/
 
 void VrepCommDialog::on_button_check_clicked(bool check)
 {
-
     bool bstatus = false;
 
-    if (qnode->checkVrep()){
-
+    if (qnode->checkVrep())
+    {
         ui->labelStatusVrep->setText("on-line");
         qnode->log(QNode::Info,"V-REP is on-line");
         bstatus = true;
-
-    }else{
-
+    }
+    else
+    {
         ui->labelStatusVrep->setText("off-line");
         qnode->log(QNode::Info,"V-REP is off-line");
         bstatus = false;
-
     }
     Q_EMIT vrepConnected(bstatus);
 }

@@ -20,10 +20,12 @@ Mov_ExecuteDialog::Mov_ExecuteDialog(QNode *q, QWidget *parent) :
 #endif
 }
 
+
 Mov_ExecuteDialog::~Mov_ExecuteDialog()
 {
     delete ui;
 }
+
 
 void Mov_ExecuteDialog::on_pushButtonOK_clicked()
 {
@@ -43,6 +45,7 @@ void Mov_ExecuteDialog::on_pushButtonOK_clicked()
     Q_EMIT addPlat_execMove(platform, check);
 }
 
+
 void Mov_ExecuteDialog::on_pushButtonOK_pressed()
 {
     if(ui->radioButton_execMov_VRep->isChecked())
@@ -52,6 +55,7 @@ void Mov_ExecuteDialog::on_pushButtonOK_pressed()
     else if(ui->radioButton_execMov_MoveIt->isChecked())
         qnode->log(QNode::Info,std::string("Executing the movement in RViz. . ."));
 }
+
 } // namespace motion_manager
 
 

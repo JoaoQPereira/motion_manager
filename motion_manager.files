@@ -14,8 +14,6 @@ include/motion_manager/movement.hpp
 include/motion_manager/object.hpp
 include/motion_manager/point.hpp
 include/motion_manager/pose.hpp
-include/motion_manager/power_law_dialog.hpp
-include/motion_manager/powerlaw3ddialog.hpp
 include/motion_manager/prmdialog.hpp
 include/motion_manager/prmstardialog.hpp
 include/motion_manager/problem.hpp
@@ -54,8 +52,6 @@ src/movement.cpp
 src/object.cpp
 src/point.cpp
 src/pose.cpp
-src/power_law_dialog.cpp
-src/powerlaw3ddialog.cpp
 src/prmdialog.cpp
 src/prmstardialog.cpp
 src/problem.cpp
@@ -79,8 +75,6 @@ src/vrepcommdialog.cpp
 ui/comp_velocitydialog.ui
 ui/main_window.ui
 ui/mov_executedialog.ui
-ui/power_law_3ddialog.ui
-ui/power_lawdialog.ui
 ui/prmdialog.ui
 ui/prmstardialog.ui
 ui/results_plan_joints_dialog.ui
