@@ -10,7 +10,9 @@
 #include <eigen3/Eigen/Dense>
 #include "config.hpp"
 
-namespace motion_manager {
+
+namespace motion_manager
+{
 
 using namespace std;
 using namespace Eigen;
@@ -18,42 +20,6 @@ using namespace Eigen;
 class RRTDialog : public QDialog
 {
     Q_OBJECT
-
-public Q_SLOTS:
-
-    /**
-     * @brief This method saves the tuning parameters to a file
-     */
-    void on_pushButton_save_clicked();
-
-    /**
-     * @brief This method loads the tuning parameters from a file
-     */
-    void on_pushButton_load_clicked();
-
-    /**
-     * @brief checkFinalPosture
-     * @param state
-     */
-    void checkFinalPosture(int state);
-
-    /**
-     * @brief checkAddPlane
-     * @param state
-     */
-    void checkAddPlane(int state);
-
-    /**
-     * @brief checkApproach
-     * @param state
-     */
-    void checkApproach(int state);
-
-    /**
-     * @brief checkRetreat
-     * @param state
-     */
-    void checkRetreat(int state);
 
 public:
     /**
@@ -176,6 +142,40 @@ public:
      */
     bool getRetreat();
 
+public Q_SLOTS:
+    /**
+     * @brief This method saves the tuning parameters to a file
+     */
+    void on_pushButton_save_clicked();
+
+    /**
+     * @brief This method loads the tuning parameters from a file
+     */
+    void on_pushButton_load_clicked();
+
+    /**
+     * @brief checkFinalPosture
+     * @param state
+     */
+    void checkFinalPosture(int state);
+
+    /**
+     * @brief checkAddPlane
+     * @param state
+     */
+    void checkAddPlane(int state);
+
+    /**
+     * @brief checkApproach
+     * @param state
+     */
+    void checkApproach(int state);
+
+    /**
+     * @brief checkRetreat
+     * @param state
+     */
+    void checkRetreat(int state);
 
 private:
     Ui::RRTDialog *ui; /**< handle of the user interface */
@@ -184,4 +184,5 @@ private:
 };
 
 } // namespace motion_manager
+
 #endif // RRTDIALOG_HPP

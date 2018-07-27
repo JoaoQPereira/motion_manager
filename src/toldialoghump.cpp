@@ -514,6 +514,7 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
     //Spheres used to model/represent the fingers (in BarrettHand)
     npoints_arm = npoints_arm + npoints_finger;
 
+    //default values: defined based on the structure of the robot
     if(!name.compare("ARoS"))
     {
         ui->lineEdit_sphere4_r->setText(QString::number(70.00));
@@ -524,7 +525,6 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
         ui->lineEdit_sphere13_r->setText(QString::number(70.00));
         ui->lineEdit_sphere14_r->setText(QString::number(40.00));
     }
-
     if(!name.compare("Sawyer"))
     {
         ui->lineEdit_sphere2_r->setText(QString::number(60.00));

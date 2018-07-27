@@ -13,7 +13,9 @@
 #include <eigen3/Eigen/Dense>
 #include "config.hpp"
 
-namespace motion_manager {
+
+namespace motion_manager
+{
 
 using namespace std;
 using namespace Eigen;
@@ -21,13 +23,6 @@ using namespace Eigen;
 class ResultsJointsDialog : public QDialog
 {
     Q_OBJECT
-
-public Q_SLOTS:
-
-    /**
-     * @brief on_pushButton_save_joints_plots_clicked
-     */
-    void on_pushButton_save_joints_plots_clicked();
 
 public:
     /**
@@ -59,9 +54,13 @@ public:
      */
     void setupPlots(vector<vector<MatrixXd>> &pos, vector<vector<MatrixXd>> &vel,vector<vector<MatrixXd>> &acc,vector<vector<vector<double>>> &timesteps);
 
-private:
-    Ui::ResultsJointsDialog *ui; /**< handle of the user interface */
+public Q_SLOTS:
+    /**
+     * @brief on_pushButton_save_joints_plots_clicked
+     */
+    void on_pushButton_save_joints_plots_clicked();
 
+private:
     /**
      * @brief plotJoint
      * @param plot
@@ -72,7 +71,10 @@ private:
      * @param acc
      */
     void plotJoint(QCustomPlot* plot, QString title, QVector<double>& time, QVector<double>& pos, QVector<double>& vel, QVector<double>& acc);
+
+    Ui::ResultsJointsDialog *ui; /**< handle of the user interface */
 };
 
 } // namespace motion_manager
+
 #endif // RESULTS_PLAN_JOINTS_DIALOG_HPP

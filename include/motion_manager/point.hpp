@@ -3,21 +3,17 @@
 
 #include "common.hpp"
 
+
 using namespace std;
 using namespace Eigen;
 
-namespace motion_manager{
+namespace motion_manager
+{
 
-
-//! The Point class
-/**
- * @brief This class defines the concept of a point in the cartesian space.
- * It is defined by 6 degrees of freedom: 3 for position and 3 for orientation
- */
 class Point
 {
-public:
 
+public:
     /**
      * @brief Point, default constructor.
      */
@@ -37,12 +33,10 @@ public:
      */
     Point(const Point& pt);
 
-
     /**
      * @brief ~Point, a destructor.
      */
     virtual ~Point();
-
 
     /**
      * @brief This method sets the name of the point.
@@ -117,11 +111,6 @@ public:
     void Trans_matrix(Matrix4d& Trans);
 
 protected:
-
-    string m_name; /**< name of the point */
-    pos m_pos; /**< position of the point */
-    orient m_or; /**< orientation of the point */
-
     /**
      * @brief Get the axis of the orientation matrix from the orientation in Roll-Pitch-Yaw.
      *        id = 0 => retrieve the x axis, id = 1 => retrieve the y axis, id = 2 => retrieve the z axis
@@ -130,8 +119,11 @@ protected:
      */
     void getRotAxis(vector<double>& xt, int id);
 
-
+    string m_name; /**< name of the point */
+    pos m_pos; /**< position of the point */
+    orient m_or; /**< orientation of the point */
 };
+
 } // namespace motion_manager
 
 #endif // POINT_HPP

@@ -5,21 +5,18 @@
 #include "object.hpp"
 #include "pose.hpp"
 
-namespace motion_manager{
+
+namespace motion_manager
+{
 
 typedef boost::shared_ptr<Robot> robotPtr; /**< shared pointer to a robot */
 typedef boost::shared_ptr<Object> objectPtr; /**< shared pointer to an object*/
 typedef boost::shared_ptr<Pose> posePtr; /**< shared pointer to a pose*/
 
-//! The Scenario Class
-/**
- * @brief This class defines the concept of scenario where the robot and/or a human partner is acting
- */
 class Scenario
-{
+{    
 
 public:
-
     /**
      * @brief Scenario, a constructor
      * @param name
@@ -33,12 +30,10 @@ public:
      */
     Scenario(const Scenario& scene);
 
-
     /**
      * @brief ~Scenario, a destructor.
      */
     ~Scenario();
-
 
     /**
      * @brief This method sets the name of the scenario
@@ -144,17 +139,12 @@ public:
      */
     void addRobot(robotPtr hh_ptr);
 
-
-private:
-
+private: 
     string m_name; /**< the name of the scenario*/
     int m_scenarioID; /**< the ID of the scenario*/
     vector<objectPtr> objs_list; /**< the objects in the scenario */
     vector<posePtr> poses_list; /**< the poses in the scenario */
     robotPtr rPtr; /**< the robot in the scenario */
-
-
-
 };
 
 } // namespace motion_manager

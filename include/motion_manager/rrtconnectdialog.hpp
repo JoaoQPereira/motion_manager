@@ -10,7 +10,9 @@
 #include <eigen3/Eigen/Dense>
 #include "config.hpp"
 
-namespace motion_manager {
+
+namespace motion_manager
+{
 
 using namespace std;
 using namespace Eigen;
@@ -18,42 +20,6 @@ using namespace Eigen;
 class RRTConnectDialog : public QDialog
 {
     Q_OBJECT
-
-public Q_SLOTS:
-
-    /**
-     * @brief This method saves the tuning parameters to a file
-     */
-    void on_pushButton_save_clicked();
-
-    /**
-     * @brief This method loads the tuning parameters from a file
-     */
-    void on_pushButton_load_clicked();
-
-    /**
-     * @brief checkFinalPosture
-     * @param state
-     */
-    void checkFinalPosture(int state);
-
-    /**
-     * @brief checkAddPlane
-     * @param state
-     */
-    void checkAddPlane(int state);
-
-    /**
-     * @brief checkApproach
-     * @param state
-     */
-    void checkApproach(int state);
-
-    /**
-     * @brief checkRetreat
-     * @param state
-     */
-    void checkRetreat(int state);
 
 public:
     /**
@@ -156,7 +122,6 @@ public:
      */
     void getPlaneParameters(std::vector<double> &params, std::vector<double> &point1, std::vector<double> &point2, std::vector<double> &point3);
 
-
     /**
      * @brief setPlaneParameters
      * @param point1
@@ -177,6 +142,41 @@ public:
      */
     bool getRetreat();
 
+public Q_SLOTS:
+    /**
+     * @brief This method saves the tuning parameters to a file
+     */
+    void on_pushButton_save_clicked();
+
+    /**
+     * @brief This method loads the tuning parameters from a file
+     */
+    void on_pushButton_load_clicked();
+
+    /**
+     * @brief checkFinalPosture
+     * @param state
+     */
+    void checkFinalPosture(int state);
+
+    /**
+     * @brief checkAddPlane
+     * @param state
+     */
+    void checkAddPlane(int state);
+
+    /**
+     * @brief checkApproach
+     * @param state
+     */
+    void checkApproach(int state);
+
+    /**
+     * @brief checkRetreat
+     * @param state
+     */
+    void checkRetreat(int state);
+
 private:
     Ui::RRTConnectDialog *ui; /**< handle of the user interface */
     std::string config; /**< current configuration */
@@ -184,4 +184,5 @@ private:
 };
 
 } // namespace motion_manager
+
 #endif // RRTCONNECTDIALOG_HPP

@@ -12,7 +12,6 @@
 // Execution of the trajectory
 #define VEL @VEL@
 
-
 // MOVEIT
 #define MOVEIT @MOVEIT@
 // ROBOT

@@ -3,15 +3,12 @@
 
 #include "problem.hpp"
 
-namespace motion_manager{
+
+namespace motion_manager
+{
 
 typedef boost::shared_ptr<Problem> problemPtr; /**< shared pointer to a problem */
 
-//! The Task class
-/**
- * @brief This class defines the concept of a task as a sequence of movements. \n
- * Each movement is obtained from the solution of the correspondent problem.
- */
 class Task
 {
 
@@ -58,16 +55,13 @@ public:
      */
     void addProblem(Problem* s);
 
-
     /**
      * @brief This method deletes all the problems of the task
      */
     void clearProblems();
 
 private:
-
     vector<problemPtr> prolem_list; /**< problems of the task */
-
 };
 
 }// motion_manager

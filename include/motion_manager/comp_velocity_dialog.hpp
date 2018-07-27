@@ -13,7 +13,9 @@
 #include <eigen3/Eigen/Dense>
 #include "config.hpp"
 
-namespace motion_manager {
+
+namespace motion_manager
+{
 
 using namespace std;
 using namespace Eigen;
@@ -21,28 +23,6 @@ using namespace Eigen;
 class CompVelocityDialog : public QDialog
 {
     Q_OBJECT
-
-public Q_SLOTS:
-
-    /**
-     * @brief on_pushButton_save_shoulder_clicked
-     */
-    void on_pushButton_save_shoulder_clicked();
-
-    /**
-     * @brief on_pushButton_save_elbow_clicked
-     */
-    void on_pushButton_save_elbow_clicked();
-
-    /**
-     * @brief on_pushButton_save_wrist_clicked
-     */
-    void on_pushButton_save_wrist_clicked();
-
-    /**
-     * @brief on_pushButton_save_hand_clicked
-     */
-    void on_pushButton_save_hand_clicked();
 
 public:
     /**
@@ -65,10 +45,28 @@ public:
      */
     void setupPlots(vector<vector<double>> &hand_linear_velocity,vector<vector<double>> &hand_angular_velocity,QVector<double> &time, int mod);
 
+public Q_SLOTS:
+    /**
+     * @brief on_pushButton_save_shoulder_clicked
+     */
+    void on_pushButton_save_shoulder_clicked();
+
+    /**
+     * @brief on_pushButton_save_elbow_clicked
+     */
+    void on_pushButton_save_elbow_clicked();
+
+    /**
+     * @brief on_pushButton_save_wrist_clicked
+     */
+    void on_pushButton_save_wrist_clicked();
+
+    /**
+     * @brief on_pushButton_save_hand_clicked
+     */
+    void on_pushButton_save_hand_clicked();
 
 private:
-    Ui::CompVelocityDialog *ui; /**< handle of the user interface */
-
     /**
      * @brief plotComp
      * @param plot
@@ -78,7 +76,10 @@ private:
      * @param lin
      */
     void plotComp(QCustomPlot* plot, QString title, QVector<double>& time, QVector<double>& var,bool lin);
+
+    Ui::CompVelocityDialog *ui; /**< handle of the user interface */
 };
 
 } // namespace motion_manager
+
 #endif // COMP_VELOCITY_DIALOG

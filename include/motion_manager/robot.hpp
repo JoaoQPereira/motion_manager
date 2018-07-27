@@ -3,17 +3,14 @@
 
 #include "common.hpp"
 
-namespace motion_manager{
 
-//! The robot class
-/**
- * @brief This class defines the concept of a robot
- */
+namespace motion_manager
+{
+
 class Robot
 {
 
 public:
-
 #if HAND==0
     /**
      * @brief Robot
@@ -34,7 +31,7 @@ public:
      * @param l
      */
     Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-             vector<double>& r, vector<double>& l);
+          vector<double>& r, vector<double>& l);
 
     /**
      * @brief Robot
@@ -50,10 +47,10 @@ public:
      * @param max_ll
      */
     Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-             vector<double>& r, vector<double>& l,
-             vector<double>& min_rl, vector<double>& max_rl,
-             vector<double>& min_ll, vector<double>& max_ll);
-#elif HAND==1
+          vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
+#else
     /**
      * @brief Robot
      * @param name
@@ -73,7 +70,7 @@ public:
      * @param l
      */
     Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
-             vector<double>& r, vector<double>& l);
+          vector<double>& r, vector<double>& l);
 
     /**
      * @brief Robot
@@ -89,9 +86,9 @@ public:
      * @param max_ll
      */
     Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
-             vector<double>& r, vector<double>& l,
-             vector<double>& min_rl, vector<double>& max_rl,
-             vector<double>& min_ll, vector<double>& max_ll);
+          vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
 
 #if HEAD == 1
     /**
@@ -109,9 +106,9 @@ public:
      * @param max_ll
      */
     Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs,
-             robot_part headspecs, vector<double>& r, vector<double>& l,
-             vector<double>& min_rl, vector<double>& max_rl,
-             vector<double>& min_ll, vector<double>& max_ll);
+          robot_part headspecs, vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
 #endif
 #endif
 
@@ -150,8 +147,7 @@ public:
      * @param specs
      */
     void setHumanHand(human_hand& specs);
-#elif HAND==1
-
+#else
     /**
      * @brief This method sets the specifications of the hand
      * @param specs
@@ -255,34 +251,9 @@ public:
      */
     void setMatLeftHand(Matrix4d& m);
 
-    // robot parts
 #if HEAD==1
     void setHead(robot_part& head);
 #endif
-//#if NECK==1
-  //  void setNeck(robot_part& neck);
-//#endif
-//#if PELVIS==1
-  //  void setPelvis(robot_part& pelvis);
-//#endif
-//#if RIGHT_UPPER_LEG==1
-  //  void setRight_Upper_leg(robot_part& right_upper_leg);
-//#endif
-//#if RIGHT_LOWER_LEG==1
-  //  void setRight_Lower_leg(robot_part& right_lower_leg);
-//#endif
-//#if RIGHT_FOOT==1
-  //  void setRight_foot(robot_part& right_foot);
-//#endif
-//#if LEFT_UPPER_LEG==1
-  //  void setLeft_Upper_leg(robot_part& left_upper_leg);
-//#endif
-//#if LEFT_LOWER_LEG==1
-  //  void setLeft_Lower_leg(robot_part& left_lower_leg);
-//#endif
-//#if LEFT_FOOT==1
-  //  void setLeft_foot(robot_part& left_foot);
-//#endif
 
     /**
      * @brief This method gets the name of the robot
@@ -301,14 +272,14 @@ public:
      * @return
      */
     arm getArm();
-#if HAND==0
 
+#if HAND==0
     /**
      * @brief This method gets hand specifications of the robot
      * @return
      */
     human_hand getHumanHand();
-#elif HAND==1
+#else
     /**
      * @brief This method gets the hand specifications of the robot
      * @return
@@ -520,7 +491,6 @@ public:
      */
     void getMatLeftHand(Matrix4d& m);
 
-
     /**
      * @brief This method gets the position of the right shoulder
      * @param pos
@@ -605,7 +575,6 @@ public:
      */
     double getRightHandVelNorm();
 
-
     /**
      * @brief This method gets the position of the left shoulder
      * @param pos
@@ -653,6 +622,7 @@ public:
      * @return
      */
     double getLeftWristNorm();
+
     /**
      * @brief This method gets the orientation of the left wrist
      * @param orr
@@ -688,7 +658,6 @@ public:
      * @return
      */
     double getLeftHandVelNorm();
-
 
     /**
      * @brief getHandPos
@@ -796,133 +765,7 @@ public:
     robot_part getHead();
 #endif
 
-//#if NECK==1
-  //  robot_part getNeck();
-//#endif
-//#if PELVIS==1
-  //  robot_part getPelvis();
-//#endif
-//#if RIGHT_UPPER_LEG==1
-  //  robot_part getRight_Upper_leg();
-//#endif
-//#if RIGHT_LOWER_LEG==1
-  //  robot_part getRight_Lower_leg();
-//#endif
-//#if RIGHT_FOOT==1
-  //  robot_part getRight_foot();
-//#endif
-//#if LEFT_UPPER_LEG==1
-  //  robot_part getLeft_Upper_leg();
-//#endif
-//#if LEFT_LOWER_LEG==1
-  //  robot_part getLeft_Lower_leg();
-//#endif
-//#if LEFT_FOOT==1
-  //  robot_part getLeft_foot();
-//#endif
-
-
 private:
-
-    string m_name; /**< name of the robot */
-    robot_part m_torso;
-#if HEAD==1
-    robot_part m_head;
-#endif
-//#if NECK==1
-  //  robot_part neck;
-//#endif
-//#if PELVIS==1
-  //  robot_part pelvis;
-//#endif
-//#if RIGHT_UPPER_LEG==1
-  //  robot_part right_upper_leg;
-//#endif
-//#if RIGHT_LOWER_LEG==1
-  //  robot_part right_lower_leg;
-//#endif
-//#if RIGHT_FOOT==1
-  //  robot_part right_foot;
-//#endif
-//#if LEFT_UPPER_LEG==1
-  //  robot_part left_upper_leg;
-//#endif
-//#if LEFT_LOWER_LEG==1
-  //  robot_part left_lower_leg;
-//#endif
-//#if LEFT_FOOT==1
-  //  robot_part left_foot;
-//#endif
-    arm m_arm_specs; /**< specifications of the arm */
-#if HAND==0
-    human_hand m_human_hand_specs; /**< specifications of the hand */
-#elif HAND==1
-    barrett_hand m_barrett_hand_specs; /**< specifications of the hand */
-    vector<int> rk; /**< r parameters of the barrett hand */
-    vector<int> jk; /**< j parameters of the barrett hand */
-#endif
-
-    DHparams m_DH_rightArm; /**< current D-H parameters of the right arm */
-    DHparams m_DH_leftArm; /**< current D-H parameters of the left arm */
-    vector<DHparams> m_DH_rightHand; /**< current D-H parameters of the fingers on the right hand */
-    vector< vector<double> > right_fing_pos; /**< current positions of the phalanges of the fingers on the right hand */
-    vector<DHparams> m_DH_leftHand; /**< current D-H parameters of the fingers on the left hand */
-    vector< vector<double> > left_fing_pos; /**< current positions of the phalanges of the fingers on the left hand */
-
-    Matrix4d mat_right; /**< transformation matrix from the fixed world frame and the reference frame of the right arm (positions are in [mm]) */
-    Matrix4d mat_left; /**< transformation matrix from the fixed world frame and the reference frame of the left arm (positions are in [mm]) */
-    Matrix4d mat_r_hand; /**< trabsformation matrix from the last joint of the right arm and the palm of the right hand (positions are in [mm]) */
-    Matrix4d mat_l_hand; /**< trabsformation matrix from the last joint of the left arm and the palm of the left hand (positions are in [mm]) */
-
-    // joints [rad]: 7 joints + 4 joints for each arm (total: 22 joints)
-    vector<double> rightPosture; /**< right arm+hand current posture */
-    vector<double> leftPosture; /**< left arm+hand current posture */
-    vector<double> rightHomePosture; /**< right arm+hand home posture */
-    vector<double> leftHomePosture; /**< left arm+hand home posture */
-    vector<double> min_rightLimits; /**< minimum right limits */
-    vector<double> max_rightLimits; /**< maximum right limits */
-    vector<double> min_leftLimits; /**< minimum left limits */
-    vector<double> max_leftLimits; /**< maximum left limits */
-
-    // joints velocities
-    vector<double> rightVelocities; /**< right arm+hand current velocities */
-    vector<double> leftVelocities; /**< left arm+hand current velocities */
-
-    // joints forces
-    vector<double> rightForces; /**< right arm+hand current forces */
-    vector<double> leftForces; /**< left arm+hand current forces */
-
-    // positions on the right arm
-    vector<double> rightShoulderPos; /**< position of the right shoulder */
-    vector<double> rightElbowPos; /**< position of the right elbow */
-    vector<double> rightWristPos; /**< position of the right wrist */
-    vector<double> rightHandPos; /**< position of the right hand */
-
-    // orientations on the right arm
-    Matrix3d rightShoulderOr; /**< orientation of the right shoulder */
-    Matrix3d rightElbowOr; /**< orientation of the right elbow */
-    Matrix3d rightWristOr; /**< orientation of the right wrist */
-    Matrix3d rightHandOr; /**< orientation of the right hand */
-
-    // positions on the right hand
-    MatrixXd rightFingers; /**< positions of the phalanges of the fingers on the right hand */
-
-    // positions on the left arm
-    vector<double> leftShoulderPos; /**< position of the left shoulder */
-    vector<double> leftElbowPos; /**< position of the left elbow */
-    vector<double> leftWristPos; /**< position of the left wrist */
-    vector<double> leftHandPos; /**< position of the left hand */
-
-    // orientations on the left arm
-    Matrix3d leftShoulderOr; /**< orientation of the left shoulder */
-    Matrix3d leftElbowOr; /**< orientation of the left elbow */
-    Matrix3d leftWristOr; /**< orientation of the left wrist */
-    Matrix3d leftHandOr; /**< orientation of the left hand */
-
-    //positions on the left hand
-    MatrixXd leftFingers; /**< positions of the phalanges of the fingers on the left hand */
-
-
     /**
      * @brief This method computes the current D-H parameters of the right arm
      */
@@ -999,6 +842,79 @@ private:
      */
     void transfMatrix(double alpha, double a, double d, double theta, Matrix4d& T);
 
+    string m_name; /**< name of the robot */
+    robot_part m_torso;
+#if HEAD==1
+    robot_part m_head;
+#endif
+    arm m_arm_specs; /**< specifications of the arm */
+#if HAND==0
+    human_hand m_human_hand_specs; /**< specifications of the hand */
+#else
+    barrett_hand m_barrett_hand_specs; /**< specifications of the hand */
+    vector<int> rk; /**< r parameters of the barrett hand */
+    vector<int> jk; /**< j parameters of the barrett hand */
+#endif
+
+    DHparams m_DH_rightArm; /**< current D-H parameters of the right arm */
+    DHparams m_DH_leftArm; /**< current D-H parameters of the left arm */
+    vector<DHparams> m_DH_rightHand; /**< current D-H parameters of the fingers on the right hand */
+    vector< vector<double> > right_fing_pos; /**< current positions of the phalanges of the fingers on the right hand */
+    vector<DHparams> m_DH_leftHand; /**< current D-H parameters of the fingers on the left hand */
+    vector< vector<double> > left_fing_pos; /**< current positions of the phalanges of the fingers on the left hand */
+
+    Matrix4d mat_right; /**< transformation matrix from the fixed world frame and the reference frame of the right arm (positions are in [mm]) */
+    Matrix4d mat_left; /**< transformation matrix from the fixed world frame and the reference frame of the left arm (positions are in [mm]) */
+    Matrix4d mat_r_hand; /**< trabsformation matrix from the last joint of the right arm and the palm of the right hand (positions are in [mm]) */
+    Matrix4d mat_l_hand; /**< trabsformation matrix from the last joint of the left arm and the palm of the left hand (positions are in [mm]) */
+
+    // joints [rad]: 7 joints + 4 joints for each arm (total: 22 joints)
+    vector<double> rightPosture; /**< right arm+hand current posture */
+    vector<double> leftPosture; /**< left arm+hand current posture */
+    vector<double> rightHomePosture; /**< right arm+hand home posture */
+    vector<double> leftHomePosture; /**< left arm+hand home posture */
+    vector<double> min_rightLimits; /**< minimum right limits */
+    vector<double> max_rightLimits; /**< maximum right limits */
+    vector<double> min_leftLimits; /**< minimum left limits */
+    vector<double> max_leftLimits; /**< maximum left limits */
+
+    // joints velocities
+    vector<double> rightVelocities; /**< right arm+hand current velocities */
+    vector<double> leftVelocities; /**< left arm+hand current velocities */
+
+    // joints forces
+    vector<double> rightForces; /**< right arm+hand current forces */
+    vector<double> leftForces; /**< left arm+hand current forces */
+
+    // positions on the right arm
+    vector<double> rightShoulderPos; /**< position of the right shoulder */
+    vector<double> rightElbowPos; /**< position of the right elbow */
+    vector<double> rightWristPos; /**< position of the right wrist */
+    vector<double> rightHandPos; /**< position of the right hand */
+
+    // orientations on the right arm
+    Matrix3d rightShoulderOr; /**< orientation of the right shoulder */
+    Matrix3d rightElbowOr; /**< orientation of the right elbow */
+    Matrix3d rightWristOr; /**< orientation of the right wrist */
+    Matrix3d rightHandOr; /**< orientation of the right hand */
+
+    // positions on the right hand
+    MatrixXd rightFingers; /**< positions of the phalanges of the fingers on the right hand */
+
+    // positions on the left arm
+    vector<double> leftShoulderPos; /**< position of the left shoulder */
+    vector<double> leftElbowPos; /**< position of the left elbow */
+    vector<double> leftWristPos; /**< position of the left wrist */
+    vector<double> leftHandPos; /**< position of the left hand */
+
+    // orientations on the left arm
+    Matrix3d leftShoulderOr; /**< orientation of the left shoulder */
+    Matrix3d leftElbowOr; /**< orientation of the left elbow */
+    Matrix3d leftWristOr; /**< orientation of the left wrist */
+    Matrix3d leftHandOr; /**< orientation of the left hand */
+
+    //positions on the left hand
+    MatrixXd leftFingers; /**< positions of the phalanges of the fingers on the left hand */
 };
 
 }// namespace motion_manager

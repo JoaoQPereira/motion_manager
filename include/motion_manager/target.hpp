@@ -3,13 +3,10 @@
 
 #include "point.hpp"
 
-namespace motion_manager{
 
-//! The Target class
-/**
- * @brief This class defines the target that is taken into account for the constraints on the hand.
- * The target is a point designed to be placed on a object that has to be manipulated.
- */
+namespace motion_manager
+{
+
 class Target:public Point
 {
 public:
@@ -32,15 +29,12 @@ public:
      */
     Target(const Target& tar);
 
-
     /**
      * @brief ~Target, a destructor.
      */
     ~Target();
-
-
-
 };
+
 }// namespace motion_manager
 
 #endif // TARGET_HPP

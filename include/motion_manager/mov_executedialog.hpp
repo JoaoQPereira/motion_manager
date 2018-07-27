@@ -7,10 +7,9 @@
 #include "qnode.hpp"
 
 
-namespace motion_manager{
-/**
- * @brief This class defines the dialog of the execution settings (platform used to execute the planned movement)
- */
+namespace motion_manager
+{
+
 class Mov_ExecuteDialog : public QDialog
 {
     Q_OBJECT

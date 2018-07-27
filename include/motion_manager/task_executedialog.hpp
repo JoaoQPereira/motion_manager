@@ -6,10 +6,9 @@
 #include "qnode.hpp"
 
 
-namespace motion_manager{
-/**
- * @brief This class defines the dialog of the execution settings (platform used to execute the task)
- */
+namespace motion_manager
+{
+
 class Task_ExecuteDialog : public QDialog
 {
     Q_OBJECT

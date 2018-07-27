@@ -5,18 +5,15 @@
 #include <ui_roscommdialog.h>
 #include "qnode.hpp"
 
-namespace motion_manager{
 
-//! The RosCommDialog class
-/**
- * @brief This class defines the dialog of the ROS communication functionalities
- */
+namespace motion_manager
+{
+
 class RosCommDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-
     /**
      * @brief RosCommDialog, a constructor
      */
@@ -95,12 +92,20 @@ public:
     ~RosCommDialog();
 
 public Q_SLOTS:
-
     /**
      * @brief This method connects/disconnects the node to/from the ROS server
      * @param check
      */
     void on_button_connect_clicked(bool check);
+
+private:
+    Ui::RosCommDialogDesign *ui;/**< handle of the user interface */
+    QNode *qnode; /**< pointer of the ROS node*/
+
+    /**
+     * @brief This method shows an error message
+     */
+    void showNoMasterMessage();
 
 Q_SIGNALS:
     /**
@@ -108,14 +113,6 @@ Q_SIGNALS:
      * @param c
      */
     void rosConnected(bool c);
-
-private:
-    Ui::RosCommDialogDesign *ui;/**< handle of the user interface */
-    /**
-     * @brief This method shows an error message
-     */
-    void showNoMasterMessage();
-    QNode *qnode; /**< pointer of the ROS node*/
 };
 
 } // namespace motion_manager

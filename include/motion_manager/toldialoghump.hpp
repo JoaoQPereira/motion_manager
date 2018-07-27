@@ -10,70 +10,18 @@
 #include "config.hpp"
 #include "common.hpp"
 
-namespace motion_manager{
+
+namespace motion_manager
+{
 
 using namespace std;
 using namespace Eigen;
 
-//! The TolDialogHUMP class
-/**
- * @brief This class defines the tuning process of the human-like motion planner
- */
 class TolDialogHUMP : public QDialog
 {
     Q_OBJECT
 
-public Q_SLOTS:
-
-    /**
-     * @brief This method saves the tuning parameters to a file
-     */
-    void on_pushButton_save_clicked();
-
-    /**
-     * @brief This method loads the tuning parameters from a file
-     */
-    void on_pushButton_load_clicked();
-
-    /**
-     * @brief checkApproach
-     * @param state
-     */
-    void checkApproach(int state);
-
-    /**
-     * @brief checkRetreat
-     * @param state
-     */
-    void checkRetreat(int state);
-
-    /**
-     * @brief checkFinalPosture
-     * @param state
-     */
-    void checkFinalPosture(int state);
-
-    /**
-     * @brief checkAddPlane
-     * @param state
-     */
-    void checkAddPlane(int state);
-
-    /**
-     * @brief checkSetHandCond
-     * @param state
-     */
-    //void checkSetHandCond(int state);
-
-    /**
-     * @brief checkSetHandCondApproach
-     * @param state
-     */
-    //void checkSetHandCondApproach(int state);
-
-
-public:
-
+public: 
     /**
      * @brief TolDialogHUMP, a constructor
      * @param parent
@@ -97,7 +45,6 @@ public:
      */
     void getTolsHand(MatrixXd& tols);
 
-
     /**
      * @brief This method gets the weights of the objective function
      * @param lambda
@@ -116,7 +63,6 @@ public:
      */
     void getTolsTarget(MatrixXd& tols);
 
-
     /**
      * @brief This method gets the maximum angular velocity allowed for each joint [deg/sec]
      * @return
@@ -134,7 +80,6 @@ public:
      * @param w
      */
     void setWMax(double w);
-
 
     /**
      * @brief This method gets the tolerances in positioning the end-effector
@@ -195,18 +140,6 @@ public:
      * @param final_acc
      */
     void getFinalAcc(std::vector<double>& final_acc);
-
-    /**
-     * @brief getVelApproach
-     * @param vel_approach
-     */
-    //void getVelApproach(std::vector<double>& vel_approach);
-
-    /**
-     * @brief getAccApproach
-     * @param acc_approach
-     */
-    //void getAccApproach(std::vector<double>& acc_approach);
 
     /**
      * @brief getPreGraspApproach
@@ -362,9 +295,40 @@ public:
      */
     void setPlaneParameters(std::vector<double> &point1,std::vector<double> &point2,std::vector<double> &point3);
 
+public Q_SLOTS:
+    /**
+     * @brief This method saves the tuning parameters to a file
+     */
+    void on_pushButton_save_clicked();
 
+    /**
+     * @brief This method loads the tuning parameters from a file
+     */
+    void on_pushButton_load_clicked();
 
+    /**
+     * @brief checkApproach
+     * @param state
+     */
+    void checkApproach(int state);
 
+    /**
+     * @brief checkRetreat
+     * @param state
+     */
+    void checkRetreat(int state);
+
+    /**
+     * @brief checkFinalPosture
+     * @param state
+     */
+    void checkFinalPosture(int state);
+
+    /**
+     * @brief checkAddPlane
+     * @param state
+     */
+    void checkAddPlane(int state);
 
 private:
     Ui::TolDialogHUMP *ui; /**< handle of the user interface */
