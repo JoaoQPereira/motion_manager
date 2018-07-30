@@ -3504,6 +3504,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     srv_enableSubscriber_hand.request.queueSize=1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber_hand.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
 #endif
+
     VectorXd f_posture; // the final posture
     bool f_reached;
     double tol_stop_stage;
@@ -3877,8 +3878,10 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     int arm_code;
     int mov_type;
     double timeTot = 0.0;
+
     this->curr_scene = scene;
     int scenarioID = scene->getID();
+
     std::vector<int> handles;
     MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
     int h_attach; // handle of the attachment point of the hand
@@ -4001,6 +4004,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                             add_client.call(srvset_parent);
                             if (srvset_parent.response.result != 1)
                                 log(QNode::Error,string("Error in grasping the object "));
+
 #if HAND == 1 && OPEN_CLOSE_HAND ==1
                             this->closeBarrettHand(arm_code);
 #else
@@ -4032,6 +4036,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                             if (srvset_parent.response.result != 1)
                                 log(QNode::Error,string("Error in releasing the object "));
                         }
+
 #if HAND ==1 && OPEN_CLOSE_HAND ==1
                         MatrixXd tt = traj_mov_real.at(j);
                         VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
@@ -4042,6 +4047,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                         VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
                         this->openBarrettHand_to_pos(arm_code,hand_init_pos);
 #else
+
                         closed.at(0)=false;
                         closed.at(1)=false;
                         closed.at(2)=false;
@@ -4255,9 +4261,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
             task->getProblem(kk)->getMovement()->setExecuted(true);
         }
         else
-        {
             hh++;
-        }
     }
 
     log(QNode::Info,string("Task completed"));
@@ -4277,7 +4281,10 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
 
 bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task, taskPtr task, scenarioPtr scene)
 {
-    bool hand_closed; closed.at(0)=false; closed.at(1)=false; closed.at(2)=false;
+    bool hand_closed;
+    closed.at(0)=false;
+    closed.at(1)=false;
+    closed.at(2)=false;
     ros::NodeHandle node;
     double ta;
     double tb = 0.0;
@@ -4285,14 +4292,18 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
     int arm_code;
     int mov_type;
     double timeTot = 0.0;
+
     this->curr_scene = scene;
     int scenarioID = scene->getID();
+
     std::vector<int> handles;
     MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
     int h_attach; // handle of the attachment point of the hand
     bool f_reached;
     VectorXd f_posture; // the final posture of the movement
-    bool plan; bool approach; bool retreat;
+    bool plan;
+    bool approach;
+    bool retreat;
     double pre_time;
 
     // set joints position or velocity (it depends on the scenario)

@@ -1775,13 +1775,16 @@ void MainWindow::on_pushButton_execTask_clicked()
 
 void MainWindow::on_pushButton_load_task_clicked()
 {
-    int plan_id; QString plan_type;
-    int mov_id; QString mov_type;
+    int plan_id;  QString plan_type;
+    int mov_id;  QString mov_type;
     int arm_code; QString arm_type;
+
     QString obj_str; objectPtr obj;
     QString obj_eng_str; objectPtr obj_eng;
     QString pose_str; posePtr pose;
-    bool prec; QString grip_type;
+
+    bool prec;
+    QString grip_type;
     int row=0;
     MatrixXd pos_stage;
     MatrixXd vel_stage;
@@ -1817,8 +1820,9 @@ void MainWindow::on_pushButton_load_task_clicked()
     QFile f(filename);
     if(f.open(QIODevice::ReadOnly))
     {
-        QTextStream stream(&f);
+        QTextStream stream( &f );
         QString line;
+
         vector<MatrixXd> t_mov;
         vector<MatrixXd> w_mov;
         vector<MatrixXd> a_mov;
@@ -1865,15 +1869,20 @@ void MainWindow::on_pushButton_load_task_clicked()
                 timesteps_stage.clear();
 
                 if((line.at(1)==QChar('E')) && (line.at(2)==QChar('N')) && (line.at(3)==QChar('D')))
+                {
                     break;
+                }
 
                 QStringList fields = line.split(",");
-                QString tmp = fields.at(0); tmp.remove(QChar('#')); fields[0]=tmp;
+                QString tmp = fields.at(0);
+                tmp.remove(QChar('#'));
+                fields[0]=tmp;
 
                 // ------------------------- Informations about movement ----------------------------------- //
                 for(int i=0; i< fields.size(); ++i)
                 {
                     QStringList fields1 = fields.at(i).split(":");
+
                     if (QString::compare(fields1.at(0).simplified(),QString("Planner"),Qt::CaseInsensitive)==0)
                         plan_type = fields1.at(1).simplified();
                     else if (QString::compare(fields1.at(0).simplified(),QString("Movement"),Qt::CaseInsensitive)==0)
@@ -1888,10 +1897,9 @@ void MainWindow::on_pushButton_load_task_clicked()
                         pose_str=fields1.at(1).simplified();
                     else if(QString::compare(fields1.at(0).simplified(),QString("Grip Type"),Qt::CaseInsensitive)==0)
                         grip_type=fields1.at(1).simplified();
-
                 }
 
-                // Planner ID
+                //Planner ID
                 this->moveit_task = false;
                 if(QString::compare(plan_type,QString("HUMP"),Qt::CaseInsensitive)==0)
                     plan_id=0;
@@ -1935,12 +1943,10 @@ void MainWindow::on_pushButton_load_task_clicked()
                 else if(QString::compare(arm_type,QString("left"),Qt::CaseInsensitive)==0)
                     arm_code=2;
 
-
                 // Movement type
                 if(QString::compare(mov_type,QString("Reach-to-grasp"),Qt::CaseInsensitive)==0)
                 {
                     mov_id=0;
-
                     //get the object
                     obj = this->curr_scene->getObject(obj_str.toStdString());
 
@@ -1961,8 +1967,8 @@ void MainWindow::on_pushButton_load_task_clicked()
                     problemPtr prob;
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,prec),new Scenario(*(this->curr_scene.get()))));
-                    else
 #if MOVEIT==1
+                    else
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
 #endif
                     prob->setSolved(true);
@@ -1972,12 +1978,12 @@ void MainWindow::on_pushButton_load_task_clicked()
                 else if(QString::compare(mov_type,QString("Reaching"),Qt::CaseInsensitive)==0)
                 {
                     mov_id=1;
-
                     problemPtr prob;
+
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get()))));
-                    else
 #if MOVEIT==1
+                    else
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get())),this->m_planner));
 #endif
                     prob->setSolved(true);
@@ -1987,16 +1993,16 @@ void MainWindow::on_pushButton_load_task_clicked()
                 else if(QString::compare(mov_type,QString("Transport"),Qt::CaseInsensitive)==0)
                 {
                     mov_id=2;
-
                     problemPtr prob;
                     //get the object
                     obj = this->curr_scene->getObject(obj_str.toStdString());
                     // get the pose
                     pose = this->curr_scene->getPose(pose_str.toStdString());
+
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,pose,prec),new Scenario(*(this->curr_scene.get()))));
-                    else
 #if MOVEIT==1
+                    else
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,pose,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
 #endif
                     prob->setSolved(true);
@@ -2006,7 +2012,6 @@ void MainWindow::on_pushButton_load_task_clicked()
                 else if(QString::compare(mov_type,QString("Engage"),Qt::CaseInsensitive)==0)
                 {
                     mov_id=3;
-
                     //get the object
                     obj = this->curr_scene->getObject(obj_str.toStdString());
                     // get the object engaged
@@ -2029,8 +2034,8 @@ void MainWindow::on_pushButton_load_task_clicked()
                     problemPtr prob;
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get()))));
-                    else
 #if MOVEIT==1
+                    else
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
 #endif
                     prob->setSolved(true);
@@ -2038,18 +2043,16 @@ void MainWindow::on_pushButton_load_task_clicked()
                     this->curr_task->addProblem(prob.get());
                 }
                 else if(QString::compare(mov_type,QString("Disengage"),Qt::CaseInsensitive)==0)
-                {
                     mov_id=4;
-                }
                 else if(QString::compare(mov_type,QString("Go park"),Qt::CaseInsensitive)==0)
                 {
                     mov_id=5;
-
                     problemPtr prob;
+
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get()))));
-                    else
 #if MOVEIT==1
+                    else
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get())),this->m_planner));
 #endif
                     prob->setSolved(true);
@@ -2061,7 +2064,6 @@ void MainWindow::on_pushButton_load_task_clicked()
                 qnode.log(QNode::Info,std::string("The movement has been added to the current task"));
                 ui.groupBox_task->setEnabled(true);
                 ui.listWidget_movs->clear();
-
                 for (int i = 0; i < this->curr_task->getProblemNumber();i++ )
                     ui.listWidget_movs->addItem(QString(this->curr_task->getProblemInfo(i).c_str()));
 
@@ -2135,7 +2137,9 @@ void MainWindow::on_pushButton_load_task_clicked()
                             acc_stage(row,k) = ((double)fields2.at(2).toDouble()*M_PI)/180;
                         }
                         else if(QString::compare(fields1.at(0).simplified(),QString("step"),Qt::CaseInsensitive)==0)
+                        {
                             break;
+                        }
                     }
                 }
                 row++;
@@ -2147,12 +2151,12 @@ void MainWindow::on_pushButton_load_task_clicked()
         QStringList h_headers;
         bool h_head=false;
         QStringList v_headers;
+
         std::vector<std::vector<QString>> task_steps;
         vector<MatrixXd> pos_mov;
-        std::vector<MatrixXd> pos_mov_real;
-        std::vector<MatrixXd> pos_mov_w_offset;
         vector<MatrixXd> vel_mov;
         vector<MatrixXd> acc_mov;
+
         vector<vector<double>> tstep_mov;
         vector<double> tstep_stage;
         double task_duration = 0.0;
@@ -2164,24 +2168,19 @@ void MainWindow::on_pushButton_load_task_clicked()
         for(size_t h=0; h< this->jointsPosition_task.size();++h)
         {
             pos_mov = this->jointsPosition_task.at(h);
-            //the trajectory obtained doesn't include the joints offsets
-            pos_mov_w_offset = pos_mov;
-            //add the joints offsets
-            pos_mov_real = qnode.realJointsPosition(pos_mov_w_offset);
             vel_mov = this->jointsVelocity_task.at(h);
             acc_mov = this->jointsAcceleration_task.at(h);
             tstep_mov = this->timesteps_task.at(h);
             mov_duration = 0.0;
 
-            for (size_t k=0; k< pos_mov_real.size();++k)
+            for (size_t k=0; k< pos_mov.size();++k)
             {
-                MatrixXd jointPosition_stage = pos_mov_real.at(k);
+                MatrixXd jointPosition_stage = pos_mov.at(k);
                 MatrixXd jointVelocity_stage = vel_mov.at(k);
                 MatrixXd jointAcceleration_stage = acc_mov.at(k);
-
                 tstep_stage = tstep_mov.at(k);
-                vector<double> time_stage(tstep_stage.size());
 
+                vector<double> time_stage(tstep_stage.size());
                 double time_init;
                 if(time_task.empty())
                     time_init=0.0;
@@ -2210,6 +2209,7 @@ void MainWindow::on_pushButton_load_task_clicked()
                                     QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
                                     QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
                                     QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+
                         if(!h_head)
                             h_headers.push_back(QString("Joint ")+QString::number(j+1));
                     }
@@ -2247,6 +2247,7 @@ void MainWindow::on_pushButton_load_task_clicked()
         // compute the hand values
         this->handPosition_task.resize(tot_steps); this->handVelocityNorm_task.resize(tot_steps);
         int step = 0;
+
         for(size_t j=0;j<this->jointsPosition_task.size();++j)
         {
             vector<MatrixXd> pos_mov = this->jointsPosition_task.at(j);
@@ -2256,6 +2257,7 @@ void MainWindow::on_pushButton_load_task_clicked()
             {
                 MatrixXd pos_stage = pos_mov.at(k);
                 MatrixXd vel_stage = vel_mov.at(k);
+
                 for(int i=0;i<pos_stage.rows();++i)
                 {
                     // position
@@ -2268,7 +2270,6 @@ void MainWindow::on_pushButton_load_task_clicked()
                     vector<double> velocities; velocities.resize(vel_row.size());
                     VectorXd::Map(&velocities[0], vel_row.size()) = vel_row;
                     this->handVelocityNorm_task.at(step) = this->curr_scene->getRobot()->getHandVelNorm(arm_code,posture,velocities);
-
                     step++;
                 }
             }
@@ -2310,6 +2311,7 @@ void MainWindow::on_pushButton_load_task_clicked()
     }
     f.close();
 }
+
 
 
 void MainWindow::on_pushButton_save_task_clicked()

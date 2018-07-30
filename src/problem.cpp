@@ -351,14 +351,12 @@ int Problem::getErrLog()
 
 bool Problem::getSolved()
 {
-
     return this->solved;
 }
 
 
 bool Problem::getPartOfTask()
 {
-
     return this->part_of_task;
 }
 
