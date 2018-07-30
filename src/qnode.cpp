@@ -415,34 +415,49 @@ bool QNode::getElements(scenarioPtr scene)
     std::vector<double> min_llimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // minimum left limits
     std::vector<double> max_llimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // maximum left limits
 
+    // **** others **** //
     int rows;
     const string NOBJECTS = string("n_objects");
     const string NPOSES = string("n_poses");
-    //scenario identification
+
+    // get scenario identification
     int scenarioID  = scene->getID();
 
-    switch (scenarioID)
+    if(scenarioID == 0)
     {
-    case 0:
-        // error, no scenario
         throw string("No scenario");
-        break;
-    case 1:
-        // Assembly scenario: the Toy vehicle with ARoS
-        //*************************************************************************************************
-        //                               OBJECTS IN THE SCENARIO
-        add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
-        srvi.request.signalName = NOBJECTS;
+    }
+
+    //*************************************************************************************************
+    //                               OBJECTS IN THE SCENARIO
+    //*************************************************************************************************
+    add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
+    srvi.request.signalName = NOBJECTS;
+    add_client.call(srvi);
+    if (srvi.response.result == 1)
+        n_objs = srvi.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Communication error");
+    }
+
+    if(scenarioID == 3 || scenarioID == 5)
+    {
+        srvi.request.signalName = NPOSES;
         add_client.call(srvi);
         if (srvi.response.result == 1)
-            n_objs= srvi.response.signalValue;
+            n_poses= srvi.response.signalValue;
         else
         {
             succ = false;
             throw string("Communication error");
         }
+    }
 
-        client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
+    client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
+    if(scenarioID == 1 || scenarioID ==  2 || scenarioID == 4) // Toy Vehicle scenarios (ARoS, Avatar, Sawyer)
+    {
         objs_prefix.push_back("BlueColumn");     // obj_id = 0
         objs_prefix.push_back("GreenColumn");    // obj_id = 1
         objs_prefix.push_back("RedColumn");      // obj_id = 2
@@ -453,111 +468,206 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Wheel2");         // obj_id = 7
         objs_prefix.push_back("Base");           // obj_id = 8
         objs_prefix.push_back("Table");          // obj_id = 9
+    }
+    else if (scenarioID == 3 || scenarioID == 5) // Drinking Service scenarios (ARoS, Sawyer)
+    {
+        objs_prefix.push_back("BottleTea");      // obj_id = 0
+        objs_prefix.push_back("BottleCoffee");   // obj_id = 1
+        objs_prefix.push_back("BottleJuice");    // obj_id = 2
+        objs_prefix.push_back("Cup");            // obj_id = 3
+        objs_prefix.push_back("Cup1");           // obj_id = 4
+        objs_prefix.push_back("Table");          // obj_id = 5
+    }
 
-        while(cnt_obj < n_objs)
+    while(cnt_obj < n_objs)
+    {
+        signPrefix = objs_prefix[cnt_obj];
+
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = signPrefix + string("Info");
+        add_client.call(srvs);
+        if (srvs.response.result == 1)
+            obj_info_str = srvs.response.signalValue;
+        else
+            succ = false;
+
+        if (succ)
         {
-            signPrefix = objs_prefix[cnt_obj];
+            floatCount = obj_info_str.size()/sizeof(float);
+
+            if(!obj_info_vec.empty())
+                obj_info_vec.clear();
+            for (int k=0;k<floatCount;++k)
+                obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
+
+            // position of the object
+            obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
+            obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
+            obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
+            // orientation of the object
+            obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+            obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+            obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
+            // size of the object
+            obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
+            obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
+            obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
+            // position of the target right
+            tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
+            tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
+            tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
+            // orientation of the target right
+            tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
+            tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
+            tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
+            // position of the target left
+            tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
+            tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
+            tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
+            // orientation of the target left
+            tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
+            tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
+            tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
+            // position of the engage point
+            engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
+            engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
+            engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
+            // orientation of the engage point
+            engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
+            engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
+            engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
+
+            Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
+                                    new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
+                                    new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
+                                    new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
+
+            infoLine = ob->getInfoLine();
+            Q_EMIT newElement(infoLine);
+            Q_EMIT newObject(ob->getName());
+
+            //handle of the object
+            srv_get_handle.request.objectName = signPrefix;
+            client_getHandle.call(srv_get_handle);
+            ob->setHandle(srv_get_handle.response.handle);
+            // handle of the visible object
+            srv_get_handle.request.objectName = signPrefix+string("_body");
+            client_getHandle.call(srv_get_handle);
+            ob->setHandleBody(srv_get_handle.response.handle);
+            // add the object to the scenario
+            scene->addObject(objectPtr(ob));
+            // add the pose to the scenario
+            if(scenarioID == 3 || scenarioID == 5) // Drinking Service scenarios (ARoS, Sawyer)
+            {
+                Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
+                Q_EMIT newPose(ps->getName());
+                scene->addPose(posePtr(ps));
+            }
+
+            cnt_obj++;
+        }
+        else
+        {
+            throw string("Error while retrieving the objects of the scenario");
+        }
+    }
+
+    //*************************************************************************************************
+    //                               POSES IN THE SCENARIO
+    //*************************************************************************************************
+    if(scenarioID == 3 || scenarioID == 5) // Drinking Service scenarios (ARoS, Sawyer)
+    {
+        // pose_id = 0
+        poses_prefix.push_back("BottleJuice_pose1");
+        poses_rel.push_back(true);
+        poses_obj_id.push_back(2);
+        // pose_id = 1
+        poses_prefix.push_back("BottleJuice_pose2");
+        poses_rel.push_back(true);
+        poses_obj_id.push_back(2);
+        // pose_id = 2
+        poses_prefix.push_back("BottleJuice_pose3");
+        poses_rel.push_back(true);
+        poses_obj_id.push_back(2);
+
+        while(cnt_pose < n_poses)
+        {
+            signPrefix = poses_prefix[cnt_pose];
 
             add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
             srvs.request.signalName = signPrefix + string("Info");
             add_client.call(srvs);
             if (srvs.response.result == 1)
-                obj_info_str = srvs.response.signalValue;
+                pose_info_str = srvs.response.signalValue;
             else
                 succ = false;
 
             if (succ)
             {
-                floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty())
-                    obj_info_vec.clear();
+                floatCount = pose_info_str.size()/sizeof(float);
+
+                if(!pose_info_vec.empty())
+                    pose_info_vec.clear();
                 for (int k=0;k<floatCount;++k)
-                    obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
+                    pose_info_vec.push_back(static_cast<double>(((float*)pose_info_str.c_str())[k]));
 
-                // position of the object
-                obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
-                obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
-                obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-                // orientation of the object
-                obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-                // size of the object
-                obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
-                obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
-                obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-                // position of the target right
-                tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
-                tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
-                tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-                // orientation of the target right
-                tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
-                // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
+                // position of the pose
+                pose_pos.Xpos = pose_info_vec.at(0)*1000; //[mm]
+                pose_pos.Ypos = pose_info_vec.at(1)*1000; //[mm]
+                pose_pos.Zpos = pose_info_vec.at(2)*1000; //[mm]
+                // orientation of the pose
+                pose_or.roll = pose_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+                pose_or.pitch = pose_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+                pose_or.yaw = pose_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
 
-                Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
-                                        new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                        new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
-                                        new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
+                Pose* ps = new Pose(signPrefix,pose_pos,pose_or,poses_rel[cnt_pose],poses_obj_id[cnt_pose]);
 
-                infoLine = ob->getInfoLine();
-                Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
+                Q_EMIT newPose(ps->getName());
+                // add the pose to the scenario
+                scene->addPose(posePtr(ps));
 
-                //handle of the object
-                srv_get_handle.request.objectName = signPrefix;
-                client_getHandle.call(srv_get_handle);
-                ob->setHandle(srv_get_handle.response.handle);
-                // handle of the visible object
-                srv_get_handle.request.objectName = signPrefix+string("_body");
-                client_getHandle.call(srv_get_handle);
-                ob->setHandleBody(srv_get_handle.response.handle);
-                // add the object to the scenario
-                scene->addObject(objectPtr(ob));
-
-                cnt_obj++;
+                cnt_pose++;
             }
             else
             {
-                throw string("Error while retrieving the objects of the scenario");
+                throw string("Error while retrieving the poses of the scenario");
             }
         }
+    }
 
-        //*************************************************************************************************
-        //                                    ROBOT
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    //*************************************************************************************************
+    //                                        ROBOT
+    //*************************************************************************************************
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    if(scenarioID <= 3)
         srvs.request.signalName = string("HumanoidName");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            Hname= srvs.response.signalValue;
-        else
-            succ = false;
+    else
+        srvs.request.signalName = string("RobotName");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        Hname= srvs.response.signalValue;
+    else
+        succ = false;
 
-        //*************************************************************************************************
-        //                                     ARMS
-        // get the handles of both arms
+    //*************************************************************************************************
+    //                                     ROBOT ARM (OR ARMS)
+    //*************************************************************************************************
+    // get the handles of both arms
+    if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
         succ = getArmsHandles(0);
+    else if(scenarioID == 2) // Toy Vehicle scenarios (Avatar)
+        succ = getArmsHandles(1);
+    else if(scenarioID >= 3) // Sawyer scenarios (Toy Vehicle, Drinking Service)
+        succ = getArmsHandles(2);
 
-        // transformation matrix for both arms
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    // transformation matrix for the arm
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
 
-        // right arm
+    // ----------------------------------------
+    //                  Right arm
+    // ----------------------------------------
+    if(scenarioID != 2) // ARoS and Sawyer robot
+    {
         srvs.request.signalName = string("mat_right_arm");
         add_client.call(srvs);
         if (srvs.response.result == 1)
@@ -567,14 +677,54 @@ bool QNode::getElements(scenarioPtr scene)
             succ = false;
             throw string("Error: Couldn't get the transformation matrix of the arms");
         }
+    }
+    else // Avatar robot
+    {
+        srvs.request.signalName = string("mat_arms");
+        add_client.call(srvs);
+        if (srvs.response.result == 1)
+            mat_right_arm_str = srvs.response.signalValue;
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the transformation matrix of the arms");
+        }
+    }
 
-        if(!mat_right_arm_vec.empty())
-            mat_right_arm_vec.clear();
-        floatCount = mat_right_arm_str.size()/sizeof(float);
+    if(!mat_right_arm_vec.empty())
+        mat_right_arm_vec.clear();
+    floatCount = mat_right_arm_str.size()/sizeof(float);
+    for (int k=0;k<floatCount;++k)
+        mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
+
+    // ----------------------------------------
+    //                  Right hand
+    // ----------------------------------------
+    if(scenarioID == 2) // Avatar robot
+    {
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("r_mat_hand");
+        add_client.call(srvs);
+        if (srvs.response.result == 1)
+            r_mat_hand_str = srvs.response.signalValue;
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the transformation matrix of the right hand");
+        }
+
+        if(!r_mat_hand_vec.empty())
+            r_mat_hand_vec.clear();
+        floatCount = r_mat_hand_str.size()/sizeof(float);
         for (int k=0;k<floatCount;++k)
-            mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
+            r_mat_hand_vec.push_back(static_cast<double>(((float*)r_mat_hand_str.c_str())[k]));
+    }
 
-        // left arm
+    // ----------------------------------------
+    //                  Left arm
+    // ----------------------------------------
+    if(scenarioID == 1 || scenarioID == 3) // ARoS
+    {
         srvs.request.signalName = string("mat_left_arm");
         add_client.call(srvs);
         if (srvs.response.result == 1)
@@ -590,134 +740,413 @@ bool QNode::getElements(scenarioPtr scene)
         floatCount = mat_left_arm_str.size()/sizeof(float);
         for (int k=0;k<floatCount;++k)
             mat_left_arm_vec.push_back(static_cast<double>(((float*)mat_left_arm_str.c_str())[k]));
+    }
 
-        rows=0;
-        for(int i=0;i<3;++i)
-        {
-            for(int j=0;j<4;++j)
-            {
-                if(i==3 && j<3)
-                {
-                    mat_right(i,j) = 0;
-                    mat_left(i,j) = 0;
-                }
-                else if(i==3 && j==3)
-                {
-                    mat_right(i,j) = 1;
-                    mat_left(i,j) = 1;
-                }
-                else if(i<3 && j==3)
-                {
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4)*1000; //[mm]
-                }
-                else
-                {
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
-                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4);
-                }
-            }
-            ++rows;
-        }
-
-        // DH parameters
+    // ----------------------------------------
+    //                  Left hand
+    // ----------------------------------------
+    if(scenarioID == 2)
+    {
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_arm");
+        srvs.request.signalName = string("l_mat_hand");
         add_client.call(srvs);
         if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
+            l_mat_hand_str = srvs.response.signalValue;
         else
         {
             succ = false;
-            throw string("Error: Couldn't get the DH parameters of the arm");
+            throw string("Error: Couldn't get the transformation matrix of the left hand");
         }
 
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-        {
-            DH_params_vec.clear();
-            theta_offset.clear();
-        }
+        if(!l_mat_hand_vec.empty())
+            l_mat_hand_vec.clear();
+        floatCount = l_mat_hand_str.size()/sizeof(float);
         for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+            l_mat_hand_vec.push_back(static_cast<double>(((float*)l_mat_hand_str.c_str())[k]));
+    }
 
-        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        robot_arm_specs.arm_specs.a = std::vector<double>(7);
-        robot_arm_specs.arm_specs.d = std::vector<double>(7);
-        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
-
-        for(int i=0;i<7;++i)
+    rows=0;
+    for(int i=0;i<3;++i){
+        for(int j=0;j<4;++j)
         {
-            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
+            if(i==3 && j<3)
+            {
+                mat_right(i,j) = 0;
+                if(scenarioID >= 1 || scenarioID <= 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                    mat_left(i,j) = 0;
+                if(scenarioID == 2)
+                {
+                    mat_r_hand(i,j) = 0;
+                    mat_l_hand(i,j) = 0;
+                }
+            }
+            else if(i==3 && j==3)
+            {
+                mat_right(i,j) = 1;
+                if(scenarioID >= 1 || scenarioID <= 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                    mat_left(i,j) = 1;
+                if(scenarioID == 2) // Avatar scenario
+                {
+                    mat_r_hand(i,j) = 1;
+                    mat_l_hand(i,j) = 1;
+                }
+            }
+            else if(i<3 && j==3)
+            {
+                mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
+                if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4)*1000; //[mm]
+                if(scenarioID == 2) // Avatar scenario
+                {
+                    mat_left(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
+                    mat_r_hand(i,j) = 0;
+                    mat_l_hand(i,j) = 0;
+                }
+
+            }
+            else
+            {
+                mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
+                if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4);
+                if(scenarioID == 2)
+                {
+                    mat_left(i,j) = mat_right_arm_vec.at(j+rows*4);
+                    mat_r_hand(i,j) = r_mat_hand_vec.at(j+rows*4);
+                    mat_l_hand(i,j) = l_mat_hand_vec.at(j+rows*4);;
+                }
+            }
         }
+        ++rows;
+    }
 
-        //*************************************************************************************************
-        //                                 BARRETT HAND
+    //*************************************************************************************************
+    //                                     DH PARAMETERS
+    //*************************************************************************************************
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("DH_params_arm");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        DH_params_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the DH parameters of the arm");
+    }
+
+    floatCount = DH_params_str.size()/sizeof(float);
+    if (!DH_params_vec.empty())
+    {
+        DH_params_vec.clear();
+        theta_offset.clear();
+    }
+    for (int k=0;k<floatCount;++k)
+        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
+    robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
+    robot_arm_specs.arm_specs.a = std::vector<double>(7);
+    robot_arm_specs.arm_specs.d = std::vector<double>(7);
+    robot_arm_specs.arm_specs.theta = std::vector<double>(7);
+
+    for(int i=0;i<7;++i)
+    {
+        robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
+        robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+        robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
+        theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
+    }
+
+    //*************************************************************************************************
+    //                                     BARRETT HAND
+    //*************************************************************************************************
 #if HAND==1
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        srvf.request.signalName = string("maxAperture_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            maxAp= srvf.response.signalValue*1000;
-        else
-            succ = false;
+    // ****************** MAX APERTURE
+    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    srvf.request.signalName = string("maxAperture_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        maxAp= srvf.response.signalValue*1000;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("Aw_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            Aw= srvf.response.signalValue*1000;
-        else
-            succ = false;
+    // ****************** Aw
+    srvf.request.signalName = string("Aw_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        Aw= srvf.response.signalValue*1000;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("A1_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A1= srvf.response.signalValue*1000;
-        else
-            succ = false;
+    // ****************** A1
+    srvf.request.signalName = string("A1_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        A1= srvf.response.signalValue*1000;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("A2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A2= srvf.response.signalValue*1000;
-        else
-            succ = false;
+    // ****************** A2
+    srvf.request.signalName = string("A2_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        A2= srvf.response.signalValue*1000;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("A3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A3= srvf.response.signalValue*1000;
-        else
-            succ = false;
+    // ****************** A3
+    srvf.request.signalName = string("A3_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        A3= srvf.response.signalValue*1000;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("D3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            D3= srvf.response.signalValue*1000;
-        else
-            succ = false;
+    // ****************** D3
+    srvf.request.signalName = string("D3_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        D3= srvf.response.signalValue*1000;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("phi2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi2= srvf.response.signalValue;
-        else
-            succ = false;
+    // ****************** PH2
+    srvf.request.signalName = string("phi2_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        phi2= srvf.response.signalValue;
+    else
+        succ = false;
 
-        srvf.request.signalName = string("phi3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi3= srvf.response.signalValue;
-        else
-            succ = false;
+    // ****************** PH3
+    srvf.request.signalName = string("phi3_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        phi3= srvf.response.signalValue;
+    else
+        succ = false;
+#endif
+    //*************************************************************************************************
+    //                                      HUMAN HANDS
+    //*************************************************************************************************
+#if HAND==0
+    // ----------------------------------------
+    //                 MAX APERTURE
+    // ----------------------------------------
+    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    srvf.request.signalName = string("maxAperture_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        max_human_Ap= srvf.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the max aperture of tha hand");
+    }
+
+    jarde_hand.maxAperture=max_human_Ap*1000; // [mm]
+
+    // ----------------------------------------
+    //                 FINGER 1
+    // ----------------------------------------
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("DH_params_fing1");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        DH_params_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the DH parameters of the finger 1");
+    }
+
+    floatCount = DH_params_str.size()/sizeof(float);
+    if (!DH_params_vec.empty())
+        DH_params_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
+    fing1 = jarde_hand.fingers.at(0);
+    fing1.ux = DH_params_vec.at(0)*1000; // [mm]
+    fing1.uy = DH_params_vec.at(1)*1000; // [mm]
+    fing1.uz = DH_params_vec.at(2)*1000; // [mm]
+    fing1.finger_specs.alpha = std::vector<double>(4);
+    fing1.finger_specs.a = std::vector<double>(4);
+    fing1.finger_specs.d = std::vector<double>(4);
+    fing1.finger_specs.theta = std::vector<double>(4);
+
+    for(int i=0;i<4;++i)
+    {
+        fing1.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
+        fing1.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+        fing1.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
+        fing1.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
+    }
+
+    jarde_hand.fingers.at(0) = fing1;
+
+    // ----------------------------------------
+    //                 FINGER 2
+    // ----------------------------------------
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("DH_params_fing2");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        DH_params_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the DH parameters of the finger 2");
+    }
+
+    floatCount = DH_params_str.size()/sizeof(float);
+    if (!DH_params_vec.empty())
+        DH_params_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
+    fing2 = jarde_hand.fingers.at(1);
+    fing2.ux = DH_params_vec.at(0)*1000; // [mm]
+    fing2.uy = DH_params_vec.at(1)*1000; // [mm]
+    fing2.uz = DH_params_vec.at(2)*1000; // [mm]
+    fing2.finger_specs.alpha = std::vector<double>(4);
+    fing2.finger_specs.a = std::vector<double>(4);
+    fing2.finger_specs.d = std::vector<double>(4);
+    fing2.finger_specs.theta = std::vector<double>(4);
+
+    for(int i=0;i<4;++i)
+    {
+        fing2.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
+        fing2.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+        fing2.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
+        fing2.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
+    }
+
+    jarde_hand.fingers.at(1) = fing2;
+
+    // ----------------------------------------
+    //                FINGER 3
+    // ----------------------------------------
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("DH_params_fing3");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        DH_params_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the DH parameters of the finger 3");
+    }
+
+    floatCount = DH_params_str.size()/sizeof(float);
+    if (!DH_params_vec.empty())
+        DH_params_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
+    fing3 = jarde_hand.fingers.at(2);
+    fing3.ux = DH_params_vec.at(0)*1000; // [mm]
+    fing3.uy = DH_params_vec.at(1)*1000; // [mm]
+    fing3.uz = DH_params_vec.at(2)*1000; // [mm]
+    fing3.finger_specs.alpha = std::vector<double>(4);
+    fing3.finger_specs.a = std::vector<double>(4);
+    fing3.finger_specs.d = std::vector<double>(4);
+    fing3.finger_specs.theta = std::vector<double>(4);
+
+    for(int i=0;i<4;++i)
+    {
+        fing3.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
+        fing3.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+        fing3.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
+        fing3.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
+    }
+
+    jarde_hand.fingers.at(2) = fing3;
+
+    // ----------------------------------------
+    //                FINGER 4
+    // ----------------------------------------
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("DH_params_fing4");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        DH_params_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the DH parameters of the finger 4");
+    }
+
+    floatCount = DH_params_str.size()/sizeof(float);
+    if (!DH_params_vec.empty())
+        DH_params_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
+    fing4 = jarde_hand.fingers.at(3);
+    fing4.ux = DH_params_vec.at(0)*1000; // [mm]
+    fing4.uy = DH_params_vec.at(1)*1000; // [mm]
+    fing4.uz = DH_params_vec.at(2)*1000; // [mm]
+    fing4.finger_specs.alpha = std::vector<double>(4);
+    fing4.finger_specs.a = std::vector<double>(4);
+    fing4.finger_specs.d = std::vector<double>(4);
+    fing4.finger_specs.theta = std::vector<double>(4);
+
+    for(int i=0;i<4;++i)
+    {
+        fing4.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
+        fing4.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
+        fing4.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
+        fing4.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
+    }
+
+    jarde_hand.fingers.at(3) = fing4;
+
+    // ----------------------------------------
+    //                THUMB
+    // ----------------------------------------
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("DH_params_thumb");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        DH_params_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the DH parameters of the thumb");
+    }
+
+    floatCount = DH_params_str.size()/sizeof(float);
+    if (!DH_params_vec.empty())
+        DH_params_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
+
+    thumb = jarde_hand.thumb;
+    thumb.uTx = DH_params_vec.at(0)*1000; // [mm]
+    thumb.uTy = DH_params_vec.at(1)*1000; // [mm]
+    thumb.uTz = DH_params_vec.at(2)*1000; // [mm]
+    thumb.thumb_specs.alpha = std::vector<double>(5);
+    thumb.thumb_specs.a = std::vector<double>(5);
+    thumb.thumb_specs.d = std::vector<double>(5);
+    thumb.thumb_specs.theta = std::vector<double>(5);
+
+    for(int i=0;i<5;++i)
+    {
+        thumb.thumb_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
+        thumb.thumb_specs.a.at(i) = DH_params_vec.at(i+8)*1000; // [mm]
+        thumb.thumb_specs.d.at(i) = DH_params_vec.at(i+13)*1000; // [mm]
+        thumb.thumb_specs.theta.at(i) = DH_params_vec.at(i+18)*static_cast<double>(M_PI)/180; // [rad]
+    }
+
+    jarde_hand.thumb = thumb;
 #endif
 
-        //*************************************************************************************************
-        //                                    HEAD
+    //*************************************************************************************************
+    //                                          HEAD
+    //*************************************************************************************************
 #if HEAD==1
+    if(scenarioID != 2)
+    {
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
         srvs.request.signalName = string("HeadInfo");
         add_client.call(srvs);
@@ -747,75 +1176,81 @@ bool QNode::getElements(scenarioPtr scene)
         head.Xsize = head_vec.at(6)*1000;//[mm]
         head.Ysize = head_vec.at(7)*1000;//[mm]
         head.Zsize = head_vec.at(8)*1000;//[mm]
+    }
 #endif
 
-        //*************************************************************************************************
-        //                                    TORSO
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("TorsoInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            torso_str = srvs.response.signalValue;
+    //*************************************************************************************************
+    //                                          TORSO
+    //*************************************************************************************************
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("TorsoInfo");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        torso_str = srvs.response.signalValue;
+    else
+    {
+        succ = false;
+        throw string("Error: Couldn't get the information of the torso");
+    }
+
+    floatCount = torso_str.size()/sizeof(float);
+    if (!torso_vec.empty())
+        torso_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
+
+    //position of the torso
+    torso.Xpos = torso_vec.at(0)*1000;//[mm]
+    torso.Ypos = torso_vec.at(1)*1000;//[mm]
+    torso.Zpos = torso_vec.at(2)*1000;//[mm]
+    //orientation of the torso
+    torso.Roll = torso_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+    torso.Pitch = torso_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+    torso.Yaw = torso_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+    //size of the torso
+    torso.Xsize = torso_vec.at(6)*1000;//[mm]
+    torso.Ysize = torso_vec.at(7)*1000;//[mm]
+    torso.Zsize = torso_vec.at(8)*1000;//[mm]
+
+    //*************************************************************************************************
+    //                                  HOME POSTURE AND JOINTS LIMITS
+    //*************************************************************************************************
+    // ****************** RIGHT ARM
+    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    // home posture
+    for (size_t i = 0; i <rposture.size(); i++)
+    {
+        srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
+        add_client.call(srvf);
+        if (srvf.response.result == 1)
+            rposture.at(i)= srvf.response.signalValue;
         else
-        {
-            succ = false; throw string("Error: Couldn't get the information of the torso");
-        }
+            succ = false;
+    }
+    // minimum right limits
+    for (size_t i = 0; i <min_rlimits.size(); i++)
+    {
+        srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
+        add_client.call(srvf);
+        if (srvf.response.result == 1)
+            min_rlimits.at(i)= srvf.response.signalValue;
+        else
+            succ = false;
+    }
+    // maximum right limits
+    for (size_t i = 0; i <max_rlimits.size(); i++)
+    {
+        srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
+        add_client.call(srvf);
+        if (srvf.response.result == 1)
+            max_rlimits.at(i)= srvf.response.signalValue;
+        else
+            succ = false;
+    }
 
-        floatCount = torso_str.size()/sizeof(float);
-        if (!torso_vec.empty())
-            torso_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
-
-        //position of the torso
-        torso.Xpos = torso_vec.at(0)*1000;//[mm]
-        torso.Ypos = torso_vec.at(1)*1000;//[mm]
-        torso.Zpos = torso_vec.at(2)*1000;//[mm]
-        //orientation of the torso
-        torso.Roll = torso_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Pitch = torso_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Yaw = torso_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the torso
-        torso.Xsize = torso_vec.at(6)*1000;//[mm]
-        torso.Ysize = torso_vec.at(7)*1000;//[mm]
-        torso.Zsize = torso_vec.at(8)*1000;//[mm]
-
-        //*************************************************************************************************
-        //                              HOME POSTURE AND JOINTS LIMITS
-        //right arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        // home posture
-        for (size_t i = 0; i <rposture.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                rposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum right limits
-        for (size_t i = 0; i <min_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum right limits
-        for (size_t i = 0; i <max_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        //left arm
+    // ****************** LEFT ARM
+    if(scenarioID <= 3) // ARoS and Avatar scenarios (Toy Vehicle and Drinking Service)
+    {
         add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
         //home posture
         for (size_t i = 0; i <lposture.size(); i++)
@@ -847,23 +1282,27 @@ bool QNode::getElements(scenarioPtr scene)
             else
                 succ = false;
         }
+    }
 
-        //*************************************************************************************************
-        //                                    CREATE ROBOT
-        if (succ)
-        {
-            //information of the torso
-            robot_torso_specs.Xpos = torso.Xpos;
-            robot_torso_specs.Ypos = torso.Ypos;
-            robot_torso_specs.Zpos = torso.Zpos;
-            robot_torso_specs.Roll = torso.Roll;
-            robot_torso_specs.Pitch = torso.Pitch;
-            robot_torso_specs.Yaw = torso.Yaw;
-            robot_torso_specs.Xsize = torso.Xsize;
-            robot_torso_specs.Ysize = torso.Ysize;
-            robot_torso_specs.Zsize = torso.Zsize;
+    //*************************************************************************************************
+    //                                  CREATE ROBOT
+    //*************************************************************************************************
+    if (succ)
+    {
+        // ****************** INFO OF THE TORSO
+        robot_torso_specs.Xpos = torso.Xpos;
+        robot_torso_specs.Ypos = torso.Ypos;
+        robot_torso_specs.Zpos = torso.Zpos;
+        robot_torso_specs.Roll = torso.Roll;
+        robot_torso_specs.Pitch = torso.Pitch;
+        robot_torso_specs.Yaw = torso.Yaw;
+        robot_torso_specs.Xsize = torso.Xsize;
+        robot_torso_specs.Ysize = torso.Ysize;
+        robot_torso_specs.Zsize = torso.Zsize;
 #if HEAD == 1
-            //information of the head
+        if(scenarioID != 2)
+        {
+            // ****************** INFO OF THE HEAD
             robot_head_specs.Xpos = head.Xpos;
             robot_head_specs.Ypos = head.Ypos;
             robot_head_specs.Zpos = head.Zpos;
@@ -873,51 +1312,72 @@ bool QNode::getElements(scenarioPtr scene)
             robot_head_specs.Xsize = head.Xsize;
             robot_head_specs.Ysize = head.Ysize;
             robot_head_specs.Zsize = head.Zsize;
+        }
 #endif
 #if HAND==1
-            //information of the barrett hand
-            robot_hand_specs.maxAperture = maxAp;
-            robot_hand_specs.Aw = Aw;
-            robot_hand_specs.A1 = A1;
-            robot_hand_specs.A2 = A2;
-            robot_hand_specs.A3 = A3;
-            robot_hand_specs.D3 = D3 ;
-            robot_hand_specs.phi2 = phi2;
-            robot_hand_specs.phi3 = phi3;
-            //add the joints offset
-            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+        // ****************** BARRETT HAND
+        robot_hand_specs.maxAperture = maxAp;
+        robot_hand_specs.Aw = Aw;
+        robot_hand_specs.A1 = A1;
+        robot_hand_specs.A2 = A2;
+        robot_hand_specs.A3 = A3;
+        robot_hand_specs.D3 = D3 ;
+        robot_hand_specs.phi2 = phi2;
+        robot_hand_specs.phi3 = phi3;
+
+        //add the joints offset
+        std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+        if (scenarioID == 1 || scenarioID == 3) // ARoS
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
+        else // Sawyer scenarios
+        {
+            lposture = rposture;
+            min_llimits = min_rlimits;
+            max_llimits = max_rlimits;
+        }
 #if HEAD == 1
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    robot_head_specs, rposture, lposture,
-                                    min_rlimits,max_rlimits,
-                                    min_llimits,max_llimits);
+        Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_hand_specs,
+                                robot_head_specs, rposture, lposture,
+                                min_rlimits, max_rlimits,
+                                min_llimits, max_llimits);
 #else
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    rposture, lposture,
-                                    min_rlimits,max_rlimits,
-                                    min_llimits,max_llimits);
+        Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_hand_specs,
+                                rposture, lposture,
+                                min_rlimits, max_rlimits,
+                                min_llimits, max_llimits);
+
 #endif
-            // transformation matrices
-            rptr->setMatRight(mat_right);
+        // **************************** TRANSFORMATION MATRICES
+        rptr->setMatRight(mat_right);
+        if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios
             rptr->setMatLeft(mat_left);
-            // home postures
-            std::vector<double> rightp;
+        else if(scenarioID > 3) // Sawyer scenarios
+            rptr->setMatLeft(mat_right);
+
+        // **************************** RIGHT JOINTS
+        std::vector<double> rightp;
+        rptr->getRightPosture(rightp);
+
+        // without offsets
+        std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
+
+        std::vector<string> rj = std::vector<string>(rightp.size());
+        for (size_t i=0; i<rightp.size(); i++ )
+        {
+            rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+            Q_EMIT newJoint(rj.at(i));
+        }
+
+        // **************************** LEFT JOINTS
+        if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios
+        {
             std::vector<double> leftp;
-            rptr->getRightPosture(rightp);
             rptr->getLeftPosture(leftp);
-            //positions of the joints (without offsett)
-            std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
+
+            //without offsets
             std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
-            // position of the right joints
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            for (size_t i=0; i<rightp.size(); i++ )
-            {
-                rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(rj.at(i));
-            }
-            // position of the left joints
+
             std::vector<string> lj = std::vector<string>(leftp.size());
             for (size_t i=0; i<leftp.size(); i++ )
             {
@@ -925,2149 +1385,78 @@ bool QNode::getElements(scenarioPtr scene)
                                   QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
                 Q_EMIT newJoint(lj.at(i));
             }
-            // display info of the robot
-            infoLine = rptr->getInfoLine();
-            Q_EMIT newElement(infoLine);
-            // create robot
-            scene->addRobot(robotPtr(rptr));
-#else
-            throw("You have probably chosen the wrong hand type");
-#endif
         }
-        else
-        {
-            throw string("Error while retrieving elements from the scenario");
-        }
-        break;
-    case 2:
-        // Assembly toy vehicle scenario with the Avatar
-        //*************************************************************************************************
-        //                               OBJECTS IN THE SCENARIO
-        add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
-        srvi.request.signalName = NOBJECTS;
-        add_client.call(srvi);
-        if (srvi.response.result == 1)
-            n_objs= srvi.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Communication error");
-        }
-
-        client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        objs_prefix.push_back("BlueColumn");     // obj_id = 0
-        objs_prefix.push_back("GreenColumn");    // obj_id = 1
-        objs_prefix.push_back("RedColumn");      // obj_id = 2
-        objs_prefix.push_back("MagentaColumn");  // obj_id = 3
-        objs_prefix.push_back("Nut1");           // obj_id = 4
-        objs_prefix.push_back("Nut2");           // obj_id = 5
-        objs_prefix.push_back("Wheel1");         // obj_id = 6
-        objs_prefix.push_back("Wheel2");         // obj_id = 7
-        objs_prefix.push_back("Base");           // obj_id = 8
-        objs_prefix.push_back("Table");          // obj_id = 9
-
-        while(cnt_obj < n_objs)
-        {
-            signPrefix = objs_prefix[cnt_obj];
-
-            add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-            srvs.request.signalName = signPrefix + string("Info");
-            add_client.call(srvs);
-            if (srvs.response.result == 1)
-                obj_info_str = srvs.response.signalValue;
-            else
-                succ = false;
-
-            if (succ)
-            {
-                floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty())
-                    obj_info_vec.clear();
-                for (int k=0;k<floatCount;++k)
-                    obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
-
-                // position of the object
-                obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
-                obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
-                obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-                // orientation of the object
-                obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-                // size of the object
-                obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
-                obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
-                obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-                // position of the target right
-                tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
-                tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
-                tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-                // orientation of the target right
-                tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[mm]
-                tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[mm]
-                tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[mm]
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
-                // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
-
-                Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
-                                        new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                        new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
-                                        new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
-
-                infoLine = ob->getInfoLine();
-                Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
-
-                //handle of the object
-                srv_get_handle.request.objectName = signPrefix;
-                client_getHandle.call(srv_get_handle);
-                ob->setHandle(srv_get_handle.response.handle);
-                // handle of the visible object
-                srv_get_handle.request.objectName = signPrefix+string("_body");
-                client_getHandle.call(srv_get_handle);
-                ob->setHandleBody(srv_get_handle.response.handle);
-                // add the object to the scenario
-                scene->addObject(objectPtr(ob));
-
-                cnt_obj++;
-            }
-            else
-            {
-                throw string("Error while retrieving the objects of the scenario");
-            }
-        }
-
-        //*************************************************************************************************
-        //                                    ROBOT
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("HumanoidName");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            Hname= srvs.response.signalValue;
-        else
-            succ = false;
-
-        //*************************************************************************************************
-        //                                     ARMS
-        // get the handles of both arms
-        succ = getArmsHandles(1);
-
-        // transformation matrix for both arms
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-
-        // right arm: from the reference frame to the arms
-        srvs.request.signalName = string("mat_arms");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_arms_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
-
-        if(!mat_arms_vec.empty())
-            mat_arms_vec.clear();
-        floatCount = mat_arms_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            mat_arms_vec.push_back(static_cast<double>(((float*)mat_arms_str.c_str())[k]));
-
-        // right hand: from the last joint of the arm to the palm of the hand
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("r_mat_hand");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            r_mat_hand_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the right hand");
-        }
-
-        if(!r_mat_hand_vec.empty())
-            r_mat_hand_vec.clear();
-        floatCount = r_mat_hand_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            r_mat_hand_vec.push_back(static_cast<double>(((float*)r_mat_hand_str.c_str())[k]));
-
-        // left hand: from the last joint of the arm to the palm of the hand
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("l_mat_hand");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            l_mat_hand_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the left hand");
-        }
-
-        if(!l_mat_hand_vec.empty())
-            l_mat_hand_vec.clear();
-        floatCount = l_mat_hand_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            l_mat_hand_vec.push_back(static_cast<double>(((float*)l_mat_hand_str.c_str())[k]));
-
-        rows=0;
-        for(int i=0;i<4;++i)
-        {
-            for(int j=0;j<4;++j)
-            {
-                if(i==3 && j<3)
-                {
-                    mat_right(i,j) = 0;
-                    mat_left(i,j) = 0;
-                    mat_r_hand(i,j) = 0;
-                    mat_l_hand(i,j) = 0;
-                }
-                else if(i==3 && j==3)
-                {
-                    mat_right(i,j) = 1;
-                    mat_left(i,j) = 1;
-                    mat_r_hand(i,j) = 1;
-                    mat_l_hand(i,j) = 1;
-                }
-                else if(i<3 && j==3)
-                {
-                    mat_right(i,j) = mat_arms_vec.at(j+rows*4)*1000; //[mm]
-                    mat_left(i,j) = mat_arms_vec.at(j+rows*4)*1000; //[mm]
-                    mat_r_hand(i,j) = 0;
-                    mat_l_hand(i,j) = 0;
-                }
-                else
-                {
-                    mat_right(i,j) = mat_arms_vec.at(j+rows*4);
-                    mat_left(i,j) = mat_arms_vec.at(j+rows*4);
-                    mat_r_hand(i,j) = r_mat_hand_vec.at(j+rows*4);
-                    mat_l_hand(i,j) = l_mat_hand_vec.at(j+rows*4);;
-                }
-            }
-            ++rows;
-        }
-
-        // DH parameters
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the arm");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-        {
-            DH_params_vec.clear();
-            theta_offset.clear();
-        }
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        robot_arm_specs.arm_specs.a = std::vector<double>(7);
-        robot_arm_specs.arm_specs.d = std::vector<double>(7);
-        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
-
-        for(int i=0;i<7;++i)
-        {
-            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
-        }
-
-        //*************************************************************************************************
-        //                                 HUMAN HANDS
-#if HAND==0
-        // ************** Max aperture
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        srvf.request.signalName = string("maxAperture_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            max_human_Ap= srvf.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the max aperture of tha hand");
-        }
-        jarde_hand.maxAperture=max_human_Ap*1000; // [mm]
-
-        // ************** Finger 1
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_fing1");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the finger 1");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-            DH_params_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        fing1 = jarde_hand.fingers.at(0);
-        fing1.ux = DH_params_vec.at(0)*1000; // [mm]
-        fing1.uy = DH_params_vec.at(1)*1000; // [mm]
-        fing1.uz = DH_params_vec.at(2)*1000; // [mm]
-        fing1.finger_specs.alpha = std::vector<double>(4);
-        fing1.finger_specs.a = std::vector<double>(4);
-        fing1.finger_specs.d = std::vector<double>(4);
-        fing1.finger_specs.theta = std::vector<double>(4);
-        for(int i=0;i<4;++i)
-        {
-            fing1.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-            fing1.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            fing1.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-            fing1.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-        }
-        jarde_hand.fingers.at(0) = fing1;
-
-        // ************** Finger 2
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_fing2");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the finger 2");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-            DH_params_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        fing2 = jarde_hand.fingers.at(1);
-        fing2.ux = DH_params_vec.at(0)*1000; // [mm]
-        fing2.uy = DH_params_vec.at(1)*1000; // [mm]
-        fing2.uz = DH_params_vec.at(2)*1000; // [mm]
-        fing2.finger_specs.alpha = std::vector<double>(4);
-        fing2.finger_specs.a = std::vector<double>(4);
-        fing2.finger_specs.d = std::vector<double>(4);
-        fing2.finger_specs.theta = std::vector<double>(4);
-        for(int i=0;i<4;++i)
-        {
-            fing2.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-            fing2.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            fing2.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-            fing2.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-        }
-        jarde_hand.fingers.at(1) = fing2;
-
-        // ************** Finger 3
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_fing3");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the finger 3");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-            DH_params_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        fing3 = jarde_hand.fingers.at(2);
-        fing3.ux = DH_params_vec.at(0)*1000; // [mm]
-        fing3.uy = DH_params_vec.at(1)*1000; // [mm]
-        fing3.uz = DH_params_vec.at(2)*1000; // [mm]
-        fing3.finger_specs.alpha = std::vector<double>(4);
-        fing3.finger_specs.a = std::vector<double>(4);
-        fing3.finger_specs.d = std::vector<double>(4);
-        fing3.finger_specs.theta = std::vector<double>(4);
-        for(int i=0;i<4;++i)
-        {
-            fing3.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-            fing3.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            fing3.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-            fing3.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-        }
-        jarde_hand.fingers.at(2) = fing3;
-
-        // ************** Finger 4
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_fing4");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the finger 4");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-            DH_params_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        fing4 = jarde_hand.fingers.at(3);
-        fing4.ux = DH_params_vec.at(0)*1000; // [mm]
-        fing4.uy = DH_params_vec.at(1)*1000; // [mm]
-        fing4.uz = DH_params_vec.at(2)*1000; // [mm]
-        fing4.finger_specs.alpha = std::vector<double>(4);
-        fing4.finger_specs.a = std::vector<double>(4);
-        fing4.finger_specs.d = std::vector<double>(4);
-        fing4.finger_specs.theta = std::vector<double>(4);
-        for(int i=0;i<4;++i)
-        {
-            fing4.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-            fing4.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            fing4.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-            fing4.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-        }
-        jarde_hand.fingers.at(3) = fing4;
-
-        // ************** Thumb
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_thumb");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the thumb");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-            DH_params_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        thumb = jarde_hand.thumb;
-        thumb.uTx = DH_params_vec.at(0)*1000; // [mm]
-        thumb.uTy = DH_params_vec.at(1)*1000; // [mm]
-        thumb.uTz = DH_params_vec.at(2)*1000; // [mm]
-        thumb.thumb_specs.alpha = std::vector<double>(5);
-        thumb.thumb_specs.a = std::vector<double>(5);
-        thumb.thumb_specs.d = std::vector<double>(5);
-        thumb.thumb_specs.theta = std::vector<double>(5);
-        for(int i=0;i<5;++i)
-        {
-            thumb.thumb_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-            thumb.thumb_specs.a.at(i) = DH_params_vec.at(i+8)*1000; // [mm]
-            thumb.thumb_specs.d.at(i) = DH_params_vec.at(i+13)*1000; // [mm]
-            thumb.thumb_specs.theta.at(i) = DH_params_vec.at(i+18)*static_cast<double>(M_PI)/180; // [rad]
-        }
-        jarde_hand.thumb = thumb;
-#endif
-
-        //*************************************************************************************************
-        //                                    TORSO
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("TorsoInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            torso_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the torso");
-        }
-
-        floatCount = torso_str.size()/sizeof(float);
-        if (!torso_vec.empty())
-            torso_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
-
-        // position of the torso
-        torso.Xpos = torso_vec.at(0)*1000;//[mm]
-        torso.Ypos = torso_vec.at(1)*1000;//[mm]
-        torso.Zpos = torso_vec.at(2)*1000;//[mm]
-        // orientation of the torso
-        torso.Roll = torso_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Pitch = torso_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Yaw = torso_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        // size of the torso
-        torso.Xsize = torso_vec.at(6)*1000;//[mm]
-        torso.Ysize = torso_vec.at(7)*1000;//[mm]
-        torso.Zsize = torso_vec.at(8)*1000;//[mm]
-
-        //*************************************************************************************************
-        //                              HOME POSTURE AND JOINTS LIMITS
-        // right arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        for (size_t i = 0; i <rposture.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                rposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum right limits
-        for (size_t i = 0; i <min_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum right limits
-        for (size_t i = 0; i <max_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        // left arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        for (size_t i = 0; i <lposture.size(); i++)
-        {
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                lposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum left limits
-        for (size_t i = 0; i <min_llimits.size(); i++)
-        {
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_llimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum left limits
-        for (size_t i = 0; i <max_llimits.size(); i++)
-        {
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_llimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        //*************************************************************************************************
-        //                                    CREATE ROBOT
-        if(succ)
-        {
-            // information of the torso
-            robot_torso_specs.Xpos = torso.Xpos;
-            robot_torso_specs.Ypos = torso.Ypos;
-            robot_torso_specs.Zpos = torso.Zpos;
-            robot_torso_specs.Roll = torso.Roll;
-            robot_torso_specs.Pitch = torso.Pitch;
-            robot_torso_specs.Yaw = torso.Yaw;
-            robot_torso_specs.Xsize = torso.Xsize;
-            robot_torso_specs.Ysize = torso.Ysize;
-            robot_torso_specs.Zsize = torso.Zsize;
-#if HAND==0
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, jarde_hand,
-                                    rposture, lposture,
-                                    min_rlimits,max_rlimits,
-                                    min_llimits,max_llimits);
-            // transformation matrices
-            rptr->setMatRight(mat_right);
-            rptr->setMatLeft(mat_left);
-            rptr->setMatRightHand(mat_r_hand);
-            rptr->setMatLeftHand(mat_l_hand);
-            // create robot
-            scene->addRobot(rptr);
-            // display info of the robot
-            infoLine = rptr->getInfoLine();
-            Q_EMIT newElement(infoLine);
-            // home postures
-            std::vector<double> rightp;
-            std::vector<double> leftp;
-            rptr->getRightPosture(rightp);
-            rptr->getLeftPosture(leftp);
-            // position of the right joints
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            for (int i=0; i<rightp.size(); i++ )
-            {
-                rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(rj.at(i));
-            }
-            // position of the left joints
-            std::vector<string> lj = std::vector<string>(leftp.size());
-            for (int i=0; i<leftp.size(); i++ )
-            {
-                lj.at(i) = string("left_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(lj.at(i));
-            }
-#else
-            throw("You have probably chosen the wrong hand type");
-#endif
-        }
-        else
-        {
-            throw string("Error while retrieving elements from the scenario");
-        }
-        break;
-    case 3:
-        // Human assistance scenario: Serving a drink with ARoS
-        //*************************************************************************************************
-        //                               OBJECTS IN THE SCENARIO
-        add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
-        srvi.request.signalName = NOBJECTS;
-        add_client.call(srvi);
-        if (srvi.response.result == 1)
-            n_objs= srvi.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Communication error");
-        }
-
-        srvi.request.signalName = NPOSES;
-        add_client.call(srvi);
-        if (srvi.response.result == 1)
-            n_poses= srvi.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Communication error");
-        }
-
-        client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        objs_prefix.push_back("BottleTea");      // obj_id = 0
-        objs_prefix.push_back("BottleCoffee");   // obj_id = 1
-        objs_prefix.push_back("BottleJuice");    // obj_id = 2
-        objs_prefix.push_back("Cup");            // obj_id = 3
-        objs_prefix.push_back("Cup1");           // obj_id = 4
-        objs_prefix.push_back("Table");          // obj_id = 5
-
-        while(cnt_obj < n_objs)
-        {
-            signPrefix = objs_prefix[cnt_obj];
-
-            add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-            srvs.request.signalName = signPrefix + string("Info");
-            add_client.call(srvs);
-            if (srvs.response.result == 1)
-                obj_info_str = srvs.response.signalValue;
-            else
-                succ = false;
-
-            if (succ)
-            {
-                floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty())
-                    obj_info_vec.clear();
-                for (int k=0;k<floatCount;++k)
-                    obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
-
-                // position of the object
-                obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
-                obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
-                obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-                // orientation of the object
-                obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-                // size of the object
-                obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
-                obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
-                obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-                // position of the target right
-                tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
-                tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
-                tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-                // orientation of the target right
-                tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
-                // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
-
-                Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
-                                        new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                        new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
-                                        new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
-
-                Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
-
-                infoLine = ob->getInfoLine();
-                Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
-                Q_EMIT newPose(ps->getName());
-
-                //handle of the object
-                srv_get_handle.request.objectName = signPrefix;
-                client_getHandle.call(srv_get_handle);
-                ob->setHandle(srv_get_handle.response.handle);
-                // handle of the visible object
-                srv_get_handle.request.objectName = signPrefix+string("_body");
-                client_getHandle.call(srv_get_handle);
-                ob->setHandleBody(srv_get_handle.response.handle);
-                // add the object to the scenario
-                scene->addObject(objectPtr(ob));
-                // add the pose to the scenario
-                scene->addPose(posePtr(ps));
-
-                cnt_obj++;
-            }
-            else
-            {
-                throw string("Error while retrieving the objects of the scenario");
-            }
-        }
-
-        //*************************************************************************************************
-        //                                    POSES OF THE BOTTLE JUICE
-        // pose_id = 0
-        poses_prefix.push_back("BottleJuice_pose1");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-        // pose_id = 1
-        poses_prefix.push_back("BottleJuice_pose2");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-        // pose_id = 2
-        poses_prefix.push_back("BottleJuice_pose3");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-
-        while(cnt_pose < n_poses)
-        {
-            signPrefix = poses_prefix[cnt_pose];
-
-            add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-            srvs.request.signalName = signPrefix + string("Info");
-            add_client.call(srvs);
-            if (srvs.response.result == 1)
-                pose_info_str = srvs.response.signalValue;
-            else
-                succ = false;
-
-            if (succ)
-            {
-                floatCount = pose_info_str.size()/sizeof(float);
-                if(!pose_info_vec.empty())
-                    pose_info_vec.clear();
-                for (int k=0;k<floatCount;++k)
-                    pose_info_vec.push_back(static_cast<double>(((float*)pose_info_str.c_str())[k]));
-
-                // position of the pose
-                pose_pos.Xpos = pose_info_vec.at(0)*1000; //[mm]
-                pose_pos.Ypos = pose_info_vec.at(1)*1000; //[mm]
-                pose_pos.Zpos = pose_info_vec.at(2)*1000; //[mm]
-                // orientation of the pose
-                pose_or.roll = pose_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                pose_or.pitch = pose_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                pose_or.yaw = pose_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-
-                Pose* ps = new Pose(signPrefix,pose_pos,pose_or,poses_rel[cnt_pose],poses_obj_id[cnt_pose]);
-
-                Q_EMIT newPose(ps->getName());
-                // add the pose to the scenario
-                scene->addPose(posePtr(ps));
-
-                cnt_pose++;
-            }
-            else
-            {
-                throw string("Error while retrieving the poses of the scenario");
-            }
-        }
-
-        //*************************************************************************************************
-        //                                    ROBOT
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("HumanoidName");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            Hname= srvs.response.signalValue;
-        else
-            succ = false;
-
-        //*************************************************************************************************
-        //                                     ARMS
-        // get the handles of both arms
-        succ = getArmsHandles(0);
-
-        // transformation matrix for both arms
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-
-        // right arm
-        srvs.request.signalName = string("mat_right_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_right_arm_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
-
-        if(!mat_right_arm_vec.empty())
-            mat_right_arm_vec.clear();
-        floatCount = mat_right_arm_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
-
-        // left arm
-        srvs.request.signalName = string("mat_left_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_left_arm_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
-
-        if(!mat_left_arm_vec.empty())
-            mat_left_arm_vec.clear();
-        floatCount = mat_left_arm_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            mat_left_arm_vec.push_back(static_cast<double>(((float*)mat_left_arm_str.c_str())[k]));
-
-        rows=0;
-        for(int i=0;i<3;++i)
-        {
-            for(int j=0;j<4;++j)
-            {
-                if(i==3 && j<3)
-                {
-                    mat_right(i,j) = 0;
-                    mat_left(i,j) = 0;
-                }
-                else if(i==3 && j==3)
-                {
-                    mat_right(i,j) = 1;
-                    mat_left(i,j) = 1;
-                }
-                else if(i<3 && j==3)
-                {
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4)*1000; //[mm]
-                }
-                else
-                {
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
-                    mat_left(i,j) = mat_left_arm_vec.at(j+rows*4);
-                }
-            }
-            ++rows;
-        }
-
-        // DH Parameters
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the arm");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-        {
-            DH_params_vec.clear();
-            theta_offset.clear();
-        }
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        robot_arm_specs.arm_specs.a = std::vector<double>(7);
-        robot_arm_specs.arm_specs.d = std::vector<double>(7);
-        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
-
-        for(int i=0;i<7;++i)
-        {
-            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
-        }
-
-        //*************************************************************************************************
-        //                                 BARRETT HAND
-#if HAND==1
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        srvf.request.signalName = string("maxAperture_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            maxAp= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("Aw_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            Aw= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A1_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A1= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A2= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A3= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("D3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            D3= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("phi2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi2= srvf.response.signalValue;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("phi3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi3= srvf.response.signalValue;
-        else
-            succ = false;
-#endif
-
-        //*************************************************************************************************
-        //                                      HEAD
-#if HEAD==1
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("HeadInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            head_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the head");
-        }
-
-        floatCount = head_str.size()/sizeof(float);
-        if (!head_vec.empty())
-            head_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
-
-        //position of the head
-        head.Xpos = head_vec.at(0)*1000;//[mm]
-        head.Ypos = head_vec.at(1)*1000;//[mm]
-        head.Zpos = head_vec.at(2)*1000;//[mm]
-        //orientation of the head
-        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the head
-        head.Xsize = head_vec.at(6)*1000;//[mm]
-        head.Ysize = head_vec.at(7)*1000;//[mm]
-        head.Zsize = head_vec.at(8)*1000;//[mm]
-#endif
-
-        //*************************************************************************************************
-        //                                    TORSO
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("TorsoInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            torso_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the torso");
-        }
-
-        floatCount = torso_str.size()/sizeof(float);
-        if (!torso_vec.empty())
-            torso_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
-
-        //position of the torso
-        torso.Xpos = torso_vec.at(0)*1000;//[mm]
-        torso.Ypos = torso_vec.at(1)*1000;//[mm]
-        torso.Zpos = torso_vec.at(2)*1000;//[mm]
-        //orientation of the torso
-        torso.Roll = torso_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Pitch = torso_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Yaw = torso_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the torso
-        torso.Xsize = torso_vec.at(6)*1000;//[mm]
-        torso.Ysize = torso_vec.at(7)*1000;//[mm]
-        torso.Zsize = torso_vec.at(8)*1000;//[mm]
-
-        //*************************************************************************************************
-        //                              HOME POSTURE AND JOINTS LIMITS
-        //right arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        for (size_t i = 0; i <rposture.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                rposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum right limits
-        for (size_t i = 0; i <min_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum right limits
-        for (size_t i = 0; i <max_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        // left arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        for (size_t i = 0; i <lposture.size(); i++)
-        {
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                lposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum left limits
-        for (size_t i = 0; i <min_llimits.size(); i++){
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_llimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum left limits
-        for (size_t i = 0; i <max_llimits.size(); i++){
-            srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_llimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        //*************************************************************************************************
-        //                                    CREATE ROBOT
-        if (succ)
-        {
-            //information of the torso
-            robot_torso_specs.Xpos = torso.Xpos;
-            robot_torso_specs.Ypos = torso.Ypos;
-            robot_torso_specs.Zpos = torso.Zpos;
-            robot_torso_specs.Roll = torso.Roll;
-            robot_torso_specs.Pitch = torso.Pitch;
-            robot_torso_specs.Yaw = torso.Yaw;
-            robot_torso_specs.Xsize = torso.Xsize;
-            robot_torso_specs.Ysize = torso.Ysize;
-            robot_torso_specs.Zsize = torso.Zsize;
-#if HEAD == 1
-            //information of the head
-            robot_head_specs.Xpos = head.Xpos;
-            robot_head_specs.Ypos = head.Ypos;
-            robot_head_specs.Zpos = head.Zpos;
-            robot_head_specs.Roll =  head.Roll;
-            robot_head_specs.Pitch = head.Pitch;
-            robot_head_specs.Yaw = head.Yaw;
-            robot_head_specs.Xsize = head.Xsize;
-            robot_head_specs.Ysize = head.Ysize;
-            robot_head_specs.Zsize = head.Zsize;
-#endif
-#if HAND==1
-            //information of the barrett hand
-            robot_hand_specs.maxAperture = maxAp;
-            robot_hand_specs.Aw = Aw;
-            robot_hand_specs.A1 = A1;
-            robot_hand_specs.A2 = A2;
-            robot_hand_specs.A3 = A3;
-            robot_hand_specs.D3 = D3 ;
-            robot_hand_specs.phi2 = phi2;
-            robot_hand_specs.phi3 = phi3;
-            //add the joints offset
-            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
-            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
-#if HEAD == 1
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    robot_head_specs, rposture, lposture,
-                                    min_rlimits,max_rlimits,
-                                    min_llimits,max_llimits);
-#else
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    rposture, lposture,
-                                    min_rlimits,max_rlimits,
-                                    min_llimits,max_llimits);
-#endif
-            //transformation matrices
-            rptr->setMatRight(mat_right);
-            rptr->setMatLeft(mat_left);
-            // home postures
-            std::vector<double> rightp;
-            std::vector<double> leftp;
-            rptr->getRightPosture(rightp);
-            rptr->getLeftPosture(leftp);
-            //positions of the joints (without offsett)
-            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
-            std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
-            // position of the right joints
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            for (size_t i=0; i<rightp.size(); i++ )
-            {
-                rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(rj.at(i));
-            }
-            // position of the left joints
-            std::vector<string> lj = std::vector<string>(leftp.size());
-            for (size_t i=0; i<leftp.size(); i++ ){
-                lj.at(i) = string("left_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(lj.at(i));
-            }
-            // display info of the robot
-            infoLine = rptr->getInfoLine();
-            Q_EMIT newElement(infoLine);
-            // create robot
-            scene->addRobot(robotPtr(rptr));
-#else
-            throw("You have probably chosen the wrong hand type");
-#endif
-        }
-        else
-        {
-            throw string("Error while retrieving elements from the scenario");
-        }
-        break;
-    case 4:
-        // Assembly scenario: the Toy vehicle with Sawyer
-        //*************************************************************************************************
-        //                               OBJECTS IN THE SCENARIO
-        add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
-        srvi.request.signalName = NOBJECTS;
-        add_client.call(srvi);
-        if (srvi.response.result == 1)
-            n_objs= srvi.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Communication error");
-        }
-
-        client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        objs_prefix.push_back("BlueColumn");     // obj_id = 0
-        objs_prefix.push_back("GreenColumn");    // obj_id = 1
-        objs_prefix.push_back("RedColumn");      // obj_id = 2
-        objs_prefix.push_back("MagentaColumn");  // obj_id = 3
-        objs_prefix.push_back("Nut1");           // obj_id = 4
-        objs_prefix.push_back("Nut2");           // obj_id = 5
-        objs_prefix.push_back("Wheel1");         // obj_id = 6
-        objs_prefix.push_back("Wheel2");         // obj_id = 7
-        objs_prefix.push_back("Base");           // obj_id = 8
-        objs_prefix.push_back("Table");          // obj_id = 9
-
-        while(cnt_obj < n_objs)
-        {
-            signPrefix = objs_prefix[cnt_obj];
-
-            add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-            srvs.request.signalName = signPrefix + string("Info");
-            add_client.call(srvs);
-            if (srvs.response.result == 1)
-                obj_info_str = srvs.response.signalValue;
-            else
-                succ = false;
-
-            if (succ)
-            {
-                floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty()){obj_info_vec.clear();}
-                for (int k=0;k<floatCount;++k)
-                    obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
-
-                // position of the object
-                obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
-                obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
-                obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-                // orientation of the object
-                obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-                // size of the object
-                obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
-                obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
-                obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-                // position of the target right
-                tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
-                tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
-                tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-                // orientation of the target right
-                tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
-                // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
-
-                Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
-                                        new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                        new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
-                                        new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
-
-                infoLine = ob->getInfoLine();
-                Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
-
-                // get the handles  of the object
-                //handle of the object
-                srv_get_handle.request.objectName = signPrefix;
-                client_getHandle.call(srv_get_handle);
-                ob->setHandle(srv_get_handle.response.handle);
-                // handle of the visible object
-                srv_get_handle.request.objectName = signPrefix+string("_body");
-                client_getHandle.call(srv_get_handle);
-                ob->setHandleBody(srv_get_handle.response.handle);
-                // add the object to the scenario
-                scene->addObject(objectPtr(ob));
-
-                cnt_obj++;
-            }
-            else
-            {
-                throw string("Error while retrieving the objects of the scenario");
-            }
-        }
-
-        //*************************************************************************************************
-        //                                    ROBOT
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("RobotName");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            Hname= srvs.response.signalValue;
-        else
-            succ = false;
-
-        //*************************************************************************************************
-        //                                     ARMS
-        // get the handles of both arms
-        succ = getArmsHandles(2);
-
-        // transformation matrix for the arm
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("mat_right_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_right_arm_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
-
-        if(!mat_right_arm_vec.empty())
-            mat_right_arm_vec.clear();
-        floatCount = mat_right_arm_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
-
-        rows=0;
-        for(int i=0;i<3;++i){
-            for(int j=0;j<4;++j)
-            {
-                if(i==3 && j<3)
-                    mat_right(i,j) = 0;
-                else if(i==3 && j==3)
-                    mat_right(i,j) = 1;
-                else if(i<3 && j==3)
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                else
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
-            }
-            ++rows;
-        }
-
-        // DH_parameters
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the arm");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-        {
-            DH_params_vec.clear();
-            theta_offset.clear();
-        }
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        robot_arm_specs.arm_specs.a = std::vector<double>(7);
-        robot_arm_specs.arm_specs.d = std::vector<double>(7);
-        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
-
-        for(int i=0;i<7;++i)
-        {
-            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
-        }
-
-        //*************************************************************************************************
-        //                                 BARRETT HAND
-#if HAND==1
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        srvf.request.signalName = string("maxAperture_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            maxAp= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("Aw_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            Aw= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A1_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A1= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A2= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A3= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("D3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            D3= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("phi2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi2= srvf.response.signalValue;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("phi3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi3= srvf.response.signalValue;
-        else
-            succ = false;
-#endif
-
-        //*************************************************************************************************
-        //                                   HEAD
-#if HEAD==1
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("HeadInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            head_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the head");
-        }
-
-        floatCount = head_str.size()/sizeof(float);
-        if (!head_vec.empty())
-            head_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
-
-        //position of the head
-        head.Xpos = head_vec.at(0)*1000;//[mm]
-        head.Ypos = head_vec.at(1)*1000;//[mm]
-        head.Zpos = head_vec.at(2)*1000;//[mm]
-        //orientation of the head
-        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the head
-        head.Xsize = head_vec.at(6)*1000;//[mm]
-        head.Ysize = head_vec.at(7)*1000;//[mm]
-        head.Zsize = head_vec.at(8)*1000;//[mm]
-#endif
-
-        //*************************************************************************************************
-        //                                    TORSO
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("TorsoInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            torso_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the torso");
-        }
-
-        floatCount = torso_str.size()/sizeof(float);
-        if (!torso_vec.empty())
-            torso_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
-
-        //position of the torso
-        torso.Xpos = torso_vec.at(0)*1000;//[mm]
-        torso.Ypos = torso_vec.at(1)*1000;//[mm]
-        torso.Zpos = torso_vec.at(2)*1000;//[mm]
-        //orientation of the torso
-        torso.Roll = torso_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Pitch = torso_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Yaw = torso_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the torso
-        torso.Xsize = torso_vec.at(6)*1000;//[mm]
-        torso.Ysize = torso_vec.at(7)*1000;//[mm]
-        torso.Zsize = torso_vec.at(8)*1000;//[mm]
-
-        //*************************************************************************************************
-        //                              HOME POSTURE AND JOINTS LIMITS
-        // right arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        for (size_t i = 0; i <rposture.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                rposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum limits
-        for (size_t i = 0; i <min_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum limits
-        for (size_t i = 0; i <max_rlimits.size(); i++){
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        //*************************************************************************************************
-        //                                    CREATE ROBOT
-        if (succ)
-        {
-            // information of the torso
-            robot_torso_specs.Xpos = torso.Xpos;
-            robot_torso_specs.Ypos = torso.Ypos;
-            robot_torso_specs.Zpos = torso.Zpos;
-            robot_torso_specs.Roll = torso.Roll;
-            robot_torso_specs.Pitch = torso.Pitch;
-            robot_torso_specs.Yaw = torso.Yaw;
-            robot_torso_specs.Xsize = torso.Xsize;
-            robot_torso_specs.Ysize = torso.Ysize;
-            robot_torso_specs.Zsize = torso.Zsize;
-#if HEAD == 1
-            // information of the head
-            robot_head_specs.Xpos = head.Xpos;
-            robot_head_specs.Ypos = head.Ypos;
-            robot_head_specs.Zpos = head.Zpos;
-            robot_head_specs.Roll =  head.Roll;
-            robot_head_specs.Pitch = head.Pitch;
-            robot_head_specs.Yaw = head.Yaw;
-            robot_head_specs.Xsize = head.Xsize;
-            robot_head_specs.Ysize = head.Ysize;
-            robot_head_specs.Zsize = head.Zsize;
-#endif
-#if HAND==1
-            // information of the barrett hand
-            robot_hand_specs.maxAperture = maxAp;
-            robot_hand_specs.Aw = Aw;
-            robot_hand_specs.A1 = A1;
-            robot_hand_specs.A2 = A2;
-            robot_hand_specs.A3 = A3;
-            robot_hand_specs.D3 = D3 ;
-            robot_hand_specs.phi2 = phi2;
-            robot_hand_specs.phi3 = phi3;
-            //add the joints offset
-            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
-
-#if HEAD == 1
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    robot_head_specs, rposture, rposture,
-                                    min_rlimits,max_rlimits, min_rlimits,max_rlimits);
-#else
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    rposture, rposture,
-                                    min_rlimits,max_rlimits, min_rlimits,max_rlimits);
-#endif
-            //transformation matrices
-            rptr->setMatRight(mat_right);
-            rptr->setMatLeft(mat_left);
-            // home postures
-            std::vector<double> rightp;
-            rptr->getRightPosture(rightp);
+        else if(scenarioID > 3) // Sawyer scenarios
             rptr->getLeftPosture(rightp);
-            //positions of the joints (without offsett)
-            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
-            // position of the right joints
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            for (size_t i=0; i<rightp.size(); i++ )
-            {
-                rj.at(i) = string("joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(rj.at(i));
-            }
-            // display info of the robot
-            infoLine = rptr->getInfoLine();
-            Q_EMIT newElement(infoLine);
-            // create robot
-            scene->addRobot(robotPtr(rptr));
+
+        // **************************** CREATE ROBOT
+        // display info of the robot
+        infoLine = rptr->getInfoLine();
+        Q_EMIT newElement(infoLine);
+        // create robot
+        scene->addRobot(robotPtr(rptr));
 #else
-            throw("You have probably chosen the wrong hand type");
+        Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, jarde_hand,
+                                rposture, lposture,
+                                min_rlimits,max_rlimits,
+                                min_llimits,max_llimits);
+
+        // **************************** TRANSFORMATION MATRICES
+        rptr->setMatRight(mat_right);
+        rptr->setMatLeft(mat_left);
+        rptr->setMatRightHand(mat_r_hand);
+        rptr->setMatLeftHand(mat_l_hand);
+
+        // **************************** RIGHT JOINTS
+        std::vector<double> rightp;
+        rptr->getRightPosture(rightp);
+
+        //without offsets
+        std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
+
+        std::vector<string> rj = std::vector<string>(rightp.size());
+        for (int i=0; i<rightp.size(); i++ )
+        {
+            rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+            Q_EMIT newJoint(rj.at(i));
+        }
+
+        // **************************** LEFT JOINTS
+        std::vector<double> leftp;
+        rptr->getLeftPosture(leftp);
+
+        //without offsets
+        std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
+
+        std::vector<string> lj = std::vector<string>(leftp.size());
+        for (int i=0; i<leftp.size(); i++ )
+        {
+            lj.at(i) = string("left_joint "+ QString::number(i+1).toStdString()+ ": "+
+                              QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+            Q_EMIT newJoint(lj.at(i));
+        }
+
+        // **************************** CREATE ROBOT
+        // display info of the robot
+        infoLine = rptr->getInfoLine();
+        Q_EMIT newElement(infoLine);
+        // create robot
+        scene->addRobot(rptr);
 #endif
-        }
-        else
-        {
-            throw string("Error while retrieving elements from the scenario");
-        }
-        break;
-    case 5:
-        // Human assistance scenario: Serving a drink with Sawyer
-        //*************************************************************************************************
-        //                               OBJECTS IN THE SCENARIO
-        add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
-        srvi.request.signalName = NOBJECTS;
-        add_client.call(srvi);
-        if (srvi.response.result == 1)
-            n_objs= srvi.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Communication error");
-        }
-
-
-        srvi.request.signalName = NPOSES;
-        add_client.call(srvi);
-        if (srvi.response.result == 1)
-            n_poses= srvi.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Communication error");
-        }
-
-        client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        objs_prefix.push_back("BottleTea");      // obj_id = 0
-        objs_prefix.push_back("BottleCoffee");   // obj_id = 1
-        objs_prefix.push_back("BottleJuice");    // obj_id = 2
-        objs_prefix.push_back("Cup");            // obj_id = 3
-        objs_prefix.push_back("Cup1");           // obj_id = 4
-        objs_prefix.push_back("Table");          // obj_id = 5
-
-        while(cnt_obj < n_objs)
-        {
-            signPrefix = objs_prefix[cnt_obj];
-
-            add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-            srvs.request.signalName = signPrefix + string("Info");
-            add_client.call(srvs);
-            if (srvs.response.result == 1)
-                obj_info_str = srvs.response.signalValue;
-            else
-                succ = false;
-
-            if (succ)
-            {
-                floatCount = obj_info_str.size()/sizeof(float);
-                if(!obj_info_vec.empty())
-                    obj_info_vec.clear();
-                for (int k=0;k<floatCount;++k)
-                    obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
-
-                // position of the object
-                obj_pos.Xpos = obj_info_vec.at(0)*1000; //[mm]
-                obj_pos.Ypos = obj_info_vec.at(1)*1000; //[mm]
-                obj_pos.Zpos = obj_info_vec.at(2)*1000; //[mm]
-                // orientation of the object
-                obj_or.roll = obj_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.pitch = obj_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                obj_or.yaw = obj_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-                // size of the object
-                obj_size.Xsize = obj_info_vec.at(6)*1000; //[mm]
-                obj_size.Ysize = obj_info_vec.at(7)*1000; //[mm]
-                obj_size.Zsize = obj_info_vec.at(8)*1000; //[mm]
-                // position of the target right
-                tarRight_pos.Xpos = obj_info_vec.at(9)*1000;//[mm]
-                tarRight_pos.Ypos = obj_info_vec.at(10)*1000;//[mm]
-                tarRight_pos.Zpos = obj_info_vec.at(11)*1000;//[mm]
-                // orientation of the target right
-                tarRight_or.roll = obj_info_vec.at(12)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.pitch = obj_info_vec.at(13)*static_cast<double>(M_PI)/180;//[rad]
-                tarRight_or.yaw = obj_info_vec.at(14)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the target left
-                tarLeft_pos.Xpos = obj_info_vec.at(15)*1000;//[mm]
-                tarLeft_pos.Ypos = obj_info_vec.at(16)*1000;//[mm]
-                tarLeft_pos.Zpos = obj_info_vec.at(17)*1000;//[mm]
-                // orientation of the target left
-                tarLeft_or.roll = obj_info_vec.at(18)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.pitch = obj_info_vec.at(19)*static_cast<double>(M_PI)/180;//[rad]
-                tarLeft_or.yaw = obj_info_vec.at(20)*static_cast<double>(M_PI)/180;//[rad]
-                // position of the engage point
-                engage_pos.Xpos = obj_info_vec.at(21)*1000;//[mm]
-                engage_pos.Ypos = obj_info_vec.at(22)*1000;//[mm]
-                engage_pos.Zpos = obj_info_vec.at(23)*1000;//[mm]
-                // orientation of the engage point
-                engage_or.roll = obj_info_vec.at(24)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.pitch = obj_info_vec.at(25)*static_cast<double>(M_PI)/180;//[rad]
-                engage_or.yaw = obj_info_vec.at(26)*static_cast<double>(M_PI)/180;//[rad]
-
-                Object* ob = new Object(signPrefix,obj_pos,obj_or,obj_size,
-                                        new Target(signPrefix + signTarRight,tarRight_pos,tarRight_or),
-                                        new Target(signPrefix + signTarLeft,tarLeft_pos,tarLeft_or),
-                                        new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
-
-                Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
-
-                infoLine = ob->getInfoLine();
-                Q_EMIT newElement(infoLine);
-                Q_EMIT newObject(ob->getName());
-                Q_EMIT newPose(ps->getName());
-
-                //handle of the object
-                srv_get_handle.request.objectName = signPrefix;
-                client_getHandle.call(srv_get_handle);
-                ob->setHandle(srv_get_handle.response.handle);
-                // handle of the visible object
-                srv_get_handle.request.objectName = signPrefix+string("_body");
-                client_getHandle.call(srv_get_handle);
-                ob->setHandleBody(srv_get_handle.response.handle);
-                // add the object to the scenario
-                scene->addObject(objectPtr(ob));
-                // add the pose to the scenario
-                scene->addPose(posePtr(ps));
-
-                cnt_obj++;
-            }
-            else
-            {
-                throw string("Error while retrieving the objects of the scenario");
-            }
-        }
-
-        //*************************************************************************************************
-        //                                    POSES OF THE BOTTLE JUICE
-        // pose_id = 0
-        poses_prefix.push_back("BottleJuice_pose1");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-        // pose_id = 1
-        poses_prefix.push_back("BottleJuice_pose2");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-        // pose_id = 2
-        poses_prefix.push_back("BottleJuice_pose3");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-
-        while(cnt_pose < n_poses)
-        {
-            signPrefix = poses_prefix[cnt_pose];
-
-            add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-            srvs.request.signalName = signPrefix + string("Info");
-            add_client.call(srvs);
-            if (srvs.response.result == 1)
-                pose_info_str = srvs.response.signalValue;
-            else
-                succ = false;
-
-            if (succ)
-            {
-                floatCount = pose_info_str.size()/sizeof(float);
-                if(!pose_info_vec.empty())
-                    pose_info_vec.clear();
-                for (int k=0;k<floatCount;++k)
-                    pose_info_vec.push_back(static_cast<double>(((float*)pose_info_str.c_str())[k]));
-
-                // position of the pose
-                pose_pos.Xpos = pose_info_vec.at(0)*1000; //[mm]
-                pose_pos.Ypos = pose_info_vec.at(1)*1000; //[mm]
-                pose_pos.Zpos = pose_info_vec.at(2)*1000; //[mm]
-                // orientation of the pose
-                pose_or.roll = pose_info_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-                pose_or.pitch = pose_info_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-                pose_or.yaw = pose_info_vec.at(5)*static_cast<double>(M_PI)/180;//[rad]
-
-                Pose* ps = new Pose(signPrefix,pose_pos,pose_or,poses_rel[cnt_pose],poses_obj_id[cnt_pose]);
-
-                Q_EMIT newPose(ps->getName());
-                // add the pose to the scenario
-                scene->addPose(posePtr(ps));
-
-                cnt_pose++;
-            }
-            else
-            {
-                throw string("Error while retrieving the poses of the scenario");
-            }
-        }
-
-        //*************************************************************************************************
-        //                                    ROBOT
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("RobotName");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            Hname= srvs.response.signalValue;
-        else
-            succ = false;
-
-
-        //*************************************************************************************************
-        //                                     ARMS
-        succ = getArmsHandles(2);
-
-        // transformation matrix for the arm
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-
-        // right arm
-        srvs.request.signalName = string("mat_right_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_right_arm_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arm");
-        }
-
-        if(!mat_right_arm_vec.empty())
-            mat_right_arm_vec.clear();
-        floatCount = mat_right_arm_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
-
-        rows=0;
-        for(int i=0;i<3;++i)
-        {
-            for(int j=0;j<4;++j)
-            {
-                if(i==3 && j<3)
-                    mat_right(i,j) = 0;
-                else if(i==3 && j==3)
-                    mat_right(i,j) = 1;
-                else if(i<3 && j==3)
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                else
-                    mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
-            }
-            ++rows;
-        }
-
-        // DH Parameters
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("DH_params_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            DH_params_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the DH parameters of the arm");
-        }
-
-        floatCount = DH_params_str.size()/sizeof(float);
-        if (!DH_params_vec.empty())
-        {
-            DH_params_vec.clear();
-            theta_offset.clear();
-        }
-
-        for (int k=0;k<floatCount;++k)
-            DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-        robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
-        robot_arm_specs.arm_specs.a = std::vector<double>(7);
-        robot_arm_specs.arm_specs.d = std::vector<double>(7);
-        robot_arm_specs.arm_specs.theta = std::vector<double>(7);
-
-        for(int i=0;i<7;++i)
-        {
-            robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i)*static_cast<double>(M_PI)/180; // [rad]
-            robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-            robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i+14)*1000; // [mm]
-            theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
-        }
-
-        //*************************************************************************************************
-        //                                 BARRETT HAND
-#if HAND==1
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        srvf.request.signalName = string("maxAperture_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            maxAp= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("Aw_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            Aw= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A1_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A1= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A2= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("A3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            A3= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("D3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            D3= srvf.response.signalValue*1000;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("phi2_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi2= srvf.response.signalValue;
-        else
-            succ = false;
-
-        srvf.request.signalName = string("phi3_info");
-        add_client.call(srvf);
-        if (srvf.response.result == 1)
-            phi3= srvf.response.signalValue;
-        else
-            succ = false;
-#endif
-
-        //*************************************************************************************************
-        //                                      HEAD
-#if HEAD==1
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("HeadInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            head_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the head");
-        }
-
-        floatCount = head_str.size()/sizeof(float);
-        if (!head_vec.empty())
-            head_vec.clear();
-
-        for (int k=0;k<floatCount;++k)
-            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
-
-        //position of the head
-        head.Xpos = head_vec.at(0)*1000;//[mm]
-        head.Ypos = head_vec.at(1)*1000;//[mm]
-        head.Zpos = head_vec.at(2)*1000;//[mm]
-        //orientation of the head
-        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the head
-        head.Xsize = head_vec.at(6)*1000;//[mm]
-        head.Ysize = head_vec.at(7)*1000;//[mm]
-        head.Zsize = head_vec.at(8)*1000;//[mm]
-#endif
-
-        //*************************************************************************************************
-        //                                    TORSO
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("TorsoInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            torso_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the torso");
-        }
-
-        floatCount = torso_str.size()/sizeof(float);
-        if (!torso_vec.empty())
-            torso_vec.clear();
-
-        for (int k=0;k<floatCount;++k)
-            torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
-
-        //position of the torso
-        torso.Xpos = torso_vec.at(0)*1000;//[mm]
-        torso.Ypos = torso_vec.at(1)*1000;//[mm]
-        torso.Zpos = torso_vec.at(2)*1000;//[mm]
-        //orientation of the torso
-        torso.Roll = torso_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Pitch = torso_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        torso.Yaw = torso_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the torso
-        torso.Xsize = torso_vec.at(6)*1000;//[mm]
-        torso.Ysize = torso_vec.at(7)*1000;//[mm]
-        torso.Zsize = torso_vec.at(8)*1000;//[mm]
-
-        //*************************************************************************************************
-        //                              HOME POSTURE AND JOINTS LIMITS
-        //right arm
-        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-        for (size_t i = 0; i <rposture.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                rposture.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // minimum limits
-        for (size_t i = 0; i <min_rlimits.size(); i++)
-        {
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                min_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-        // maximum limits
-        for (size_t i = 0; i <max_rlimits.size(); i++){
-            srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
-            add_client.call(srvf);
-            if (srvf.response.result == 1)
-                max_rlimits.at(i)= srvf.response.signalValue;
-            else
-                succ = false;
-        }
-
-        //*************************************************************************************************
-        //                                    CREATE ROBOT
-        if (succ)
-        {
-            //information of the torso
-            robot_torso_specs.Xpos = torso.Xpos;
-            robot_torso_specs.Ypos = torso.Ypos;
-            robot_torso_specs.Zpos = torso.Zpos;
-            robot_torso_specs.Roll = torso.Roll;
-            robot_torso_specs.Pitch = torso.Pitch;
-            robot_torso_specs.Yaw = torso.Yaw;
-            robot_torso_specs.Xsize = torso.Xsize;
-            robot_torso_specs.Ysize = torso.Ysize;
-            robot_torso_specs.Zsize = torso.Zsize;
-#if HEAD == 1
-            //information of the head
-            robot_head_specs.Xpos = head.Xpos;
-            robot_head_specs.Ypos = head.Ypos;
-            robot_head_specs.Zpos = head.Zpos;
-            robot_head_specs.Roll =  head.Roll;
-            robot_head_specs.Pitch = head.Pitch;
-            robot_head_specs.Yaw = head.Yaw;
-            robot_head_specs.Xsize = head.Xsize;
-            robot_head_specs.Ysize = head.Ysize;
-            robot_head_specs.Zsize = head.Zsize;
-#endif
-#if HAND==1
-            //information of the barrett hand
-            robot_hand_specs.maxAperture = maxAp;
-            robot_hand_specs.Aw = Aw;
-            robot_hand_specs.A1 = A1;
-            robot_hand_specs.A2 = A2;
-            robot_hand_specs.A3 = A3;
-            robot_hand_specs.D3 = D3 ;
-            robot_hand_specs.phi2 = phi2;
-            robot_hand_specs.phi3 = phi3;
-            //add the joints offset
-            std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
-#if HEAD == 1
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    robot_head_specs, rposture, rposture,
-                                    min_rlimits,max_rlimits, min_rlimits,max_rlimits);
-#else
-            Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, robot_hand_specs,
-                                    rposture, rposture,
-                                    min_rlimits,max_rlimits, min_rlimits,max_rlimits);
-#endif
-            //transformation matrices
-            rptr->setMatRight(mat_right);
-            rptr->setMatLeft(mat_right);
-            // home postures
-            std::vector<double> rightp;
-            rptr->getRightPosture(rightp);
-            rptr->getLeftPosture(rightp);
-            //positions of the joints (without offsett)
-            std::transform(rightp.begin(), rightp.end(), theta_offset.begin(), rightp.begin(), std::minus<double>());
-            std::vector<string> rj = std::vector<string>(rightp.size());
-            for (size_t i=0; i<rightp.size(); i++ )
-            {
-                rj.at(i) = string("joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-                Q_EMIT newJoint(rj.at(i));
-            }
-            // display info of the robot
-            infoLine = rptr->getInfoLine();
-            Q_EMIT newElement(infoLine);
-            // create robot
-            scene->addRobot(robotPtr(rptr));
-#else
-            throw("You have probably chosen the wrong hand type");
-#endif
-        }
-        else
-        {
-            throw string("Error while retrieving elements from the scenario");
-        }
-        break;
+    }
+    else
+    {
+        throw string("Error while retrieving elements from the scenario");
     }
 
     this->curr_scene = scene;
+
     // stop the simulation
     add_client = n.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
     vrep_common::simRosStopSimulation srvcc;
     add_client.call(srvcc);
+
     // we got all the elements of the scenario
     got_scene = true;
 
@@ -3812,7 +2201,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 }
             }
 
-            // ----- post-movement operations -------- //
+            // --------------------------------- post-movement operations ------------------------------------------- //
             //ros::spinOnce(); // handle ROS messages
             switch (mov_type)
             {
@@ -3914,6 +2303,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     ros::spinOnce(); // first handle ROS messages
 
     int hh=0; // it counts problems that do not belong to the task
+
     for(int kk=0; kk < task->getProblemNumber(); ++kk)
     {
         if(task->getProblem(kk)->getPartOfTask() && task->getProblem(kk)->getSolved())
@@ -3926,10 +2316,12 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
             vector<MatrixXd> vel_mov = vel_task.at(ii);
             vector<vector<double>> timesteps_mov = timesteps_task.at(ii);
             vector<double> tols_stop_mov = tols_stop_task.at(ii);
+
             double tol_stop_stage;
             MatrixXd traj;
             MatrixXd vel;
             std::vector<double> timesteps_stage;
+
             movementPtr mov = task->getProblem(kk)->getMovement();
             vector<string> traj_descr_mov = traj_descr_task.at(ii);
             this->curr_mov = mov;
@@ -4216,7 +2608,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                         }
                     }
 
-                    // ---- post-movement operations ---- //
+                    // ----------------------------- post-movement operations ---------------------------------- //
                     // set the detected object child of the attach point
                     add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
                     vrep_common::simRosSetObjectParent srvset_parent; // service to set a parent object
@@ -4347,10 +2739,12 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
             vector<MatrixXd> vel_mov = vel_task.at(ii);
             vector<vector<double>> timesteps_mov = timesteps_task.at(ii);
             vector<double> tols_stop_mov = tols_stop_task.at(ii);
+
             double tol_stop_stage;
             MatrixXd traj;
             MatrixXd vel;
             std::vector<double> timesteps_stage;
+
             movementPtr mov = task->getProblem(kk)->getMovement();
             vector<string> traj_descr_mov = traj_descr_task.at(ii);
             this->curr_mov = mov;
@@ -4374,7 +2768,6 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
             switch (arm_code)
             {
             case 0: // dual arm
-              // TODO
               break;
             case 1: //right arm
               handles = right_handles;
@@ -4391,7 +2784,9 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
             MatrixXd traj_ret_plan_app;
             MatrixXd vel_ret_plan_app;
             std::vector<double> timesteps_ret_plan_app;
-            bool join_ret_plan_app = false; bool join_ret_plan = false; bool join_plan_app = false;
+            bool join_ret_plan_app = false;
+            bool join_ret_plan = false;
+            bool join_plan_app = false;
 
             if(mov_type==0 || mov_type==2 || mov_type==3 || mov_type==4)
             {
@@ -4634,7 +3029,8 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
 
                         ta = tb;
                         double tt_step = timesteps_stage.at(i);
-                        if(tt_step<0.001){tt_step = MIN_EXEC_TIMESTEP_VALUE;}
+                        if(tt_step<0.001)
+                            tt_step = MIN_EXEC_TIMESTEP_VALUE;
                         tb = ta + tt_step;
 
                         bool interval = true;
@@ -4759,7 +3155,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                         }
                     } // for loop step
 
-                    // ---- post-movement operations ---- //
+                    // ---------------------------------- post-movement operations -------------------------------- //
                     // set the detected object child of the attach point
                     add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
                     vrep_common::simRosSetObjectParent srvset_parent; // service to set a parent object
@@ -6133,4 +4529,3 @@ bool QNode::openBarrettHand(int hand)
 #endif
 
 }  // namespace motion_manager
-
