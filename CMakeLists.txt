@@ -166,7 +166,6 @@ include_directories(
     ${IPOPT_HOME}/${CMAKE_BUILD_TYPE}/include/coin
     ${IPOPT_HOME}/${CMAKE_BUILD_TYPE}/include/coin/ThirdParty
     ${IPOPT_HOME}/${CMAKE_BUILD_TYPE}/include/extra
-
 )
 link_directories(
     ${IPOPT_HOME}/${CMAKE_BUILD_TYPE}/lib

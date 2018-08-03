@@ -6,6 +6,9 @@
 #include <sensor_msgs/JointState.h>
 #include <string>
 #include <std_msgs/String.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/Empty.h>
+#include <ros/callback_queue.h>
 #include <QThread>
 #include <QStringListModel>
 #include <vrep_common/VrepInfo.h>
@@ -133,7 +136,15 @@ public:
      * @param scene
      * @return
      */
-    bool execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene);
+    bool execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr, movementPtr mov, scenarioPtr scene);
+
+    /**
+     * @brief execMovement_Sawyer
+     * @return
+     */
+#if ROBOT==1
+    bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov);
+#endif
 
     /**
      * @brief execTask
@@ -147,6 +158,21 @@ public:
      * @return
      */
     bool execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
+
+    /**
+     * @brief execTask_Sawyer
+     * @param traj_task
+     * @param vel_task
+     * @param timesteps_task
+     * @param tols_stop_task
+     * @param traj_descr_task
+     * @param task
+     * @param scene
+     * @return
+     */
+#if ROBOT==1
+    bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
+#endif
 
     /**
      * @brief execTask_complete
@@ -225,12 +251,6 @@ private:
      * @param info
      */
     void infoCallback(const vrep_common::VrepInfoConstPtr& info);
-
-    /**
-     * @brief This is the callback to retrieve the state of the joints
-     * @param state
-     */
-    void JointsCallback(const sensor_msgs::JointState& state);
 
     /**
      * @brief This is the callback to retrieve the state of the proximity sensor on the right end-effector
@@ -389,6 +409,21 @@ private:
     void Shelf_4_dCallback(const geometry_msgs::PoseStamped& data);
 
     /**
+     * @brief This is the callback to retrieve the state of the joints
+     * @param state
+     * @param robot
+     */
+    void JointsCallback(const sensor_msgs::JointState& state);
+
+ #if ROBOT == 1
+    /**
+     * @brief This is the callback to retrieve the state of the joints (Robot Sawyer)
+     * @param state
+     */
+    void SawyerJointsCallback(const sensor_msgs::JointState &state);
+#endif
+
+    /**
      * @brief This method returns the linear interpolation
      * @param ya
      * @param yb
@@ -458,6 +493,7 @@ private:
 
     int init_argc; /**< initial argc */
     char** init_argv; /**< initial argv */
+    //*********************************** VRep simulator
     ros::ServiceClient add_client;/**<  ROS client */
     ros::Subscriber subInfo; /**< ROS subscriber for information about the simulation */
     ros::Subscriber subJoints_state; /**< ROS subscriber to the topic /vrep/joint_state */
@@ -490,6 +526,14 @@ private:
     ros::Subscriber subShelf_4_b; /**< ROS sunscriber to the topic /vrep/Shelf_4_b_pose (obj_id=7 in the Challenging scenario) */
     ros::Subscriber subShelf_4_c; /**< ROS sunscriber to the topic /vrep/Shelf_4_c_pose (obj_id=8 in the Challenging scenario) */
     ros::Subscriber subShelf_4_d; /**< ROS sunscriber to the topic /vrep/Shelf_4_d_pose (obj_id=9 in the Challenging scenario) */
+#if ROBOT==1
+    //*********************************** Real Robot
+    ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
+    ros::Publisher pubJointCommand_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command */
+    ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
+    ros::Publisher pubReset_robot; /** < ROS publisher to the topic /robot/set_super_reset */
+    ros::Publisher pubStop_robot; /** < ROS publisher to the topic /robot/set_super_stop */
+#endif
 #if MOVEIT==1
     boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */
 #endif
@@ -509,6 +553,8 @@ private:
     int left_attach; /**< left hand attach point */
     bool got_scene; /**< true if we got all the elements of the scenario */
     bool obj_in_hand; /**< true if the object is in the hand */
+    std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
+    //*********************************** Hand
     std::vector<int> right_handles; /**< right arm and right hand joints handles */
     std::vector<int> left_handles; /**< left arm and left hand joints handles */
     MatrixXi right_hand_handles; /**< matrix of the handles of the right hand joints */
@@ -519,7 +565,8 @@ private:
     std::vector<double> left_2hand_pos; /**< position of the left hand 2 phalanx */
     std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
     std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
-    std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
+    //*********************************** Real Robot
+    std::vector<double> robot_joints_pos; /**< position of the right arm*/
 #if HAND ==1
     std::vector<bool> firstPartLocked;
     std::vector<int> needFullOpening;

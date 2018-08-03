@@ -8,6 +8,9 @@
 #include <string>
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/Empty.h>
+#include <intera_core_msgs/JointCommand.h>
 #include <sstream>
 #include <time.h>
 #include "../include/motion_manager/qnode.hpp"
@@ -38,9 +41,7 @@
 
 
 namespace motion_manager {
-/*****************************************************************************
-** Implementation
-*****************************************************************************/
+
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
     init_argv(argv)
@@ -55,6 +56,7 @@ QNode::QNode(int argc, char** argv ) :
     left_2hand_pos.assign(3,0.0f);
     left_2hand_vel.assign(3,0.0f);
     left_2hand_force.assign(3,0.0f);
+    robot_joints_pos.assign(7,0.0f);
     got_scene = false;
     obj_in_hand = false;
 #if HAND ==1
@@ -112,10 +114,21 @@ void QNode::on_end()
 }
 
 
-bool  QNode::loadScenario(const std::string& path,int id)
+bool QNode::loadScenario(const std::string& path,int id)
 {
     ros::NodeHandle n;
 
+#if ROBOT == 1
+    // ------------------------------------------------------------------------------------------- //
+    //                                   ROBOT SUBSCRIBERS                                         //
+    // Sawyer scenarios
+    if(id >= 3)
+        // Topic that contains the position of the Sawyer joints
+        subJoints_state_robot = n.subscribe("/robot/joint_states", 1, &QNode::SawyerJointsCallback, this);
+#endif
+
+    // ------------------------------------------------------------------------------------------- //
+    //                                   VREP SUBSCRIBERS                                         //
     // pause simulations
     add_client = n.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
     vrep_common::simRosStopSimulation srvstop;
@@ -145,7 +158,7 @@ bool  QNode::loadScenario(const std::string& path,int id)
 
         switch(id)
         {
-        case 0: case 1: case 4:
+        case 0: case 1: case 3:
             // Assembly scenario: the Toy vehicle with ARoS
             // Assembly scenario: the Toy vehicle with Jarde
             // Assembly scenario: the Toy vehicle with Sawyer
@@ -168,7 +181,7 @@ bool  QNode::loadScenario(const std::string& path,int id)
             // Base (obj_id = 8)
             subBase = n.subscribe("/vrep/Base_pose",1,&QNode::BaseCallback,this);
             break;
-        case 3: case 5:
+        case 2: case 4:
             // Human assistance scenario: Serving a drink with ARoS
             // Human assistance scenario: Serving a drink with Sawyer
             // Bottle Tea (obj_id = 0)
@@ -187,6 +200,7 @@ bool  QNode::loadScenario(const std::string& path,int id)
         // planning scene of RViZ
         planning_scene_interface_ptr.reset(new moveit::planning_interface::PlanningSceneInterface());
 #endif
+        ros::spinOnce();
         return true;
     }
     else
@@ -1771,9 +1785,9 @@ void QNode::RPY_matrix(std::vector<double> rpy, Matrix3d &Rot)
 
 void QNode::infoCallback(const vrep_common::VrepInfoConstPtr& info)
 {
-    simulationTime=info->simulationTime.data;
-    simulationTimeStep=info->timeStep.data;
-    simulationRunning=(info->simulatorState.data&1)!=0;
+    simulationTime = info->simulationTime.data;
+    simulationTimeStep = info->timeStep.data;
+    simulationRunning = (info->simulatorState.data&1)!=0;
 }
 
 
@@ -1840,17 +1854,24 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 {
     this->curr_scene = scene;
     int scenarioID = scene->getID();
-    this->curr_mov = mov; int mov_type = mov->getType();  int arm_code = mov->getArm();
-    bool plan; bool approach; bool retreat;
+    this->curr_mov = mov; int mov_type = mov->getType();
+    int arm_code = mov->getArm();
+    bool plan;
+    bool approach;
+    bool retreat;
     bool hand_closed;
 
     switch (mov_type)
     {
     case 0: case 1: case 5: // reach-to-grasp, reaching, go-park
-        closed.at(0)=false; closed.at(1)=false; closed.at(2)=false;
+        closed.at(0)=false;
+        closed.at(1)=false;
+        closed.at(2)=false;
         break;
     case 2: case 3: case 4: // transport, engage, disengage
-        closed.at(0)=true; closed.at(1)=true; closed.at(2)=true;
+        closed.at(0)=true;
+        closed.at(1)=true;
+        closed.at(2)=true;
         break;
     }
 
@@ -1862,6 +1883,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
     std::vector<int> handles;
     MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
     int h_attach; // handle of the attachment point of the hand
+
     switch (arm_code)
     {
     case 0: // dual arm
@@ -1959,7 +1981,8 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
         }
         else if(strcmp(mov_descr.c_str(),"approach")==0)
         {
-            plan=false; approach=true; retreat=false;
+            plan=false; approach=true;
+            retreat=false;
             if(join_plan_approach)
             {
                 MatrixXd tt = traj_mov_real.at(k); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
@@ -2146,13 +2169,16 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                                     (((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed))
                                 dataTraj.handles.data.push_back(handles.at(k));
 
-                            int exec_mode; double exec_value;
+                            int exec_mode;
+                            double exec_value;
 #if VEL==0
                             // position
-                            exec_mode = 0; exec_value = yxt;
+                            exec_mode = 0;
+                            exec_value = yxt;
 #elif VEL==1
                             //velocity
-                            exec_mode = 2; exec_value = yx;
+                            exec_mode = 2;
+                            exec_value = yx;
 #endif
                             switch(scenarioID)
                             {
@@ -2254,6 +2280,55 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 }
 
 
+#if ROBOT== 1
+bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
+{
+    ros::NodeHandle node;
+    bool homePostureEqual = false;
+
+    // --------------------------------- PUBLISHERS ------------------------------------------- //
+    // Topics that enable/disable the movement of robot joints
+    pubEnable_robot = node.advertise<std_msgs::Bool>("/robot/set_super_enable", 1);
+    pubReset_robot = node.advertise<std_msgs::Empty>("/robot/set_super_reset", 1);
+    pubStop_robot = node.advertise<std_msgs::Empty>("/robot/set_super_stop", 1);
+
+    // Topic that change the values of Sawyer joints
+    pubJointCommand_robot = node.advertise<intera_core_msgs::JointCommand>("/robot/limb/right/joint_command", 1);
+
+    // Enable the robot before attempting to control any of the motors
+    std_msgs::Bool enable_msg;
+    enable_msg.data = true;
+    pubEnable_robot.publish(enable_msg);
+
+    //handle ROS messages
+    ros::spinOnce();
+
+    // -------------------------- COMPARES INITIALS POSTURES ---------------------------------- //
+    //The trajectory planned doesn't include the joints offsets
+    std::vector<MatrixXd> traj_mov_w_offset = traj_mov;
+    //Add the joints offsets
+    std::vector<MatrixXd> traj_mov_real = realJointsPosition(traj_mov_w_offset);
+
+    //Get the home position of the Sawyer arm (in V-REP simulator)
+    MatrixXd traj = traj_mov_real.at(0);
+    VectorXd iP = traj.row(0);
+    std::vector<double> initialPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - 4));
+
+    // Compare the initial posture in simulation with the current posture of the real robot
+    if(robot_joints_pos == initialPosture)
+        homePostureEqual = true;
+
+    // ----------------------- PUTS REAL ROBOT IN INITIAL POSTURE ---------------------------- //
+    if(!homePostureEqual)
+        log(QNode::Info,string("The Sawyer robot isn't in the start posture."));
+    else
+    {
+        log(QNode::Info,string("The Sawyer robot is in the start posture."));
+    }
+}
+#endif
+
+
 bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene)
 {
     bool hand_closed;
@@ -2287,6 +2362,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     srv_enableSubscriber.request.topicName="/"+nodeName+"/set_joints"; // the topic name
     srv_enableSubscriber.request.queueSize=1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
+
 #if HAND==1
     // set joints position (it is used to set the target postion of the 2nd phalanx of the fingers)
     ros::ServiceClient client_enableSubscriber_hand=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
@@ -2669,6 +2745,13 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
 
     return true;
 }
+
+
+#if ROBOT==1
+bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene)
+{
+}
+#endif
 
 
 bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task, taskPtr task, scenarioPtr scene)
@@ -3288,109 +3371,6 @@ void QNode::run()
 }
 
 
-void QNode::JointsCallback(const sensor_msgs::JointState &state)
-{
-    std::vector<std::string> joints_names = state.name;
-    std::vector<double> joints_pos(state.position.begin(),state.position.end());
-    std::vector<double> joints_vel(state.velocity.begin(),state.velocity.end());
-    std::vector<double> joints_force(state.effort.begin(),state.effort.end());
-
-    std::vector<double> right_posture;
-    std::vector<double> right_vel;
-    std::vector<double> right_forces;
-    std::vector<double> left_posture;
-    std::vector<double> left_vel;
-    std::vector<double> left_forces;
-
-    #if HAND == 0
-    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
-                             "right_joint_thumb_TMC_aa","right_joint_fing1_MCP","right_joint_fing3_MCP","right_joint_thumb_TMC_fe"};
-    const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
-                             "left_joint_thumb_TMC_aa","left_joint_fing1_MCP","left_joint_fing3_MCP","left_joint_thumb_TMC_fe"};
-    const char *r_2hand[] = {"right_joint_fing1_PIP","right_joint_fing3_PIP","right_joint_thumb_MCP"};
-    const char *l_2hand[] = {"left_joint_fing1_PIP","left_joint_fing3_PIP","left_joint_thumb_MCP"};
-    #elif HAND == 1
-    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
-                             "right_BarrettHand_jointA_0","right_BarrettHand_jointB_0","right_BarrettHand_jointB_2","right_BarrettHand_jointB_1"};
-    const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
-                             "left_BarrettHand_jointA_0","left_BarrettHand_jointB_0","left_BarrettHand_jointB_2","left_BarrettHand_jointB_1"};
-    const char *r_2hand[]={"right_BarrettHand_jointC_0","right_BarrettHand_jointC_2","right_BarrettHand_jointC_1"};
-    const char *l_2hand[]={"left_BarrettHand_jointC_0","left_BarrettHand_jointC_2","left_BarrettHand_jointC_1"};
-    #endif
-
-    for (int i = 0; i < JOINTS_ARM+JOINTS_HAND; ++i)
-    {
-        size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_names[i]) - joints_names.begin();
-        size_t l_index = std::find(joints_names.begin(), joints_names.end(), l_names[i]) - joints_names.begin();
-
-        if (r_index >= joints_names.size())
-            std::cout << "element not found in state.name \n";
-        else
-        {
-            right_posture.push_back(joints_pos.at(r_index));
-            right_vel.push_back(joints_vel.at(r_index));
-            right_forces.push_back(joints_force.at(r_index));
-        }
-
-        if(this->curr_scene->getRobot()->getName()=="ARoS")
-        {
-            if (l_index >= joints_names.size())
-                std::cout << "element not found in state.name \n";
-            else
-            {
-                left_posture.push_back(joints_pos.at(l_index));
-                left_vel.push_back(joints_vel.at(l_index));
-                left_forces.push_back(joints_force.at(l_index));
-            }
-        }
-    }
-
-    for(int i = 0; i < HAND_FINGERS; ++i)
-    {
-        size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_2hand[i]) - joints_names.begin();
-        size_t l_index = std::find(joints_names.begin(), joints_names.end(), l_2hand[i]) - joints_names.begin();
-
-        if (r_index >= joints_names.size())
-            std::cout << "element not found in state.name \n";
-        else
-        {
-            right_2hand_pos.at(i)=joints_pos.at(r_index);
-            right_2hand_vel.at(i)=joints_vel.at(r_index);
-            right_2hand_force.at(i)=joints_force.at(r_index);
-        }
-
-        if(this->curr_scene->getRobot()->getName()=="ARoS")
-        {
-            if (l_index >= joints_names.size())
-                std::cout << "element not found in state.name \n";
-            else
-            {
-                left_2hand_pos.at(i)=joints_pos.at(l_index);
-                left_2hand_vel.at(i)=joints_vel.at(l_index);
-                left_2hand_force.at(i)=joints_force.at(l_index);
-            }
-        }
-    }
-
-    if (this->curr_scene)
-    {
-        //add the joints offset
-        std::transform(right_posture.begin(), right_posture.end(), theta_offset.begin(), right_posture.begin(), std::plus<double>());
-        this->curr_scene->getRobot()->setRightPosture(right_posture);
-        this->curr_scene->getRobot()->setRightVelocities(right_vel);
-        this->curr_scene->getRobot()->setRightForces(right_forces);
-
-        if(this->curr_scene->getRobot()->getName()=="ARoS")
-        {
-            std::transform(left_posture.begin(), left_posture.end(), theta_offset.begin(), left_posture.begin(), std::plus<double>());
-            this->curr_scene->getRobot()->setLeftPosture(left_posture);
-            this->curr_scene->getRobot()->setLeftVelocities(left_vel);
-            this->curr_scene->getRobot()->setLeftForces(left_forces);
-        }
-    }
-}
-
-
 void QNode::log(const LogLevel &level, const std::string &msg)
 {
     logging_model.insertRows(logging_model.rowCount(),1);
@@ -3424,6 +3404,123 @@ void QNode::log(const LogLevel &level, const std::string &msg)
     logging_model.setData(logging_model.index(logging_model.rowCount()-1),new_row);
     Q_EMIT loggingUpdated();
 }
+
+
+void QNode::JointsCallback(const sensor_msgs::JointState &state)
+{
+    std::vector<std::string> joints_names = state.name;
+    std::vector<double> joints_pos(state.position.begin(),state.position.end());
+    std::vector<double> joints_vel(state.velocity.begin(),state.velocity.end());
+    std::vector<double> joints_force(state.effort.begin(),state.effort.end());
+
+    std::vector<double> right_posture; std::vector<double> left_posture;
+    std::vector<double> right_vel; std::vector<double> left_vel;
+    std::vector<double> right_forces; std::vector<double> left_forces;
+
+#if HAND == 0
+    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
+                             "right_joint_thumb_TMC_aa","right_joint_fing1_MCP","right_joint_fing3_MCP","right_joint_thumb_TMC_fe"};
+    const char *r_2hand[] = {"right_joint_fing1_PIP","right_joint_fing3_PIP","right_joint_thumb_MCP"};
+    const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
+                             "left_joint_thumb_TMC_aa","left_joint_fing1_MCP","left_joint_fing3_MCP","left_joint_thumb_TMC_fe"};
+    const char *l_2hand[] = {"left_joint_fing1_PIP","left_joint_fing3_PIP","left_joint_thumb_MCP"};
+#elif HAND == 1
+    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
+                             "right_BarrettHand_jointA_0","right_BarrettHand_jointB_0","right_BarrettHand_jointB_2","right_BarrettHand_jointB_1"};
+    const char *r_2hand[]={"right_BarrettHand_jointC_0","right_BarrettHand_jointC_2","right_BarrettHand_jointC_1"};
+
+    const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
+                         "left_BarrettHand_jointA_0","left_BarrettHand_jointB_0","left_BarrettHand_jointB_2","left_BarrettHand_jointB_1"};
+    const char *l_2hand[]={"left_BarrettHand_jointC_0","left_BarrettHand_jointC_2","left_BarrettHand_jointC_1"};
+#endif
+
+    for (int i = 0; i < JOINTS_ARM+JOINTS_HAND; ++i)
+    {
+        size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_names[i]) - joints_names.begin();
+
+        if (r_index < joints_names.size())
+        {
+            right_posture.push_back(joints_pos.at(r_index));
+            right_vel.push_back(joints_vel.at(r_index));
+            right_forces.push_back(joints_force.at(r_index));
+        }
+
+        if(this->curr_scene->getRobot()->getName()=="ARoS")
+        {
+            size_t l_index = std::find(joints_names.begin(), joints_names.end(), l_names[i]) - joints_names.begin();
+
+            if (l_index < joints_names.size())
+            {
+                left_posture.push_back(joints_pos.at(l_index));
+                left_vel.push_back(joints_vel.at(l_index));
+                left_forces.push_back(joints_force.at(l_index));
+            }
+        }
+    }
+
+    for(int i = 0; i < HAND_FINGERS; ++i)
+    {
+        size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_2hand[i]) - joints_names.begin();
+
+        if (r_index < joints_names.size())
+        {
+            right_2hand_pos.at(i)=joints_pos.at(r_index);
+            right_2hand_vel.at(i)=joints_vel.at(r_index);
+            right_2hand_force.at(i)=joints_force.at(r_index);
+        }
+
+        if(this->curr_scene->getRobot()->getName()=="ARoS")
+        {
+            size_t l_index = std::find(joints_names.begin(), joints_names.end(), l_2hand[i]) - joints_names.begin();
+
+            if (l_index < joints_names.size())
+            {
+                left_2hand_pos.at(i)=joints_pos.at(l_index);
+                left_2hand_vel.at(i)=joints_vel.at(l_index);
+                left_2hand_force.at(i)=joints_force.at(l_index);
+            }
+        }
+    }
+
+    if (this->curr_scene)
+    {
+        //add the joints offset
+        std::transform(right_posture.begin(), right_posture.end(), theta_offset.begin(), right_posture.begin(), std::plus<double>());
+        this->curr_scene->getRobot()->setRightPosture(right_posture);
+        this->curr_scene->getRobot()->setRightVelocities(right_vel);
+        this->curr_scene->getRobot()->setRightForces(right_forces);
+
+        if(this->curr_scene->getRobot()->getName()=="ARoS")
+        {
+            std::transform(left_posture.begin(), left_posture.end(), theta_offset.begin(), left_posture.begin(), std::plus<double>());
+            this->curr_scene->getRobot()->setLeftPosture(left_posture);
+            this->curr_scene->getRobot()->setLeftVelocities(left_vel);
+            this->curr_scene->getRobot()->setLeftForces(left_forces);
+        }
+    }
+}
+
+
+#if ROBOT == 1
+void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
+{
+    // Save the names and positions of the joints
+    std::vector<std::string> joints_names = state.name;
+    std::vector<double> joints_pos(state.position.begin(),state.position.end());
+
+    // Name of arm joints
+    const char *r_names[] = {"right_j0", "right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
+
+    for (int i = 0; i < JOINTS_ARM; ++i)
+    {
+        // Index of the joint in vector
+        size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_names[i]) - joints_names.begin();
+
+        if (r_index < joints_names.size())
+            robot_joints_pos.at(i) = joints_pos.at(r_index);
+    }
+}
+#endif
 
 
 const std::string QNode::currentDateTime()
