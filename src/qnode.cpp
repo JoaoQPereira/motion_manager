@@ -56,7 +56,7 @@ QNode::QNode(int argc, char** argv ) :
     left_2hand_pos.assign(3,0.0f);
     left_2hand_vel.assign(3,0.0f);
     left_2hand_force.assign(3,0.0f);
-    robot_joints_pos.assign(7,0.0f);
+    robotPosture.assign(7,0.0f);
     got_scene = false;
     obj_in_hand = false;
 #if HAND ==1
@@ -2295,36 +2295,87 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
     // Topic that change the values of Sawyer joints
     pubJointCommand_robot = node.advertise<intera_core_msgs::JointCommand>("/robot/limb/right/joint_command", 1);
 
-    // Enable the robot before attempting to control any of the motors
+    // Enables the robot before attempting to control any of the motors
     std_msgs::Bool enable_msg;
     enable_msg.data = true;
     pubEnable_robot.publish(enable_msg);
 
-    //handle ROS messages
+    // Handle ROS messages
     ros::spinOnce();
 
     // -------------------------- COMPARES INITIALS POSTURES ---------------------------------- //
-    //The trajectory planned doesn't include the joints offsets
+    // The trajectory planned doesn't include the joints offsets
     std::vector<MatrixXd> traj_mov_w_offset = traj_mov;
     //Add the joints offsets
     std::vector<MatrixXd> traj_mov_real = realJointsPosition(traj_mov_w_offset);
 
-    //Get the home position of the Sawyer arm (in V-REP simulator)
+    // Get the home position of the Sawyer arm (in V-REP simulator)
     MatrixXd traj = traj_mov_real.at(0);
     VectorXd iP = traj.row(0);
-    std::vector<double> initialPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - 4));
+    std::vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - 4));
 
+    // Tolerance to the desired final posture
+    const double FINAL_TOL = 1e-6;
     // Compare the initial posture in simulation with the current posture of the real robot
-    if(robot_joints_pos == initialPosture)
-        homePostureEqual = true;
+    // !!!!!!!!! ERROR
+//    if(std::abs(robotPosture) >= FINAL_TOL)
+//        homePostureEqual = true;
 
     // ----------------------- PUTS REAL ROBOT IN INITIAL POSTURE ---------------------------- //
     if(!homePostureEqual)
-        log(QNode::Info,string("The Sawyer robot isn't in the start posture."));
-    else
     {
-        log(QNode::Info,string("The Sawyer robot is in the start posture."));
+        log(QNode::Info,string("The Sawyer robot isn't in the start posture."));
+
+        // ***********************
+        //      DIFFERENCE BETWEEN THE JOINTS OF THE ROBOT AND THE INITIAL POSTURE DEFINED IN V-REP
+        std::vector<double> diff;
+        for(size_t i = 0; i < JOINTS_ARM; ++i)
+            diff.push_back(simulationPosture[i] - robotPosture[i]);
+
+        // ***********************
+        //      NUMBER OF STEPS
+        // Dependent variable: Maximum joints limits
+        std::vector<double> robotMaxLimit;
+        this->curr_scene->getRobot()->getRightMaxLimits(robotMaxLimit);
+        // Dependent variable: Minimum joints limits
+        std::vector<double> robotMinLimit;
+        this->curr_scene->getRobot()->getRightMinLimits(robotMinLimit);
+        // Number of steps (consult the master's thesis)
+        int nSteps = getSteps(robotMaxLimit, robotMinLimit, robotPosture, simulationPosture);
+
+        // ***********************
+        //      INCREASE OF EACH JOINT OF THE ROBOT
+        std::vector<double> inc;
+        for(size_t i = 0; i < JOINTS_ARM; ++i)
+            inc.push_back(diff[i] / nSteps);
+        
+        // ***********************
+        //      PUTS ROBOT IN THE INITIAL POSTURE DEFINED IN V-REP
+        std::vector<double> newRobotPosture;
+        std::vector<double> currRobotPosture(robotPosture);
+
+        for(int i = 0; i < nSteps; ++i)
+        {
+            for (size_t j = 0; j < JOINTS_ARM; ++j)
+                newRobotPosture.push_back(currRobotPosture[j] + inc[j]);
+
+            // Publish a message in the topic "/robot/limb/right/joint_command"
+
+            // The current values of the joints are equal to those previously determined
+            currRobotPosture = newRobotPosture;
+            newRobotPosture.clear();
+
+            // Checks if the robot's current posture is equal to the inital posture defined in V-REP
+            // !!!!!!!!! ERROR
+//            if(currRobotPosture - simulationPosture >= FINAL_TOL)
+//            {
+//                homePostureEqual = true;
+//                log(QNode::Info,string("The Sawyer robot is in the start posture."));
+//            }
+        }
     }
+    else
+        log(QNode::Info,string("The Sawyer robot is in the start posture."));
 }
 #endif
 
@@ -3517,7 +3568,7 @@ void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
         size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_names[i]) - joints_names.begin();
 
         if (r_index < joints_names.size())
-            robot_joints_pos.at(i) = joints_pos.at(r_index);
+            robotPosture.at(i) = joints_pos.at(r_index);
     }
 }
 #endif
@@ -4210,6 +4261,30 @@ bool QNode::getArmsHandles(int robot)
     }
 
     return succ;
+}
+
+
+int QNode::getSteps(std::vector<double> &maxLimits, std::vector<double> &minLimits, std::vector<double> &initPosture, std::vector<double> &finalPosture)
+{
+    // Minimum number of steps
+    const int N_STEP_MIN = 5;
+    // Maximum number of steps
+    const int N_STEP_MAX = 50;
+
+    // Maximum and minimum joints limits
+    VectorXd max = VectorXd::Map(maxLimits.data(), maxLimits.size());
+    VectorXd min = VectorXd::Map(minLimits.data(), minLimits.size());
+    double den = (max-min).norm();
+
+    // Current and final position of the joints
+    VectorXd init = VectorXd::Map(initPosture.data(), initPosture.size());
+    VectorXd final = VectorXd::Map(finalPosture.data(), finalPosture.size());
+    double num = (final-init).norm();
+
+    // Number of steps (N_Min + (N_Max - N_Min) * (|| Pos_f - Pos_i || / || lim_Max - lim_Min||))
+    int n_steps = static_cast<int>(0.5 + (N_STEP_MIN + (N_STEP_MAX - N_STEP_MIN) * (num / den)));
+
+    return n_steps;
 }
 
 

@@ -491,6 +491,16 @@ private:
      */
     void updateObjectInfo(int obj_id,std::string name, const geometry_msgs::PoseStamped &data);
 
+    /**
+     * @brief getSteps
+     * @param maxLimits
+     * @param minLimits
+     * @param initPosture
+     * @param finalPosture
+     * @return
+     */
+    int getSteps(std::vector<double> &maxLimits, std::vector<double> &minLimits, std::vector<double> &initPosture, std::vector<double> &finalPosture);
+
     int init_argc; /**< initial argc */
     char** init_argv; /**< initial argv */
     //*********************************** VRep simulator
@@ -566,7 +576,7 @@ private:
     std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
     std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
     //*********************************** Real Robot
-    std::vector<double> robot_joints_pos; /**< position of the right arm*/
+    std::vector<double> robotPosture; /**< position of the right arm*/
 #if HAND ==1
     std::vector<bool> firstPartLocked;
     std::vector<int> needFullOpening;
