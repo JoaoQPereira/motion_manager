@@ -49,11 +49,11 @@ void Mov_ExecuteDialog::on_pushButtonOK_clicked()
 void Mov_ExecuteDialog::on_pushButtonOK_pressed()
 {
     if(ui->radioButton_execMov_VRep->isChecked())
-        qnode->log(QNode::Info,std::string("Executing the movement in V-REP . . ."));
+        qnode->log(QNode::Info,std::string("executing the movement in V-REP . . ."));
     else if(ui->radioButton_execMov_Robot->isChecked())
-        qnode->log(QNode::Info,std::string("Executing the movement in Robot . . ."));
+        qnode->log(QNode::Info,std::string("executing the movement in Robot . . ."));
     else if(ui->radioButton_execMov_MoveIt->isChecked())
-        qnode->log(QNode::Info,std::string("Executing the movement in RViz. . ."));
+        qnode->log(QNode::Info,std::string("executing the movement in RViz. . ."));
 }
 
 } // namespace motion_manager

@@ -8,6 +8,8 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/UInt16.h>
 #include <ros/callback_queue.h>
 #include <QThread>
 #include <QStringListModel>
@@ -543,6 +545,9 @@ private:
     ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
     ros::Publisher pubReset_robot; /** < ROS publisher to the topic /robot/set_super_reset */
     ros::Publisher pubStop_robot; /** < ROS publisher to the topic /robot/set_super_stop */
+    ros::Publisher pubJointCommand_timeout_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command_timeout */
+    ros::Publisher pubRate_robot;
+    ros::Publisher pubSpeedRatio_robot;
 #endif
 #if MOVEIT==1
     boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */

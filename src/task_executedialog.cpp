@@ -44,9 +44,9 @@ void Task_ExecuteDialog::on_pushButtonOK_clicked()
 void Task_ExecuteDialog::on_pushButtonOK_pressed()
 {
     if(ui->radioButton_execTask_VRep->isChecked())
-        qnode->log(QNode::Info,std::string("Executing the task in V-REP . . ."));
+        qnode->log(QNode::Info,std::string("executing the task in V-REP . . ."));
     else if(ui->radioButton_execTask_Robot->isChecked())
-        qnode->log(QNode::Info,std::string("Executing the task in Robot . . ."));
+        qnode->log(QNode::Info,std::string("executing the task in Robot . . ."));
 }
 
 } // namespace motion_manager
