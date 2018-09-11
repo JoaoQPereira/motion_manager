@@ -31,6 +31,8 @@ SET(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 find_package(catkin REQUIRED COMPONENTS
     qt_build
     roscpp
+    actionlib
+    actionlib_msgs
 )
 include_directories(${catkin_INCLUDE_DIRS})
 

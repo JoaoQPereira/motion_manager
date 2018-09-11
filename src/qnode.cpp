@@ -2284,154 +2284,125 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
 {
     ros::NodeHandle node;
-    /* < All the joint control publishers provided by the Sawyer SDK run at 100Hz > */
-    ros::Rate r(5);
-    bool homePostureEqual = false;
+    bool homePostureEqual;
 
-    // --------------------------------- PUBLISHERS ------------------------------------------- //
-    // Topics that enable/disable the movement of robot joints
-    pubEnable_robot = node.advertise<std_msgs::Bool>("/robot/set_super_enable", 10);
-    pubReset_robot = node.advertise<std_msgs::Empty>("/robot/set_super_reset", 10);
-    pubStop_robot = node.advertise<std_msgs::Empty>("/robot/set_super_stop", 10);
+    // ---------------------------------------------------------------------------------------- //
+    //                                       PUBLISHERS                                         //
+    // ---------------------------------------------------------------------------------------- //
+    // Topics to enable/disable the movement of robot joints
+    pubEnable_robot = node.advertise<std_msgs::Bool>("/robot/set_super_enable", 1);
+    pubReset_robot = node.advertise<std_msgs::Empty>("/robot/set_super_reset", 1);
+    pubStop_robot = node.advertise<std_msgs::Empty>("/robot/set_super_stop", 1);
 
-    // Topic that changes the values of Sawyer joints
-    pubJointCommand_robot = node.advertise<intera_core_msgs::JointCommand>("/robot/limb/right/joint_command", 10);
-    //
-    pubJointCommand_timeout_robot = node.advertise<std_msgs::Float64>("/robot/limb/right/joint_command_timeout", 10);
-    //
-    // pubRate_robot = node.advertise<std_msgs::UInt16>("/robot/joint_state_publish_rate", 10);
-    //
-    // pubSpeedRatio_robot = node.advertise<std_msgs::Float64>("/robot/limb/right/set_speed_ratio", 10);
+    // Topic to change the value of Sawyer joints
+    pubJointCommand_robot = node.advertise<intera_core_msgs::JointCommand>("/robot/limb/right/joint_command", 1);
+    // Topic to define the publishing rate of messages on the topic "/robot/limb/right/joint_command"
+    pubJointCommand_timeout_robot = node.advertise<std_msgs::Float64>("/robot/limb/right/joint_command_timeout", 1);
 
     // Enables the robot before attempting to control any of the motors
     std_msgs::Bool enable_msg;
     enable_msg.data = true;
     pubEnable_robot.publish(enable_msg);
 
-    // Defines the control rate timeout
-    std_msgs::Float64 timeout;
-    timeout.data = 0.5; // Hz (5Hz is the default value)
-    //
-    std_msgs::UInt16 rate;
-    rate.data = 100; // 100 Hz
-    //
-    std_msgs::Float64 speedRatio;
-    speedRatio.data = 0.1;
-
     // Handle ROS messages
     ros::spinOnce();
 
-    // -------------------------- COMPARES INITIALS POSTURES ---------------------------------- //
-    // The trajectory planned doesn't include the joints offsets
+
+    // ---------------------------------------------------------------------------------------- //
+    //                             COMPARISON OF INITIALS POSTURES                              //
+    // ---------------------------------------------------------------------------------------- //
+    // Get the trajectory planned by the HUMP
     std::vector<MatrixXd> traj_mov_w_offset = traj_mov;
-    //Add the joints offsets
+    // The trajectory planned doesn't include the joints offsets, so it's necessary to add these values.
     std::vector<MatrixXd> traj_mov_real = realJointsPosition(traj_mov_w_offset);
 
-    // Get the home position of the Sawyer arm (in V-REP simulator)
+    // Get the initial position of the robot arm in the V-REP simulator
     MatrixXd traj = traj_mov_real.at(0);
     VectorXd iP = traj.row(0);
     std::vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - 4));
 
-    // Tolerance to the desired final posture
-    const double startPosture_tol = 1e-10;
+    // Calculate the difference between the initial posture in simulation and the current posture of the robot
+    std::vector<double> diff;
+    for(int i = 0; i < JOINTS_ARM; ++i)
+        diff.push_back(simulationPosture.at(i) - robotPosture.at(i));
 
-    // Checks if the initial posture in simulation is equal to the current posture of the real robot
-    if(sqrt(pow((simulationPosture.at(0) - robotPosture.at(0)), 2) +
-            pow((simulationPosture.at(1) - robotPosture.at(1)), 2) +
-            pow((simulationPosture.at(2) - robotPosture.at(2)), 2) +
-            pow((simulationPosture.at(3) - robotPosture.at(3)), 2) +
-            pow((simulationPosture.at(4) - robotPosture.at(4)), 2) +
-            pow((simulationPosture.at(5) - robotPosture.at(5)), 2) +
-            pow((simulationPosture.at(6) - robotPosture.at(6)), 2)) < startPosture_tol)
-    {
-        // ------------------------------- THE POSTURES ARE THE SAME ------------------------------- //
+    // Get the highest value in the vector with differences between the joints
+    double max_diff = *std::max_element(diff.begin(), diff.end());
+    // Tolerance for the maximum difference between the initial posture defined in V-REP simulator and the current
+    // posture of the robot
+    double tol_maxDiff = 0.008726646;
+
+    if(max_diff < tol_maxDiff)
+        // **************************************************************************************** //
+        //                                  THE POSTURES ARE EQUAL                                  //
         homePostureEqual = true;
-        log(QNode::Info,string("The Sawyer robot is in the start posture."));
-    }
     else
     {
-        // ------------ THE POSTURES ARE DIFFERENT: PUTS REAL ROBOT IN INITIAL POSTURE ------------ //
-        log(QNode::Info, string("moving the Sawyer robot to the start posture... "));
+        // **************************************************************************************** //
+        //            THE POSTURES ARE DIFFERENT: MOVING THE ROBOT TO THE INITIAL POSTURE           //
+        log(QNode::Info, string("moving the Sawyer robot to the initial posture... "));
 
-        // ***********************
-        //      DIFFERENCE BETWEEN THE JOINTS OF THE ROBOT AND THE INITIAL POSTURE DEFINED IN V-REP
-        std::vector<double> diff;
+        // Create the action client specifying the server name to connect to
+        motionCommClient motionComm("/motion/motion_command", true);
+        // The action client waits for the action server to start before continuing
+        motionComm.waitForServer();
+
+        // For joint trajectories, we specify the maximum value of speed and acceleration per joint
+        intera_motion_msgs::WaypointOptions wayPointOptions;
+        wayPointOptions.max_joint_speed_ratio = 0.1; // speed: values defined between 0.01 and 1
         for(int i = 0; i < JOINTS_ARM; ++i)
-            diff.push_back(simulationPosture.at(i) - robotPosture.at(i));
+            wayPointOptions.max_joint_accel.push_back(0.05); // acceleration: values defined between 0.001 and 1
 
-        // ***********************
-        //      NUMBER OF STEPS
-        // Dependent variable: Maximum joints limits
-        std::vector<double> robotMaxLimit;
-        this->curr_scene->getRobot()->getRightMaxLimits(robotMaxLimit);
-        // Dependent variable: Minimum joints limits
-        std::vector<double> robotMinLimit;
-        this->curr_scene->getRobot()->getRightMinLimits(robotMinLimit);
-        // Number of steps (consult the master's thesis)
-        int nSteps = getSteps(robotMaxLimit, robotMinLimit, robotPosture, simulationPosture);
+        // Define the first waypoint of the trajectory - initial posture of the robot
+        intera_motion_msgs::Waypoint initialPoint;
+        initialPoint.options = wayPointOptions;
+        initialPoint.joint_positions = robotPosture;
+        // Define the last waypoint of the trajectory - desired posture = initial posture in simulator
+        intera_motion_msgs::Waypoint finalPoint;
+        finalPoint.options = wayPointOptions;
+        finalPoint.joint_positions = simulationPosture;
 
-        // ***********************
-        //      INCREASE OF EACH JOINT OF THE ROBOT
-        std::vector<double> inc;
-        for(int i = 0; i < JOINTS_ARM; ++i)
-            inc.push_back(diff.at(i) / nSteps);
-        
-        // ***********************
-        //      PUTS ROBOT IN THE INITIAL POSTURE DEFINED IN V-REP
-        std::vector<double> newRobotPosture;
-        std::vector<double> currRobotPosture(robotPosture);
+        // Define trajectory to be planned and executed. This has to pass through all waypoints defined previously
+        // The motion controller supports two basic methods for interpolation between waypoints: JOINT and CARTESIAN mode
+        intera_motion_msgs::Trajectory trajectory;
+        trajectory.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
+        trajectory.waypoints.push_back(initialPoint);
+        trajectory.waypoints.push_back(finalPoint);
+        trajectory.trajectory_options.interpolation_type = "JOINT";
 
-        for(int i = 0; i < nSteps; ++i)
+        // Define the goal message
+        intera_motion_msgs::MotionCommandGoal newStartPosture;
+        newStartPosture.command = newStartPosture.MOTION_START;
+        newStartPosture.trajectory = trajectory;
+
+        // Send the goal message to the action server "/motion/motion_command"
+        motionComm.sendGoal(newStartPosture);
+        // After 20 sec the function return false, if the goal hasn't reached
+        motionComm.waitForResult(ros::Duration(30));
+
+        if(motionComm.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
-            for(int j = 0; j < JOINTS_ARM; ++j)
-                newRobotPosture.push_back(currRobotPosture.at(j) + inc.at(j));
-
-            // Message to publish (message type: JointCommand)
-            intera_core_msgs::JointCommand trajMsg;
-            /* < control mode: POSITION = 1, VELOCITY = 2, TORQUE = 3, TRAJECTORY = 4 */
-            trajMsg.mode = intera_core_msgs::JointCommand::POSITION_MODE;
-            /* < joints' names */
-            // trajMsg.names = {"right_j0", "right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
-            trajMsg.names = {"right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
-            /* < joints' values */
-            // for(int k = 0; k < JOINTS_ARM; ++k)
-            for(int k = 1; k < JOINTS_ARM; ++k)
-                trajMsg.position.push_back(newRobotPosture.at(k));
-
-            //
-            // pubRate_robot.publish(rate);
-            //
-            // pubSpeedRatio_robot.publish(speedRatio);
-            // Publish a message in the topic "/robot/limb/right/joint_command_timeout"
-            pubJointCommand_timeout_robot.publish(timeout);
-            // Publish a message in the topic "/robot/limb/right/joint_command"
-            pubJointCommand_robot.publish(trajMsg);
-
-
-            // sleep
-            r.sleep();
-
-            // The current values of the joints are equal to those previously determined
-            currRobotPosture = newRobotPosture;
-            newRobotPosture.clear();
-
-            // Checks if the robot's current posture is equal to the inital posture defined in V-REP
-            if(sqrt(pow((simulationPosture.at(0) - robotPosture.at(0)), 2) +
-                    pow((simulationPosture.at(1) - robotPosture.at(1)), 2) +
-                    pow((simulationPosture.at(2) - robotPosture.at(2)), 2) +
-                    pow((simulationPosture.at(3) - robotPosture.at(3)), 2) +
-                    pow((simulationPosture.at(4) - robotPosture.at(4)), 2) +
-                    pow((simulationPosture.at(5) - robotPosture.at(5)), 2) +
-                    pow((simulationPosture.at(6) - robotPosture.at(6)), 2)) < startPosture_tol)
-            {
-                homePostureEqual = true;
-                log(QNode::Info, string("The Sawyer robot is in the start posture."));
-            }
+            // The desired posture was reached
+            log(QNode::Info,string("The robot's initial posture was reached."));
+            homePostureEqual = true;
         }
-
-        // Handle ROS messages:
-        ros::spinOnce();
+        else
+        {
+            // It isn't possible to reach the desired posture. We can check the list of possible errors which are
+            // returned from action server in the result message
+            log(QNode::Error, string("Error in reaching the initial posture of the robot."));
+            homePostureEqual = false;
+            return false;
+        }
     }
+
+    // Handle ROS messages:
+    ros::spinOnce();
+
+
+    // ---------------------------------------------------------------------------------------- //
+    //                              EXECUTE THE PLANNED TRAJECTORY                              //
+    // ---------------------------------------------------------------------------------------- //
 
     return true;
 }

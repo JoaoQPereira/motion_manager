@@ -18,6 +18,10 @@
 #include <vrep_common/simRosSetStringSignal.h>
 #include <algorithm>
 
+#include <intera_motion_msgs/MotionCommandAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -46,6 +50,8 @@ using namespace logging::trivial;
 typedef boost::shared_ptr<Scenario> scenarioPtr;/**< shared pointer to the current scenario */
 typedef boost::shared_ptr<Task> taskPtr; /**< shared pointer to the current task */
 typedef boost::shared_ptr<Object> objectPtr;/**< shared pointer to an object in the scenario */
+
+typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> motionCommClient;
 
 const double MIN_EXEC_TIMESTEP_VALUE = 0.3; /**< minimum value of the timestep during the execution of the movement [sec]. It is used to join the stages of the movements when timestep is zero*/
 
