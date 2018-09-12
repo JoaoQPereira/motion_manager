@@ -20,7 +20,7 @@
 
 #include <intera_motion_msgs/MotionCommandAction.h>
 #include <actionlib/client/simple_action_client.h>
-
+#include <unistd.h>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -151,7 +151,7 @@ public:
      * @return
      */
 #if ROBOT==1
-    bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov);
+    bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov);
 #endif
 
     /**
@@ -552,8 +552,7 @@ private:
     ros::Publisher pubReset_robot; /** < ROS publisher to the topic /robot/set_super_reset */
     ros::Publisher pubStop_robot; /** < ROS publisher to the topic /robot/set_super_stop */
     ros::Publisher pubJointCommand_timeout_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command_timeout */
-    ros::Publisher pubRate_robot;
-    ros::Publisher pubSpeedRatio_robot;
+    ros::Publisher pubRate_robot; /** < */
 #endif
 #if MOVEIT==1
     boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */

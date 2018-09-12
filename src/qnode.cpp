@@ -2281,9 +2281,10 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 
 #if ROBOT== 1
-bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
+bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov)
 {
     ros::NodeHandle node;
+    ros::Rate loop_rate(10);
     bool homePostureEqual;
 
     // ---------------------------------------------------------------------------------------- //
@@ -2298,6 +2299,9 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
     pubJointCommand_robot = node.advertise<intera_core_msgs::JointCommand>("/robot/limb/right/joint_command", 1);
     // Topic to define the publishing rate of messages on the topic "/robot/limb/right/joint_command"
     pubJointCommand_timeout_robot = node.advertise<std_msgs::Float64>("/robot/limb/right/joint_command_timeout", 1);
+    //
+    pubRate_robot = node.advertise<std_msgs::UInt16>("/robot/joint_state_publish_rate", 1);
+
 
     // Enables the robot before attempting to control any of the motors
     std_msgs::Bool enable_msg;
@@ -2306,7 +2310,6 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
 
     // Handle ROS messages
     ros::spinOnce();
-
 
     // ---------------------------------------------------------------------------------------- //
     //                             COMPARISON OF INITIALS POSTURES                              //
@@ -2331,6 +2334,7 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
     // Tolerance for the maximum difference between the initial posture defined in V-REP simulator and the current
     // posture of the robot
     double tol_maxDiff = 0.008726646;
+
 
     if(max_diff < tol_maxDiff)
         // **************************************************************************************** //
@@ -2377,7 +2381,7 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
 
         // Send the goal message to the action server "/motion/motion_command"
         motionComm.sendGoal(newStartPosture);
-        // After 20 sec the function return false, if the goal hasn't reached
+        // After 30 sec the function return false, if the goal hasn't reached
         motionComm.waitForResult(ros::Duration(30));
 
         if(motionComm.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
@@ -2394,15 +2398,75 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov)
             homePostureEqual = false;
             return false;
         }
+
+        // Sleep for the specified number of seconds
+        sleep(2);
     }
 
     // Handle ROS messages:
     ros::spinOnce();
 
-
     // ---------------------------------------------------------------------------------------- //
     //                              EXECUTE THE PLANNED TRAJECTORY                              //
     // ---------------------------------------------------------------------------------------- //
+
+    if(homePostureEqual)
+    {
+        //
+        std_msgs::Float64 timeout;
+        timeout.data = 5;
+        //
+        std_msgs::UInt16 rate;
+        rate.data = 100;
+
+        for(size_t k = 0; k < traj_mov_real.size(); ++k)
+        {
+            // For each stage (plan, approach or retreat)
+            MatrixXd pos_stage = traj_mov_real.at(k);
+            MatrixXd vel_stage = vel_mov.at(k);
+            MatrixXd acc_stage = acc_mov.at(k);
+
+            for(int kk = 0; kk < pos_stage.rows(); ++kk)
+            {
+                // For each step (each stage is divided into several steps)
+                VectorXd pos_step = pos_stage.row(kk);
+                VectorXd vel_step = vel_stage.row(kk);
+                VectorXd acc_step = acc_stage.row(kk);
+
+                // Position, velocity and acceleration of the arm joints
+                std::vector<double> pos_arm(&pos_step[0], pos_step.data() + (pos_step.cols() * pos_step.rows() - 4));
+                std::vector<double> vel_arm(&vel_step[0], vel_step.data() + (vel_step.cols() * vel_step.rows() - 4));
+                std::vector<double> acc_arm(&acc_step[0], acc_step.data() + (acc_step.cols() * acc_step.rows() - 4));
+
+                // ******************************************************************************** //
+                //                               MESSAGE TO PUBLISH                                 //
+                intera_core_msgs::JointCommand trajMsg;
+                //
+                trajMsg.mode = intera_core_msgs::JointCommand::TRAJECTORY_MODE;
+                //
+                trajMsg.names = {"right_j0", "right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
+                //
+                for(int i = 0; i < JOINTS_ARM; ++i)
+                {
+                    trajMsg.position.push_back(pos_arm.at(i));
+                    trajMsg.velocity.push_back(vel_arm.at(i));
+                    trajMsg.acceleration.push_back(acc_arm.at(i));
+                }
+
+                //
+                pubRate_robot.publish(rate);
+                //
+                pubJointCommand_timeout_robot.publish(timeout);
+                //
+                pubJointCommand_robot.publish(trajMsg);
+                //
+                loop_rate.sleep();
+            }
+
+            ros::spinOnce();
+        }
+    }
+
 
     return true;
 }

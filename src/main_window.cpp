@@ -226,7 +226,7 @@ void MainWindow::execMove(int c, bool a)
     else if(c == 1) //Execute the planned movement in Robot
     {
         if(robot_name == "Sawyer")
-            qnode.execMovement_Sawyer(this->jointsPosition_mov);
+            qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov);
     }
 #if MOVEIT==1
     else if(c == 2 && this->moveit_mov) //Execute the planned movement in RViz
@@ -1717,7 +1717,7 @@ void MainWindow::on_pushButton_execMov_clicked()
         else if(usedPlat_move == 1) //Execute the planned movement in Robot
         {
             if(robot_name == "Sawyer")
-                qnode.execMovement_Sawyer(this->jointsPosition_mov);
+                qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov);
         }
 #if MOVEIT==1
         else if(usedPlat_move == 2 && this->moveit_mov) //Execute the planned movement in RViz MoveIt
