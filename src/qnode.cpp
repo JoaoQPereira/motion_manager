@@ -2281,10 +2281,9 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 
 #if ROBOT== 1
-bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov)
+bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov, std::vector<std::vector<double>> timesteps)
 {
     ros::NodeHandle node;
-    ros::Rate loop_rate(10);
     bool homePostureEqual;
 
     // ---------------------------------------------------------------------------------------- //
@@ -2299,9 +2298,6 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
     pubJointCommand_robot = node.advertise<intera_core_msgs::JointCommand>("/robot/limb/right/joint_command", 1);
     // Topic to define the publishing rate of messages on the topic "/robot/limb/right/joint_command"
     pubJointCommand_timeout_robot = node.advertise<std_msgs::Float64>("/robot/limb/right/joint_command_timeout", 1);
-    //
-    pubRate_robot = node.advertise<std_msgs::UInt16>("/robot/joint_state_publish_rate", 1);
-
 
     // Enables the robot before attempting to control any of the motors
     std_msgs::Bool enable_msg;
@@ -2414,10 +2410,7 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
     {
         //
         std_msgs::Float64 timeout;
-        timeout.data = 5;
-        //
-        std_msgs::UInt16 rate;
-        rate.data = 100;
+        timeout.data = 0.1;
 
         for(size_t k = 0; k < traj_mov_real.size(); ++k)
         {
@@ -2425,6 +2418,8 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
             MatrixXd pos_stage = traj_mov_real.at(k);
             MatrixXd vel_stage = vel_mov.at(k);
             MatrixXd acc_stage = acc_mov.at(k);
+            //
+            std::vector<double> timesteps_stage = timesteps.at(k);
 
             for(int kk = 0; kk < pos_stage.rows(); ++kk)
             {
@@ -2437,6 +2432,31 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
                 std::vector<double> pos_arm(&pos_step[0], pos_step.data() + (pos_step.cols() * pos_step.rows() - 4));
                 std::vector<double> vel_arm(&vel_step[0], vel_step.data() + (vel_step.cols() * vel_step.rows() - 4));
                 std::vector<double> acc_arm(&acc_step[0], acc_step.data() + (acc_step.cols() * acc_step.rows() - 4));
+
+                //
+                double time_step = timesteps_stage.at(kk);
+                int nMicro_step = 10;
+
+                std::vector<double> posA = robotPosture;
+                std::vector<double> velA = robotPosture; // change
+                std::vector<double> velA = robotPosture; // change
+                double t_posA = 0;
+
+                std::vector<double> posB = pos_arm;
+                std::vector<double> velB = vel_arm;
+                std::vector<double> velB = vel_arm;
+                double t_posB = time_step;
+
+                for(int n = 0; n < nMicro_step; ++n)
+                {
+                    double m = ((t_posA + (n + 1) * time_step) + t_posA) / (t_posB - t_posA);
+                    double posNewPoint = interpolate(posA, posB, m);
+                    double velNewPoint = interpolate(velA, velB, m);
+                    double accNewPoint = interpolate(accA, accB, m);
+                }
+
+
+                ros::Rate rate (1 / time_step);
 
                 // ******************************************************************************** //
                 //                               MESSAGE TO PUBLISH                                 //
@@ -2454,19 +2474,16 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
                 }
 
                 //
-                pubRate_robot.publish(rate);
-                //
                 pubJointCommand_timeout_robot.publish(timeout);
                 //
                 pubJointCommand_robot.publish(trajMsg);
                 //
-                loop_rate.sleep();
+                rate.sleep();
+                //
+                ros::spinOnce();
             }
-
-            ros::spinOnce();
         }
     }
-
 
     return true;
 }
