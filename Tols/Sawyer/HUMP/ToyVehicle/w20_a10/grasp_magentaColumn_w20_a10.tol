@@ -240,8 +240,7 @@ pre_grasp_y=0
 
 pre_grasp_z=-0.707106781
 
-pre_grasp_dist=120
-
+pre_grasp_dist=105
 post_grasp_x=0
 
 post_grasp_y=0

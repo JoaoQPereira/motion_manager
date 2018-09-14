@@ -2421,66 +2421,95 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
             //
             std::vector<double> timesteps_stage = timesteps.at(k);
 
-            for(int kk = 0; kk < pos_stage.rows(); ++kk)
+            for(int kk = 0; kk < pos_stage.rows() - 1; ++kk)
             {
+                // ****************************************************************************** //
+                //                               Current step information                         //
                 // For each step (each stage is divided into several steps)
-                VectorXd pos_step = pos_stage.row(kk);
-                VectorXd vel_step = vel_stage.row(kk);
-                VectorXd acc_step = acc_stage.row(kk);
+                VectorXd pos_step_curr = pos_stage.row(kk);
+                VectorXd vel_step_curr = vel_stage.row(kk);
+                VectorXd acc_step_curr = acc_stage.row(kk);
 
                 // Position, velocity and acceleration of the arm joints
-                std::vector<double> pos_arm(&pos_step[0], pos_step.data() + (pos_step.cols() * pos_step.rows() - 4));
-                std::vector<double> vel_arm(&vel_step[0], vel_step.data() + (vel_step.cols() * vel_step.rows() - 4));
-                std::vector<double> acc_arm(&acc_step[0], acc_step.data() + (acc_step.cols() * acc_step.rows() - 4));
+                std::vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - 4));
+                std::vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - 4));
+                std::vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - 4));
 
+                // ****************************************************************************** //
+                //                                 Next step information                          //
+                // For each step (each stage is divided into several steps)
+                VectorXd pos_step_next = pos_stage.row(kk + 1);
+                VectorXd vel_step_next = vel_stage.row(kk + 1);
+                VectorXd acc_step_next = acc_stage.row(kk + 1);
+
+                // Position, velocity and acceleration of the arm joints
+                std::vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - 4));
+                std::vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - 4));
+                std::vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - 4));
+
+                // ****************************************************************************** //
+                //                                                          //
                 //
                 double time_step = timesteps_stage.at(kk);
-                int nMicro_step = 10;
+                //
+                int nMicro_step = (int)round((time_step * 40.0) / 0.75);
 
-                std::vector<double> posA = robotPosture;
-                std::vector<double> velA = robotPosture; // change
-                std::vector<double> velA = robotPosture; // change
-                double t_posA = 0;
+                //
+                double t_inc = time_step / nMicro_step;
 
-                std::vector<double> posB = pos_arm;
-                std::vector<double> velB = vel_arm;
-                std::vector<double> velB = vel_arm;
-                double t_posB = time_step;
-
-                for(int n = 0; n < nMicro_step; ++n)
+                for(int n = 1; n <= nMicro_step; ++n)
                 {
-                    double m = ((t_posA + (n + 1) * time_step) + t_posA) / (t_posB - t_posA);
-                    double posNewPoint = interpolate(posA, posB, m);
-                    double velNewPoint = interpolate(velA, velB, m);
-                    double accNewPoint = interpolate(accA, accB, m);
+                    //
+                    std::vector<double> pos_arm;
+                    std::vector<double> vel_arm;
+                    std::vector<double> acc_arm;
+
+                    //
+                    double t_curr = 0;
+                    double t_next = time_step;
+
+                    for(int i = 0; i < JOINTS_ARM; ++i)
+                    {
+                        //
+                        double m = ((n * t_inc) - t_curr) / (t_next - t_curr);
+                        //
+                        pos_arm.push_back(interpolate(pos_arm_curr.at(i), pos_arm_next.at(i), m));
+                        vel_arm.push_back(interpolate(vel_arm_curr.at(i), vel_arm_next.at(i), m));
+                        acc_arm.push_back(interpolate(acc_arm_curr.at(i), acc_arm_next.at(i), m));
+                    }
+
+                    //
+                    ros::Rate rate (1 / t_inc);
+
+                    // ******************************************************************************** //
+                    //                               MESSAGE TO PUBLISH                                 //
+                    intera_core_msgs::JointCommand trajMsg;
+                    //
+                    trajMsg.mode = intera_core_msgs::JointCommand::TRAJECTORY_MODE;
+                    //
+                    trajMsg.names = {"right_j0", "right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
+                    //
+                    for(int i = 0; i < JOINTS_ARM; ++i)
+                    {
+                        trajMsg.position.push_back(pos_arm.at(i));
+                        trajMsg.velocity.push_back(vel_arm.at(i));
+                        trajMsg.acceleration.push_back(acc_arm.at(i));
+                    }
+
+                    //
+                    pubJointCommand_timeout_robot.publish(timeout);
+                    //
+                    pubJointCommand_robot.publish(trajMsg);
+                    //
+                    rate.sleep();
+                    //
+                    ros::spinOnce();
+
+                    //
+                    pos_arm.clear();
+                    vel_arm.clear();
+                    acc_arm.clear();
                 }
-
-
-                ros::Rate rate (1 / time_step);
-
-                // ******************************************************************************** //
-                //                               MESSAGE TO PUBLISH                                 //
-                intera_core_msgs::JointCommand trajMsg;
-                //
-                trajMsg.mode = intera_core_msgs::JointCommand::TRAJECTORY_MODE;
-                //
-                trajMsg.names = {"right_j0", "right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
-                //
-                for(int i = 0; i < JOINTS_ARM; ++i)
-                {
-                    trajMsg.position.push_back(pos_arm.at(i));
-                    trajMsg.velocity.push_back(vel_arm.at(i));
-                    trajMsg.acceleration.push_back(acc_arm.at(i));
-                }
-
-                //
-                pubJointCommand_timeout_robot.publish(timeout);
-                //
-                pubJointCommand_robot.publish(trajMsg);
-                //
-                rate.sleep();
-                //
-                ros::spinOnce();
             }
         }
     }
