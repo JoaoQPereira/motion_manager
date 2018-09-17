@@ -171,15 +171,12 @@ public:
      * @brief execTask_Sawyer
      * @param traj_task
      * @param vel_task
+     * @param acc_task
      * @param timesteps_task
-     * @param tols_stop_task
-     * @param traj_descr_task
-     * @param task
-     * @param scene
      * @return
      */
 #if ROBOT==1
-    bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
+    bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>> timesteps);
 #endif
 
     /**
@@ -549,10 +546,7 @@ private:
     ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
     ros::Publisher pubJointCommand_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command */
     ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
-    ros::Publisher pubReset_robot; /** < ROS publisher to the topic /robot/set_super_reset */
-    ros::Publisher pubStop_robot; /** < ROS publisher to the topic /robot/set_super_stop */
     ros::Publisher pubJointCommand_timeout_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command_timeout */
-    ros::Publisher pubRate_robot; /** < */
 #endif
 #if MOVEIT==1
     boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */

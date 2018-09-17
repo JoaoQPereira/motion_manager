@@ -63,13 +63,13 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=-0.00830734
-init_vel_2=-0.0154517
-init_vel_3=-0.00937452
-init_vel_4=0.0375151
-init_vel_5=-0.0068816
-init_vel_6=-0.035069
-init_vel_7=-0.0164383
+init_vel_1=-0.00634856
+init_vel_2=-0.0147504
+init_vel_3=-0.00902833
+init_vel_4=0.0378696
+init_vel_5=-0.0052687
+init_vel_6=-0.0362631
+init_vel_7=-0.0156942
 init_vel_8=0
 init_vel_9=0
 init_vel_10=0
@@ -98,13 +98,13 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.00512516
-init_acc_2=-0.00953285
-init_acc_3=-0.00578355
-init_acc_4=0.0231447
-init_acc_5=-0.00424556
-init_acc_6=-0.0216356
-init_acc_7=-0.0101415
+init_acc_1=-0.00361592
+init_acc_2=-0.00840131
+init_acc_3=-0.00514222
+init_acc_4=0.0215692
+init_acc_5=-0.00300087
+init_acc_6=-0.0206542
+init_acc_7=-0.00893888
 init_acc_8=0
 init_acc_9=0
 init_acc_10=0
@@ -235,7 +235,7 @@ pre_place_y=0
 
 pre_place_z=0
 
-pre_place_dist=60
+pre_place_dist=30
 
 post_place_x=0.707106781
 

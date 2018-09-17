@@ -252,7 +252,7 @@ void MainWindow::execTask(int c, bool a)
     else if(c == 1) //Execute the task in Robot
     {
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
-            qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
+            qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
     }
 
     execSettings_task = a;
@@ -1786,7 +1786,7 @@ void MainWindow::on_pushButton_execTask_clicked()
         else if(usedPlat_task == 1) //Execute the task in Robot
         {
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
-                qnode.execTask_Sawyer(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
+                qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
         }
     }
 }
