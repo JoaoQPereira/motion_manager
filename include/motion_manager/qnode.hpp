@@ -18,6 +18,7 @@
 #include <vrep_common/simRosSetStringSignal.h>
 #include <algorithm>
 
+#include <control_msgs/FollowJointTrajectoryAction.h>
 #include <intera_motion_msgs/MotionCommandAction.h>
 #include <actionlib/client/simple_action_client.h>
 #include <unistd.h>
@@ -52,6 +53,7 @@ typedef boost::shared_ptr<Task> taskPtr; /**< shared pointer to the current task
 typedef boost::shared_ptr<Object> objectPtr;/**< shared pointer to an object in the scenario */
 
 typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> motionCommClient;
+typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> followJointTrajectoryClient;
 
 const double MIN_EXEC_TIMESTEP_VALUE = 0.3; /**< minimum value of the timestep during the execution of the movement [sec]. It is used to join the stages of the movements when timestep is zero*/
 
@@ -544,9 +546,9 @@ private:
 #if ROBOT==1
     //*********************************** Real Robot
     ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
-    ros::Publisher pubJointCommand_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command */
     ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
-    ros::Publisher pubJointCommand_timeout_robot; /**< ROS publisher to the ropic /robot/limb/right/joint_command_timeout */
+    motionCommClient* motionComm; /**< */
+    followJointTrajectoryClient* folJointTraj; /**< */
 #endif
 #if MOVEIT==1
     boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */
