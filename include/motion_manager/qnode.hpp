@@ -167,7 +167,7 @@ public:
      * @param scene
      * @return
      */
-    bool execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
+    bool execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
 
     /**
      * @brief execTask_Sawyer
@@ -178,7 +178,7 @@ public:
      * @return
      */
 #if ROBOT==1
-    bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>> timesteps);
+    bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps);
 #endif
 
     /**

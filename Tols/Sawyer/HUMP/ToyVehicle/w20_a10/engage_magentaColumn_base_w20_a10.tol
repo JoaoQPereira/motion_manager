@@ -63,13 +63,13 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=-0.00634856
-init_vel_2=-0.0147504
-init_vel_3=-0.00902833
-init_vel_4=0.0378696
-init_vel_5=-0.0052687
-init_vel_6=-0.0362631
-init_vel_7=-0.0156942
+init_vel_1=-0.0123936
+init_vel_2=-0.034617
+init_vel_3=-0.00797838
+init_vel_4=0.0761494
+init_vel_5=-0.0151319
+init_vel_6=-0.0713831
+init_vel_7=-0.0327156
 init_vel_8=0
 init_vel_9=0
 init_vel_10=0
@@ -98,13 +98,13 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.00361592
-init_acc_2=-0.00840131
-init_acc_3=-0.00514222
-init_acc_4=0.0215692
-init_acc_5=-0.00300087
-init_acc_6=-0.0206542
-init_acc_7=-0.00893888
+init_acc_1=-0.0132213
+init_acc_2=-0.0369288
+init_acc_3=-0.00851121
+init_acc_4=0.0812349
+init_acc_5=-0.0161424
+init_acc_6=-0.0761503
+init_acc_7=-0.0349005
 init_acc_8=0
 init_acc_9=0
 init_acc_10=0
@@ -235,7 +235,7 @@ pre_place_y=0
 
 pre_place_z=0
 
-pre_place_dist=30
+pre_place_dist=50
 
 post_place_x=0.707106781
 
@@ -245,9 +245,9 @@ post_place_z=-0.707106781
 
 post_place_dist=45
 
-w_red_app=10
+w_red_app=5
 
-w_red_ret=12
+w_red_ret=15
 
 # Move settings
 target_x=-400

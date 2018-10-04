@@ -2172,6 +2172,7 @@ void MainWindow::on_pushButton_load_task_clicked()
         QStringList v_headers;
 
         std::vector<std::vector<QString>> task_steps;
+        vector<MatrixXd> pos_mov_w_offset;
         vector<MatrixXd> pos_mov;
         vector<MatrixXd> vel_mov;
         vector<MatrixXd> acc_mov;
@@ -2186,7 +2187,8 @@ void MainWindow::on_pushButton_load_task_clicked()
 
         for(size_t h=0; h< this->jointsPosition_task.size();++h)
         {
-            pos_mov = this->jointsPosition_task.at(h);
+            pos_mov_w_offset = this->jointsPosition_task.at(h);
+            pos_mov = qnode.realJointsPosition(pos_mov_w_offset);
             vel_mov = this->jointsVelocity_task.at(h);
             acc_mov = this->jointsAcceleration_task.at(h);
             tstep_mov = this->timesteps_task.at(h);
@@ -2344,6 +2346,7 @@ void MainWindow::on_pushButton_save_task_clicked()
     {
         QTextStream stream(&f);
         int h=0; // numbers of problems that are not in the current task
+
 
         for(int i=0; i <ui.listWidget_movs->count(); ++i)
         {
