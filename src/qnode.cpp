@@ -3133,44 +3133,44 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
         // Number of steps to be executed along the planned movement
         int nTotalSteps = 1;
 
-        for(size_t k = 0; k < traj_task_real.size(); ++k)
+        for(size_t j = 0; j < traj_task_real.size(); ++j)
         {
             // ********************************************************************** //
             //                         Movements information                          //
             // ********************************************************************** //
             // For each movement of the planned task (each task is divided into several movements),
             // Position, velocity, aceleration
-            vector<MatrixXd> pos_mov = traj_task_real.at(k);
-            vector<MatrixXd> vel_mov = vel_task.at(k);
-            vector<MatrixXd> acc_mov = acc_task.at(k);
-            vector<vector<double>> timesteps_mov = timesteps_task.at(k);
+            vector<MatrixXd> pos_mov = traj_task_real.at(j);
+            vector<MatrixXd> vel_mov = vel_task.at(j);
+            vector<MatrixXd> acc_mov = acc_task.at(j);
+            vector<vector<double>> timesteps_mov = timesteps_task.at(j);
 
-            for(size_t kk = 0; kk < pos_mov.size(); ++kk)
+            for(size_t k = 0; k < pos_mov.size(); ++k)
             {
                 // ************************************************************************** //
                 //                             Stages information                             //
                 // ************************************************************************** //
                 // For each stage of the planned movement ("Plan", "Approach" or "Retreat"),
                 // we get the values of: position, velocity, aceleration and time_steps
-                MatrixXd pos_stage = pos_mov.at(kk);
-                MatrixXd vel_stage = vel_mov.at(kk);
-                MatrixXd acc_stage = acc_mov.at(kk);
-                vector<double> timesteps_stage = timesteps_mov.at(kk);
+                MatrixXd pos_stage = pos_mov.at(k);
+                MatrixXd vel_stage = vel_mov.at(k);
+                MatrixXd acc_stage = acc_mov.at(k);
+                vector<double> timesteps_stage = timesteps_mov.at(k);
 
-                for(int kkk = 0; kkk < pos_stage.rows() - 1; ++kkk)
+                for(int kk = 0; kk < pos_stage.rows() - 1; ++kk)
                 {
                     // ********************************************************************** //
                     //                           Steps information                            //
                     // ********************************************************************** //
                     // For each step of the planned movement (each stage is divided into several steps),
                     // Get the current values of: position, velocity, aceleration
-                    VectorXd pos_step_curr = pos_stage.row(kkk);
-                    VectorXd vel_step_curr = vel_stage.row(kkk);
-                    VectorXd acc_step_curr = acc_stage.row(kkk);
+                    VectorXd pos_step_curr = pos_stage.row(kk);
+                    VectorXd vel_step_curr = vel_stage.row(kk);
+                    VectorXd acc_step_curr = acc_stage.row(kk);
                     // Get the next values of: position, velocity, aceleration
-                    VectorXd pos_step_next = pos_stage.row(kkk + 1);
-                    VectorXd vel_step_next = vel_stage.row(kkk + 1);
-                    VectorXd acc_step_next = acc_stage.row(kkk + 1);
+                    VectorXd pos_step_next = pos_stage.row(kk + 1);
+                    VectorXd vel_step_next = vel_stage.row(kk + 1);
+                    VectorXd acc_step_next = acc_stage.row(kk + 1);
 
                     // Get only the position, velocity and acceleration of the robot arm joints
                     // Current step
@@ -3186,8 +3186,8 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
                     // ********************************************************************** //
                     //                       Joints linear interpolation                      //
                     // ********************************************************************** //
-                    // Adds the position, velocity and acceleration obtained for the first step in plan stage (first movement)
-                    if(k == 0 && kk == 0 && kkk == 0)
+                    // Adds the position, velocity and acceleration obtained for the first step in plan stage
+                    if(j == 0 && k == 0 && kk == 0)
                     {
                         pos_arm.push_back(pos_arm_curr);
                         vel_arm.push_back(vel_arm_curr);
@@ -3195,9 +3195,9 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
                     }
 
                     // Divide each step into several micro steps (1s correspond to 5 MicroStep)
-                    int microSteps = (int)round(timesteps_stage.at(kkk) * 5.0);
+                    int microSteps = (int)round(timesteps_stage.at(kk) * 5.0);
                     // Determine the time associated with execution of each microSteps
-                    double t_inc = timesteps_stage.at(kkk) / microSteps;
+                    double t_inc = timesteps_stage.at(kk) / microSteps;
 
                     for(int n = 1; n <= microSteps; ++n)
                     {
@@ -3208,7 +3208,7 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
 
                         // Each micro step starts at 0 sec and ends after the time step determined by the HUMP
                         double t_curr = 0.0;
-                        double t_next = timesteps_stage.at(kkk);
+                        double t_next = timesteps_stage.at(kk);
 
                         // Linear interpolation depends on the value of m
                         // m is determined by the following formula: (x - x0) / (x1 - x0)
@@ -3220,10 +3220,10 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
                             // Linear interpolation of the joints' position
                             pos_arm_microSteps.push_back(interpolate(pos_arm_curr.at(i), pos_arm_next.at(i), m));
 
-                            // At the end of the planned task, the velocity and acceleration of the joints are
+                            // At the end of the planned movement, the velocity and acceleration of the joints are
                             // set to zero, ensuring no noise. The planned value is close to 0!
-                            if((k == traj_task_real.size() - 1) && (kk = pos_mov.size() - 1) &&
-                                    (kkk == pos_stage.rows() - 2) && (n == microSteps))
+                            if((j == traj_task_real.size() - 1) && (k == pos_mov.size() - 1) &&
+                                    (kk == pos_stage.rows() - 2) && (n == microSteps))
                             {
                                 vel_arm_microSteps.push_back(0.0);
                                 acc_arm_microSteps.push_back(0.0);
@@ -3276,25 +3276,25 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
         control_msgs::FollowJointTrajectoryGoal plannedTrajectory;
         plannedTrajectory.trajectory = trajPlannedHUMP;
 
-//        // Send the goal message to the action server "/robot/limb/right/follow_joint_trajectory"
-//        folJointTraj->sendGoal(plannedTrajectory);
-//        // After 30 sec the function return false, if the goal hasn't reached
-//        folJointTraj->waitForResult(ros::Duration(45));
+        // Send the goal message to the action server "/robot/limb/right/follow_joint_trajectory"
+        folJointTraj->sendGoal(plannedTrajectory);
+        // After 30 sec the function return false, if the goal hasn't reached
+        folJointTraj->waitForResult(ros::Duration(45));
 
-//        if(folJointTraj->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-//            // The final posture was reached
-//            log(QNode::Info,string("Final posture reached."));
-//        else
-//        {
-//            // It isn't possible to reach the desired posture. We can check the list of possible errors which are
-//            // returned from action server in the result message
-//            log(QNode::Error, string("Error in reaching the final posture of the robot."));
-//            return false;
-//        }
+        if(folJointTraj->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+            // The final posture was reached
+            log(QNode::Info,string("Final posture reached."));
+        else
+        {
+            // It isn't possible to reach the desired posture. We can check the list of possible errors which are
+            // returned from action server in the result message
+            log(QNode::Error, string("Error in reaching the final posture of the robot."));
+            return false;
+        }
 
-//        log(QNode::Info,string("Task completed."));
-//        // Handle ROS messages
-//        ros::spinOnce();
+        log(QNode::Info,string("Task completed."));
+        // Handle ROS messages
+        ros::spinOnce();
     }
 
     return true;
