@@ -40,6 +40,9 @@ resources/images.qrc
 resources/images/icon.png
 resources/images/logo_eeng.png
 resources/images/motion_managerIcon.png
+robot_jointstatesdialog.cpp
+robot_jointstatesdialog.hpp
+robot_jointstatesdialog.ui
 src/comp_velocity_dialog.cpp
 src/engagepoint.cpp
 src/handposcolor.cpp

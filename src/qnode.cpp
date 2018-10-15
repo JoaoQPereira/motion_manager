@@ -3186,7 +3186,7 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
                     // ********************************************************************** //
                     //                       Joints linear interpolation                      //
                     // ********************************************************************** //
-                    // Adds the position, velocity and acceleration obtained for the first step in plan stage
+                    // Adds the position, velocity and acceleration obtained for the first movement (first step in plan stage)
                     if(j == 0 && k == 0 && kk == 0)
                     {
                         pos_arm.push_back(pos_arm_curr);

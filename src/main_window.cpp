@@ -219,13 +219,11 @@ void MainWindow::updateRVizStatus(bool c)
 
 void MainWindow::execMove(int c, bool a)
 {
-    string robot_name = this->curr_scene->getRobot()->getName();
-
     if(c == 0)  //Execute the planned movement in V-REP simulator
         qnode.execMovement(this->jointsPosition_mov, this->jointsVelocity_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
     else if(c == 1) //Execute the planned movement in Robot
     {
-        if(robot_name == "Sawyer")
+        if(this->curr_scene->getRobot()->getName() == "Sawyer")
             qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov, this->timesteps_mov);
     }
 #if MOVEIT==1
@@ -1705,8 +1703,6 @@ void MainWindow::on_pushButton_plan_trials_clicked()
 
 void MainWindow::on_pushButton_execMov_clicked()
 {
-    string robot_name = this->curr_scene->getRobot()->getName();
-
     //If the dialog hasn't been displayed or the user hasn't chosen the "don't ask again" option
     if(execSettings_move == false)
         mMovExecutedlg->show();
@@ -1716,7 +1712,7 @@ void MainWindow::on_pushButton_execMov_clicked()
             qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
         else if(usedPlat_move == 1) //Execute the planned movement in Robot
         {
-            if(robot_name == "Sawyer")
+            if(this->curr_scene->getRobot()->getName() == "Sawyer")
                 qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov, this->timesteps_mov);
         }
 #if MOVEIT==1

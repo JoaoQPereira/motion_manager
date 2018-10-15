@@ -50,7 +50,7 @@ Q_SIGNALS:
      * @param c (c = 0 => "V-rep simulator", c = 1 => "Robot", c = 2 => "RViz MoveIt")
      * @param a (a = true => "Don't ask again", a = false => "ask again")
      */
-    void addPlat_execTask(int c, bool a);
+    void addPlat_execTask(int c, bool a);    
 };
 
 }// namespace motion_manager

@@ -12,7 +12,7 @@ Task_ExecuteDialog::Task_ExecuteDialog(QNode *q, QWidget *parent) :
     ui->setupUi(this);
     qnode = q;
 
-#if ROBOT==0
+#if ROBOT == 0
     ui->radioButton_execTask_Robot->setEnabled(false);
 #endif
 }
@@ -50,3 +50,5 @@ void Task_ExecuteDialog::on_pushButtonOK_pressed()
 }
 
 } // namespace motion_manager
+
+
