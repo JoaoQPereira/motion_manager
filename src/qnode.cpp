@@ -2400,7 +2400,7 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
         }
 
         // Sleep for the specified number of seconds
-        sleep(2);
+        sleep(5);
     }
 
     // Handle ROS messages
@@ -3111,7 +3111,7 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
         }
 
         // Sleep for the specified number of seconds
-        sleep(2);
+        sleep(5);
     }
 
     // Handle ROS messages
