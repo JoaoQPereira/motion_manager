@@ -58,6 +58,7 @@ class JointStates:
     #   FUNCTION: plotData  #
     # ********************* #
     def plotData(self):
+        # Initialization of variables
         self.t = []
         self.pos = [[] for _ in range(self.nJoints)]
         self.vel = [[] for _ in range(self.nJoints)]
@@ -181,7 +182,7 @@ class JointStates:
 #                                                    Main                                                     #
 # ----------------------------------------------------------------------------------------------------------- #
 def main():
-    rospy.init_node('motion_interface')
+    rospy.init_node('monitoring_interface_joints')
     listener = JointStates()
 
 if __name__ == '__main__':
