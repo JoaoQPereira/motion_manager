@@ -1,42 +1,17 @@
 #!/usr/bin/env python
-'''
-==============
-3D Hand position scatterplot
-==============
-
-Test .
-'''
-
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-def plot_hand_pos(hand_pos):
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
-	for row in hand_pos:
-		x=row[0]
-		y=row[1]
-		z=row[2]
-		ax.scatter(x, y, z, c='r', marker='o')
+fig = plt.figure()
+ax = fig.add_subplot(111)
 
-	ax.set_xlabel('X [mm]')
-	ax.set_ylabel('Y [mm]')
-	ax.set_zlabel('Z [mm]')
-	plt.suptitle('Hand position')
+t = np.arange(0.0, 5.0, 0.01)
+s = np.cos(2*np.pi*t)
+line, = ax.plot(t, s, lw=2)
 
-	fig.savefig('hand_pos.pdf')
-	fig.savefig('hand_pos.svg')
+ax.annotate('local max', xy=(2, 1), xytext=(3, 1.5),
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            )
 
-	plt.show()
-
-	return;
-
-
-hand_pos = np.array([
-					 [1,2,3],
-					 [-6,8,-4],
-					 [5,7,-12]
-					])
-
-plot_hand_pos(hand_pos)
+ax.set_ylim(-2,2)
+plt.show()

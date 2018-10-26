@@ -1150,7 +1150,7 @@ bool QNode::getElements(scenarioPtr scene)
         DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
     thumb = jarde_hand.thumb;
-    thumb.uTx = DH_params_vec.at(0)*1000; // [mm]
+    thumb.uTx = DH_params_vec.at(0)*10mat_right00; // [mm]
     thumb.uTy = DH_params_vec.at(1)*1000; // [mm]
     thumb.uTz = DH_params_vec.at(2)*1000; // [mm]
     thumb.thumb_specs.alpha = std::vector<double>(5);

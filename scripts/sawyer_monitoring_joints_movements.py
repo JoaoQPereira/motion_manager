@@ -60,10 +60,10 @@ class JointStates:
     def plotData(self):
         # Initialization of variables
         self.t = []
-        self.pos = [[] for _ in range(self.nJoints)]
-        self.vel = [[] for _ in range(self.nJoints)]
-        self.axisPos = [[] for _ in range(self.nJoints)]
-        self.axisVel = [[] for _ in range(self.nJoints)]
+        self.pos = [[] for i in range(self.nJoints)]
+        self.vel = [[] for i in range(self.nJoints)]
+        self.axisPos = [[] for i in range(self.nJoints)]
+        self.axisVel = [[] for i in range(self.nJoints)]
 
         # *-*-*-*-*-*-*-*-*-*- #
         #   Create the figure  #
@@ -95,16 +95,20 @@ class JointStates:
 
         # Title of the figure
         fig.suptitle('[Sawyer Robot]: Monitoring of Joints Movements', fontsize = 35, fontweight = 'bold', color = 'peru')
-        # Initialize the subplots of the figure
-        for x in range(0, self.nJoints):
-            self.axisPos[x] = fig.add_subplot(4, 2, (x + 1))
-            self.axisVel[x] = self.axisPos[x].twinx()
+        # Create subplots of the figure
+        for joint in range(0, self.nJoints):
+            self.axisPos[joint] = fig.add_subplot(4, 2, (joint + 1))
+            self.axisVel[joint] = self.axisPos[joint].twinx()
 
         # ******************* #
         #   FUNCTION: update  #
         # ******************* #
         def update(i):
             if self.joints_pos and self.StopPlot == 0:
+                # *-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+                #   Initilization of variables  #
+                # Joint number
+                joint = 0
                 # *-*-*-* #
                 #   Time  #
                 if self.iTime == 0:
@@ -113,43 +117,46 @@ class JointStates:
                 else:
                     self.t.append(time.clock() - self.iTime)
 
-                for x in range(0, self.nJoints):
+                # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+                #   Plot Joints Position and Velocity   #
+                for jointPos, jointVel, posValue, velValue, axisPos, axisVel in zip(
+                        self.pos, self.vel, self.joints_pos, self.joints_vel, self.axisPos, self.axisVel):
                     # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
                     #   Joints position and velocity  #
-                    self.pos[x].append((float(self.joints_pos[x]) * 180) / math.pi)
-                    self.vel[x].append((float(self.joints_vel[x]) * 180) / math.pi)
-
+                    jointPos.append((float(posValue) * 180) / math.pi)
+                    jointVel.append((float(velValue) * 180) / math.pi)
                     # *-*-*-*-*-*-*-*- #
                     #   Plot the data  #
-                    self.axisPos[x].clear()
+                    axisPos.clear()
                     # Configurations
-                    self.axisVel[x].yaxis.tick_left()
-                    self.axisVel[x].yaxis.set_label_position('left')
-                    self.axisVel[x].spines['left'].set_position(('outward', 45))
-                    self.axisVel[x].set_frame_on(True)
-                    self.axisVel[x].patch.set_visible(False)
+                    axisVel.yaxis.tick_left()
+                    axisVel.yaxis.set_label_position('left')
+                    axisVel.spines['left'].set_position(('outward', 45))
+                    axisVel.set_frame_on(True)
+                    axisVel.patch.set_visible(False)
                     # Plot the position
-                    self.axisPos[x].set_title(('Joint ' + str(x)), fontweight = 'bold')
-                    self.axisPos[x].set_xlabel('Time [s]', fontsize = 11)
-                    self.axisPos[x].set_xlim([max(0, self.t[-1] - 40), self.t[-1] + 0.0001])
-                    self.axisPos[x].set_ylim([min(self.pos[x]) - 10, max(self.pos[x]) + 10])
-                    self.axisPos[x].spines['left'].set_color('firebrick')
-                    self.axisPos[x].spines['left'].set_linewidth(2)
-                    p = self.axisPos[x].plot(self.t, self.pos[x], color = 'firebrick', linewidth = 1.65, label = 'Pos [deg]')
+                    axisPos.set_title(('Joint ' + str(joint)), fontweight = 'bold')
+                    axisPos.set_xlabel('Time [s]', fontsize = 11)
+                    axisPos.set_xlim([max(0, self.t[-1] - 40), self.t[-1] + 0.0001])
+                    axisPos.set_ylim([min(jointPos) - 10, max(jointPos) + 10])
+                    axisPos.spines['left'].set_color('firebrick')
+                    axisPos.spines['left'].set_linewidth(2)
+                    p = axisPos.plot(self.t, jointPos, color = 'firebrick', linewidth = 1.65, label = 'Pos [deg]')
                     # Plot the velocity
-                    self.axisVel[x].set_ylim([min(self.vel[x]) - 5, max(self.vel[x]) + 5])
-                    self.axisVel[x].spines['left'].set_color('teal')
-                    self.axisVel[x].spines['left'].set_linewidth(2)
-                    v = self.axisVel[x].plot(self.t, self.vel[x], color = 'teal', linewidth = 1.65, label = 'Vel [deg/s]')
+                    axisVel.set_ylim([min(jointVel) - 5, max(jointVel) + 5])
+                    axisVel.spines['left'].set_color('teal')
+                    axisVel.spines['left'].set_linewidth(2)
+                    v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel [deg/s]')
                     # Legend
                     lns = p + v
                     labs = [l.get_label() for l in lns]
-                    leg = self.axisPos[x].legend(lns, labs, loc = 'lower right', fontsize = 9.5, shadow = True, fancybox = True)
+                    leg = axisPos.legend(lns, labs, loc = 'lower right', fontsize = 9.5, shadow = True, fancybox = True)
                     leg.get_frame().set_alpha(0.5)
+                    joint = joint + 1
             else:
                 pass
 
-        a = anim.FuncAnimation(fig, update, frames = 100000)
+        a = anim.FuncAnimation(fig, update, frames = 1000)
         plt.show()
 
     # ****************** #
@@ -165,12 +172,12 @@ class JointStates:
         # Reset all variables used in the plot
         self.t = []
         self.iTime = 0
-        self.pos = [[] for _ in range(self.nJoints)]
-        self.vel = [[] for _ in range(self.nJoints)]
-        for x in range(0, self.nJoints):
-            self.axisPos[x].set_xlim([0, self.iTime + 0.0001])
-            self.axisPos[x].set_ylim([((float(self.joints_pos[x]) * 180) / math.pi) - 10, ((float(self.joints_pos[x]) * 180) / math.pi) + 10])
-            self.axisVel[x].set_ylim([((float(self.joints_vel[x]) * 180) / math.pi) - 5, ((float(self.joints_vel[x]) * 180) / math.pi) + 5])
+        self.pos = [[] for i in range(0, self.nJoints)]
+        self.vel = [[] for i in range(0, self.nJoints)]
+        for axisPos, axisVel, valuePos, valueVel in zip(self.axisPos, self.axisVel, self.joints_pos, self.joints_vel):
+            axisPos.set_xlim([0, self.iTime + 0.0001])
+            axisPos.set_ylim([((float(valuePos) * 180) / math.pi) - 10, ((float(valuePos) * 180) / math.pi) + 10])
+            axisVel.set_ylim([((float(valueVel) * 180) / math.pi) - 5, ((float(valueVel) * 180) / math.pi) + 5])
 
     # ******************* #
     #   FUNCTION: bStart  #
