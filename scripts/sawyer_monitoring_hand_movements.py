@@ -6,8 +6,11 @@ import time
 import mpl_toolkits.axes_grid1
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
+import matplotlib.gridspec as gridspec
+from mpl_toolkits.mplot3d import proj3d
 from sensor_msgs.msg import JointState
 from mpl_toolkits import mplot3d
+from numpy import linalg as LA
 
 # ----------------------------------------------------------------------------------------------------------- #
 #                                              Class JointStates                                              #
@@ -22,7 +25,13 @@ class Hand:
         self.joints_pos = []
         self.joints_vel = []
         self.iTime = 0
-        self.StopPlot = 0
+        self.nJoints = 7
+        # DH parameters
+        self.dH_a = [0, 81, 0, 0, 0, 0, 0]
+        self.dH_alpha = [0, -1.5707963268, -1.5707963268, 1.5707963268, -1.5707963268, 1.5707963268, -1.5707963268]
+        self.dH_d = [317, 192.5, 400, -168.5, 400, 136.3, 265.2]
+        # World Transformation Matrix (Base of the arm relative to the floor)
+        self.T_world = self.transMatrixInd(-0.00033700562527, -0.00000011784288577, 3.1415926536, [49.988, 14.982, 910.0])
 
         # Topic to subcribe to
         rospy.Subscriber("/robot/joint_states", JointState, self.callbackJoints)
@@ -56,20 +65,83 @@ class Hand:
     # *********************** #
     #   FUNCTION: getHandPos  #
     # *********************** #
+    def getHandVel(self, handPos):
+        # Jacobian Matrix
+        jacobian = np.zeros((6,7));
+        z = [0] * 3
+        pos = [0] * 3
+        diff = [0] * 3
+        # Transformation Matrix
+        T = self.T_world
+
+        if self.joints_pos and self.joints_vel:
+            #
+            jointVel = self.joints_vel
+
+            #
+            for a, alpha, d, theta, joint in zip(self.dH_a, self.dH_alpha,
+                                                 self.dH_d, self.joints_pos, range(self.nJoints)):
+                # Transformation matrix between the joints of the manipulator
+                if joint == 1:
+                    T_aux = self.transfMatix(a, alpha, d, theta - 1.5707963268)
+                else:
+                    T_aux = self.transfMatix(a, alpha, d, theta)
+                # Transformation matrix between each of the joints and the base of the manipulator
+                T = [[sum(a * b for a, b in zip(T_row, T_aux_col)) for T_aux_col in zip(*T_aux)] for T_row in T]
+
+                #
+                for item, hand, aux in zip(T, handPos, range(0,3)):
+                    if aux != 3:
+                        z[aux] = item[2]
+                        pos[aux] = item[3]
+                        diff[aux] = hand - item[3]
+
+                #
+                cross = np.cross(z, diff)
+                #
+                column = np.concatenate((cross, z), axis = None)
+                print 'joint: {}'.format(joint)
+                print 'column: {}'.format(column)
+                print '***************************************************'
+                #
+                for item, value in zip(jacobian, column):
+                    item[joint] = value
+
+            #
+            print 'hand pos: {}'.format(handPos)
+            handVel = np.tensordot(jacobian, jointVel, axes = 1)
+            handVelLinear = [handVel[0], handVel[1], handVel[2]]
+            handVelLinearNorm = LA.norm(handVelLinear)
+
+            #print 'JOINT: {}'.format(joint)
+            #print 'T: {}'.format(T)
+            #print 'z: {}'.format(z)
+            #print 'pos: {}'.format(pos)
+            #print 'diff: {}'.format(diff)
+            #print 'cross: {}'.format(cross)
+            #print 'column: {}'.format(column)
+            #print 'jacobian: {}'.format(jacobian)
+            #print 'jointsVel: {}'.format(jointVel)
+            #print 'handVel: {}'.format(handVel)
+            #print 'handVelLinear: {}'.format(handVelLinear)
+            #print 'handVelLinearNorm: {}'.format(handVelLinearNorm)
+
+
+            return handVelLinearNorm
+
+    # *********************** #
+    #   FUNCTION: getHandPos  #
+    # *********************** #
     def getHandPos(self):
-        # DH parameters
-        dH_a = [0, 81, 0, 0, 0, 0, 0]
-        dH_alpha = [0, -1.5707963268, -1.5707963268, 1.5707963268, -1.5707963268, 1.5707963268, -1.5707963268]
-        dH_d = [317, 192.5, 400, -168.5, 400, 136.3, 265.2]
-        # World Transformation Matrix (Base of the arm relative to the floor)
-        T = self.transMatrixInd(-0.00033700562527, -0.00000011784288577, 3.1415926536, [49.988, 14.982, 910.0])
         # Hand Position
         hand_pos = []
         # Joint Number
         joint = 0
+        # Transformation Matrix
+        T = self.T_world
 
         if self.joints_pos:
-            for a, alpha, d, theta in zip(dH_a, dH_alpha, dH_d, self.joints_pos):
+            for a, alpha, d, theta in zip(self.dH_a, self.dH_alpha, self.dH_d, self.joints_pos):
                 # Transformation matrix between the joints of the manipulator
                 if joint == 1:
                     T_aux = self.transfMatix(a, alpha, d, theta - 1.5707963268)
@@ -169,6 +241,9 @@ class Hand:
     def plotHandPos(self):
         # Initialization of variables
         pos = [[] for i in range(0, 3)]
+        vel = []
+        t = []
+
         # *-*-*-*-*-*-*-*-*-*- #
         #   Create the figure  #
         fig = plt.figure()
@@ -177,72 +252,95 @@ class Hand:
         mng.resize(*mng.window.maxsize())
         # Title of the figure
         fig.suptitle('[Sawyer Robot]: Monitoring of Hand Movements', fontsize = 35, fontweight = 'bold', color = 'peru')
-        # Initialize the subplots of the figure
-        axisPos = fig.add_subplot(1, 1, 1, projection = '3d')
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*- #
+        #   Initialize the subplots  #
+        # Position
+        gs = gridspec.GridSpec(3,1)
+        axisPos = fig.add_subplot(gs[0:2], projection = '3d')
+        axisVel = fig.add_subplot(gs[-1])
+        axisPos.view_init(5, 25)
 
         # ******************* #
         #   FUNCTION: update  #
         # ******************* #
         def update(i):
-            # Get data
+            # Get hand position
             handPos = self.getHandPos()
-            if handPos:
-                for position, value in zip(pos, handPos):
-                    position.append(value)
+            #if handPos:
+                # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+                #          Hand Position          #
+                # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+                #for position, value in zip(pos, handPos):
+                    #position.append(value)
 
-                # Plot data
-                axisPos.clear()
-                axisPos.set_title('Hand Position', fontweight = 'bold', fontsize = 18)
-                axisPos.set_xlabel('x [mm]', fontsize = 11)
-                axisPos.set_xlim([min(pos[0]) - 5, max(pos[0]) + 5])
-                axisPos.set_ylabel('y [mm]', fontsize = 11)
-                axisPos.set_ylim([min(pos[1]) - 5, max(pos[1]) + 5])
-                axisPos.set_zlabel('z [mm]', fontsize = 11)
-                axisPos.set_zlim([min(pos[2]) - 5, max(pos[2]) + 5])
+                # *-*-*-*-*-*-*-*- #
+                #   Plot the data  #
+                # Configurations
+                #axisPos.clear()
+                #axisPos.set_title('Hand Position', fontweight = 'bold', fontsize = 18)
+                #axisPos.set_xlabel('y [mm]', fontsize = 10)
+                #axisPos.set_ylabel('x [mm]', fontsize = 10)
+                #axisPos.set_zlabel('z [mm]', fontsize = 10)
+                #axisPos.set_xlim([min(pos[1]) - 10, max(pos[1]) + 10])
+                #axisPos.set_ylim([min(pos[0]) + 10, max(pos[0]) - 10])
+                #axisPos.set_zlim([min(pos[2]) - 10, max(pos[2]) + 10])
 
-                for i in range(0, len(pos[0])):
-                    # All Other Points
-                    if i != 0 and i != len(pos[0]) - 1:
-                        co = 'firebrick'
-                        ma = 'o'
-                        si = 75
-                        al = 0.5
-                    # Initial Point
-                    elif i == 0:
-                        co = 'seagreen'
-                        ma = '^'
-                        si = 175
-                        al = 1.0
-                    # Final Point
-                    else:
-                        co = 'slateblue'
-                        ma = 'v'
-                        si = 175
-                        al = 1.0
+                #for i in range(0, len(pos[0])):
+                    # Start Point = Start Posiion of the Arm
+                    #if i == 0:
+                        #axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'cornflowerblue',
+                                        #marker = '^', s = 175, alpha = 1.0)
+                        #x2D, y2D, _ = proj3d.proj_transform(pos[1][i], pos[0][i], pos[2][i], axisPos.get_proj())
+                        #axisPos.annotate('Start', xy = (x2D, y2D), xytext = (-30, 0),
+                                         #textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                        # bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'cornflowerblue', alpha = 0.45),
+                                         #arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+                    # Current Point = Current Position of the arm
+                    #elif i == len(pos[0]) - 1:
+                        #axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'forestgreen',
+                                        #marker = 'v', s = 175, alpha = 1.0)
+                        #x2D, y2D, _ = proj3d.proj_transform(pos[1][i], pos[0][i], pos[2][i], axisPos.get_proj())
+                        #axisPos.annotate('Current', xy = (x2D, y2D), xytext = (80, 0),
+                                         #textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                         #bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'forestgreen', alpha = 0.45),
+                                         #arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+                    # All other points in the trajectory
+                    #else:
+                        #axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'firebrick',
+                                        #marker = '.', s = 170, alpha = 0.50)
 
-                    axisPos.scatter(pos[0][i], pos[1][i], pos[2][i], color = co, marker = ma, s = si, alpha = al)
-                    
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+            #          Hand Velocity          #
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+            # Get hand velocity
+            handVel = self.getHandVel(handPos)
+            if handVel:
+                # Save hand velocity
+                vel.append(handVel)
+                # Save current time
+                if self.iTime == 0:
+                    t.append(0.0)
+                    self.iTime = time.clock()
+                else:
+                    t.append(time.clock() - self.iTime)
+
+                # *-*-*-*-*-*-*-*- #
+                #   Plot the data  #
+                # Configurations
+                axisVel.clear()
+                axisVel.set_title('Hand Velocity', fontweight = 'bold', fontsize = 18)
+                axisVel.set_xlabel('Time [s]', fontsize = 11)
+                axisVel.set_ylabel('[mm/s]', fontsize = 11)
+                axisVel.set_xlim([max(0, t[-1] - 40), t[-1] + 0.0001])
+                axisVel.set_ylim([min(vel) - 10, max(vel) + 10])
+                axisVel.spines['left'].set_color('darkgoldenrod')
+                axisVel.spines['left'].set_linewidth(3)
+                # Plot the velocity
+                axisVel.plot(t, vel, color = 'darkgoldenrod', linewidth = 1.65, label = 'Vel [mm/s]')
+
         a = anim.FuncAnimation(fig, update, frames = 1000)
         plt.show()
-
-    # ****************** #
-    #   FUNCTION: bStop  #
-    # ****************** #
-    def bStop(self, event):
-        self.StopPlot = 1
-
-    # ******************* #
-    #   FUNCTION: bClean  #
-    # ******************* #
-    def bClear(self, event):
-        # Reset all variables used in the plot
-        pass
-
-    # ******************* #
-    #   FUNCTION: bStart  #
-    # ******************* #
-    def bStart(self, event):
-        self.StopPlot = 0
 
 # ----------------------------------------------------------------------------------------------------------- #
 #                                                    Main                                                     #
