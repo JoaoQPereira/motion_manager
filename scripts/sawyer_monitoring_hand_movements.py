@@ -26,6 +26,8 @@ class Hand:
         self.joints_vel = []
         self.iTime = 0
         self.nJoints = 7
+        self.handPos = []
+        self.handVel = 0.0
         # DH parameters
         self.dH_a = [0, 81, 0, 0, 0, 0, 0]
         self.dH_alpha = [0, -1.5707963268, -1.5707963268, 1.5707963268, -1.5707963268, 1.5707963268, -1.5707963268]
@@ -61,6 +63,9 @@ class Hand:
         # Save the position and velocity of the joints
         self.joints_pos = pos
         self.joints_vel = vel
+
+        self.handPos = self.getHandPos()
+        self.handVel = self.getHandVel(self.handPos)
 
     # *********************** #
     #   FUNCTION: getHandPos  #
@@ -100,15 +105,15 @@ class Hand:
                 cross = np.cross(z, diff)
                 #
                 column = np.concatenate((cross, z), axis = None)
-                print 'joint: {}'.format(joint)
-                print 'column: {}'.format(column)
-                print '***************************************************'
+                #print 'joint: {}'.format(joint)
+                #print 'column: {}'.format(column)
+                #print '***************************************************'
                 #
                 for item, value in zip(jacobian, column):
                     item[joint] = value
 
             #
-            print 'hand pos: {}'.format(handPos)
+            #print 'hand pos: {}'.format(handPos)
             handVel = np.tensordot(jacobian, jointVel, axes = 1)
             handVelLinear = [handVel[0], handVel[1], handVel[2]]
             handVelLinearNorm = LA.norm(handVelLinear)
@@ -124,8 +129,6 @@ class Hand:
             #print 'jointsVel: {}'.format(jointVel)
             #print 'handVel: {}'.format(handVel)
             #print 'handVelLinear: {}'.format(handVelLinear)
-            #print 'handVelLinearNorm: {}'.format(handVelLinearNorm)
-
 
             return handVelLinearNorm
 
@@ -265,59 +268,55 @@ class Hand:
         #   FUNCTION: update  #
         # ******************* #
         def update(i):
-            # Get hand position
-            handPos = self.getHandPos()
-            #if handPos:
+            if self.handPos:
                 # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
                 #          Hand Position          #
                 # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
-                #for position, value in zip(pos, handPos):
-                    #position.append(value)
+                for position, value in zip(pos, self.handPos):
+                    position.append(value)
 
                 # *-*-*-*-*-*-*-*- #
                 #   Plot the data  #
                 # Configurations
-                #axisPos.clear()
-                #axisPos.set_title('Hand Position', fontweight = 'bold', fontsize = 18)
-                #axisPos.set_xlabel('y [mm]', fontsize = 10)
-                #axisPos.set_ylabel('x [mm]', fontsize = 10)
-                #axisPos.set_zlabel('z [mm]', fontsize = 10)
-                #axisPos.set_xlim([min(pos[1]) - 10, max(pos[1]) + 10])
-                #axisPos.set_ylim([min(pos[0]) + 10, max(pos[0]) - 10])
-                #axisPos.set_zlim([min(pos[2]) - 10, max(pos[2]) + 10])
+                axisPos.clear()
+                axisPos.set_title('Hand Position', fontweight = 'bold', fontsize = 18)
+                axisPos.set_xlabel('y [mm]', fontsize = 10)
+                axisPos.set_ylabel('x [mm]', fontsize = 10)
+                axisPos.set_zlabel('z [mm]', fontsize = 10)
+                axisPos.set_xlim([min(pos[1]) - 10, max(pos[1]) + 10])
+                axisPos.set_ylim([min(pos[0]) + 10, max(pos[0]) - 10])
+                axisPos.set_zlim([min(pos[2]) - 10, max(pos[2]) + 10])
 
-                #for i in range(0, len(pos[0])):
+                for i in range(0, len(pos[0])):
                     # Start Point = Start Posiion of the Arm
-                    #if i == 0:
-                        #axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'cornflowerblue',
-                                        #marker = '^', s = 175, alpha = 1.0)
-                        #x2D, y2D, _ = proj3d.proj_transform(pos[1][i], pos[0][i], pos[2][i], axisPos.get_proj())
-                        #axisPos.annotate('Start', xy = (x2D, y2D), xytext = (-30, 0),
-                                         #textcoords = 'offset points', ha = 'right', va = 'bottom',
-                                        # bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'cornflowerblue', alpha = 0.45),
-                                         #arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+                    if i == 0:
+                        axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'cornflowerblue',
+                                        marker = '^', s = 175, alpha = 1.0)
+                        x2D, y2D, _ = proj3d.proj_transform(pos[1][i], pos[0][i], pos[2][i], axisPos.get_proj())
+                        axisPos.annotate('Start', xy = (x2D, y2D), xytext = (-30, 0),
+                                         textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                         bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'cornflowerblue', alpha = 0.45),
+                                         arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
                     # Current Point = Current Position of the arm
-                    #elif i == len(pos[0]) - 1:
-                        #axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'forestgreen',
-                                        #marker = 'v', s = 175, alpha = 1.0)
-                        #x2D, y2D, _ = proj3d.proj_transform(pos[1][i], pos[0][i], pos[2][i], axisPos.get_proj())
-                        #axisPos.annotate('Current', xy = (x2D, y2D), xytext = (80, 0),
-                                         #textcoords = 'offset points', ha = 'right', va = 'bottom',
-                                         #bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'forestgreen', alpha = 0.45),
-                                         #arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+                    elif i == len(pos[0]) - 1:
+                        axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'forestgreen',
+                                        marker = 'v', s = 175, alpha = 1.0)
+                        x2D, y2D, _ = proj3d.proj_transform(pos[1][i], pos[0][i], pos[2][i], axisPos.get_proj())
+                        axisPos.annotate('Current', xy = (x2D, y2D), xytext = (80, 0),
+                                         textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                         bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'forestgreen', alpha = 0.45),
+                                         arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
                     # All other points in the trajectory
-                    #else:
-                        #axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'firebrick',
-                                        #marker = '.', s = 170, alpha = 0.50)
+                    else:
+                        axisPos.scatter(pos[1][i], pos[0][i], pos[2][i], color = 'firebrick',
+                                        marker = '.', s = 170, alpha = 0.50)
 
             # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
             #          Hand Velocity          #
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
-            # Get hand velocity
-            handVel = self.getHandVel(handPos)
-            if handVel:
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #'
+            if self.handVel:
                 # Save hand velocity
-                vel.append(handVel)
+                vel.append(self.handVel)
                 # Save current time
                 if self.iTime == 0:
                     t.append(0.0)
@@ -333,7 +332,7 @@ class Hand:
                 axisVel.set_xlabel('Time [s]', fontsize = 11)
                 axisVel.set_ylabel('[mm/s]', fontsize = 11)
                 axisVel.set_xlim([max(0, t[-1] - 40), t[-1] + 0.0001])
-                axisVel.set_ylim([min(vel) - 10, max(vel) + 10])
+                axisVel.set_ylim([0.0, max(vel) + 5])
                 axisVel.spines['left'].set_color('darkgoldenrod')
                 axisVel.spines['left'].set_linewidth(3)
                 # Plot the velocity
