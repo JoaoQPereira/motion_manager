@@ -6,8 +6,8 @@ import time
 import numpy as np
 import math
 import Tkinter as tk
-import tkFont
 import tkMessageBox
+import tkFont
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.mplot3d import proj3d
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -31,6 +31,7 @@ class JointStates:
         self.nJoints = 7
         self.run = 0
         self.stop = 0
+        self.save = 0
         #
         self.configFiles()
 
@@ -46,6 +47,7 @@ class JointStates:
             self.run = 1
             self.save = 1
             self.tStart = time
+            self.refTime = self.tStart
             #
             self.fPos = open(self.filePos, 'a')
             self.fVel = open(self.fileVel, 'a')
@@ -83,21 +85,24 @@ class JointStates:
         vel = []
 
         #
-        if self.save:
-            #
+        elapsedTime = (dt.now() - self.refTime).total_seconds()
+
+        #
+        if self.save and elapsedTime >= 0.075:
             for allJoints_name in data.name:
                 #
                 if allJoints_name in self.joints_names:
-                    # Get joint index
+                    #
                     i = data.name.index(allJoints_name)
-                    # Get joint position
+                    #
                     pos.insert(i, data.position[i])
-                    # Get joint velocity
+                    #
                     vel.insert(i, data.velocity[i])
 
             if len(pos) == self.nJoints and len(vel) == self.nJoints:
                 #
                 t = (dt.now() - self.tStart).total_seconds()
+                self.refTime = dt.now()
                 #
                 self.fPos.write('{}, {} \n'.format(t, str(pos)[1:-1]))
                 self.fVel.write('{}, {} \n'.format(t, str(vel)[1:-1]))
@@ -225,12 +230,12 @@ class PlotJointsResults:
             axisPos.set_title(('Joint ' + str(joint)), fontweight = 'bold')
             axisPos.set_xlabel('Time [s]', fontsize = 11)
             axisPos.set_xlim(min(self.t), max(self.t))
-            axisPos.set_ylim([min(jointPos) - 1, max(jointPos) + 1])
+            axisPos.set_ylim([min(jointPos) - 5, max(jointPos) + 5])
             axisPos.spines['left'].set_color('firebrick')
             axisPos.spines['left'].set_linewidth(2)
             p = axisPos.plot(self.t, jointPos, color = 'firebrick', linewidth = 1.65, label = 'Pos [deg]')
             #
-            axisVel.set_ylim([min(jointVel) - 1, max(jointVel) + 1])
+            axisVel.set_ylim([min(jointVel) - 5, max(jointVel) + 5])
             axisVel.spines['left'].set_color('teal')
             axisVel.spines['left'].set_linewidth(2)
             v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel [deg/s]')
@@ -501,7 +506,8 @@ class Application:
 
         #
         fontTitle = tkFont.Font(family = 'Helvetica', size = 12, weight = 'bold')
-        fontButton = tkFont.Font(family = 'system', size = 10)
+        self.fontButton = tkFont.Font(family = 'system', size = 10)
+        self.root.option_add('*Dialog.msg.font', 'system 10')
 
         #***************************
         recordFrame = tk.Frame(self.root, width = 50, height = 50, background = 'white')
@@ -509,15 +515,15 @@ class Application:
         recordLabel.pack(pady = 10)
         #
         buttonStart = tk.Button(recordFrame, text = 'Start', command = self.bStart)
-        buttonStart.config(height = 2, width = 12, bg = 'indianred', font = fontButton)
+        buttonStart.config(height = 2, width = 12, bg = 'indianred', font = self.fontButton)
         buttonStart.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
         #
         buttonStop = tk.Button(recordFrame, text = 'Stop', command = self.bStop)
-        buttonStop.config(height = 2, width = 12, bg = 'lightslategray',  font = fontButton)
+        buttonStop.config(height = 2, width = 12, bg = 'lightslategray',  font = self.fontButton)
         buttonStop.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
         #
         buttonClear = tk.Button(recordFrame, text = 'Clear', command = self.bClear)
-        buttonClear.config(height = 2, width = 12, bg = 'peru', font = fontButton)
+        buttonClear.config(height = 2, width = 12, bg = 'peru', font = self.fontButton)
         buttonClear.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
 
         #***************************
@@ -526,11 +532,11 @@ class Application:
         resultsLabel.pack(pady = 10)
         #
         buttonJoints = tk.Button(resultsFrame, text = 'Joints', command = self.bJoints)
-        buttonJoints.config(height = 2, width = 12, bg = 'goldenrod', font = fontButton)
+        buttonJoints.config(height = 2, width = 12, bg = 'goldenrod', font = self.fontButton)
         buttonJoints.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
         #
         buttonHand = tk.Button(resultsFrame, text = 'Hand', command = self.bHand)
-        buttonHand.config(height = 2, width = 12, bg = 'darkkhaki',  font = fontButton)
+        buttonHand.config(height = 2, width = 12, bg = 'darkkhaki',  font = self.fontButton)
         buttonHand.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
 
         #***************************
@@ -545,7 +551,9 @@ class Application:
     def bStop(self):
         if self.run:
             self.stop = 1
+            self.clear = 0
             self.run = 0
+            self.start = 0
             self.jointStates.unsubscribeTopic()
 
 
@@ -555,6 +563,8 @@ class Application:
     def bClear(self):
         if not self.run:
             self.clear = 1
+            self.start = 0
+            self.stop = 0
             self.jointStates.clearFiles()
 
 
@@ -562,26 +572,54 @@ class Application:
     #         FUNCTION: bStart         #
     # ******************************** #
     def bStart(self):
-        if not self.run:
+        if not self.run and not self.stop:
             self.start = 1
             self.run = 1
+            self.clear = 0
             self.jointStates.subscribeTopic(dt.now())
+        elif not self.run and self.stop:
+            question = tkMessageBox.askquestion(title = 'Record Movement',
+                                                message = 'The information about the previously executed movement will be clean.\nDo you want to contine?',
+                                                parent = self.root)
+            if question == 'yes':
+                self.start = 1
+                self.run = 1
+                self.clear = 0
+                self.stop = 0
+                self.jointStates.clearFiles()
+                self.jointStates.subscribeTopic(dt.now())
 
 
     # ********************************* #
     #         FUNCTION: bJoints         #
     # ********************************* #
     def bJoints(self):
-        if not self.run:
+        if self.stop and not self.clear:
             plotJoints = PlotJointsResults(self.root)
+        elif self.start:
+            tkMessageBox.showerror(title = 'Plot Error',
+                                  message = 'Cannot plot the results of the joints! \nMake sure the movement recording is stopped.',
+                                  parent = self.root)
+        else:
+            tkMessageBox.showerror(title = 'Plot Error',
+                                  message = 'Cannot plot the results of the joints! \nMake sure the movement executed by the robot is recorded.',
+                                  parent = self.root)
 
 
     # ********************************* #
     #         FUNCTION: bJoints         #
     # ********************************* #
     def bHand(self):
-        if not self.run:
+        if self.stop and not self.clear:
             plotHand = PlotHandResults(self.root)
+        elif self.start:
+            tkMessageBox.showerror(title = 'Plot Error',
+                                   message = 'Cannot plot the results of the hand. \nMake sure the movement recording is stopped.',
+                                   parent = self.root)
+        else:
+            tkMessageBox.showerror(title = 'Plot Error',
+                                   message = 'Cannot plot the results of the hand. \nMake sure the movement executed by the robot is recorded.',
+                                   parent = self.root)
 
 
 
