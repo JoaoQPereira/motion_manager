@@ -9,16 +9,18 @@ import Tkinter as tk
 import tkMessageBox
 import tkFont
 import matplotlib.gridspec as gridspec
+import matplotlib.animation as anim
 from mpl_toolkits.mplot3d import proj3d
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from sensor_msgs.msg import JointState
 from datetime import datetime as dt
+from numpy import linalg as LA
 
 
 # ----------------------------------------------------------------------------------------------------------- #
 # ----------------------------------------------------------------------------------------------------------- #
-#                                              Class JointStates                                              #
+#                                             Classe JointStates                                              #
 # ----------------------------------------------------------------------------------------------------------- #
 # ----------------------------------------------------------------------------------------------------------- #
 class JointStates:
@@ -26,13 +28,13 @@ class JointStates:
     #         FUNCTION: init         #
     # ****************************** #
     def __init__(self):
-        #
+        # Configuration variables
         self.joints_names = ['right_j0', 'right_j1', 'right_j2', 'right_j3','right_j4', 'right_j5', 'right_j6']
         self.nJoints = 7
         self.run = 0
         self.stop = 0
         self.save = 0
-        #
+        # Create files to store the joints' position and velocity over time
         self.configFiles()
 
 
@@ -41,14 +43,14 @@ class JointStates:
     # *************************************** #
     def subscribeTopic(self, time):
         if not self.run:
-            #
+            # ROS subscriber to the topic "/robot/joints_states"
             self.sub = rospy.Subscriber("/robot/joint_states", JointState, self.callbackJoints)
-            #
+            # Set values of configuration variables
             self.run = 1
             self.save = 1
             self.tStart = time
             self.refTime = self.tStart
-            #
+            # Open files to store the joints' position and velocity
             self.fPos = open(self.filePos, 'a')
             self.fVel = open(self.fileVel, 'a')
 
@@ -58,10 +60,10 @@ class JointStates:
     # *************************************** #
     def unsubscribeTopic(self):
         if self.run:
-            #
+            # Set values of configuration variables
             self.save = 0
             self.run = 0
-            #
+            # Close files
             self.fPos.close()
             self.fVel.close()
 
@@ -70,10 +72,10 @@ class JointStates:
     #         FUNCTION: clearFiles         #
     # ************************************ #
     def clearFiles(self):
-        #
+        # Clean files to store the joints' position and velocity
         self.fPos = open(self.filePos, 'w').close()
         self.fVel = open(self.fileVel, 'w').close()
-        #
+        # Write the first two lines of the files: (i) the file name and (ii) the stored variables and their units of measure
         self.configFiles()
 
 
@@ -164,7 +166,7 @@ class PlotJointsResults:
 
         #
         jointsWindow = tk.Toplevel(root)
-        fig = Figure(figsize = (15, 12), facecolor = 'gainsboro')
+        fig = Figure(figsize = (15, 10), facecolor = 'gainsboro')
         fig.subplots_adjust(top = 0.89, hspace = 0.55, wspace = 0.30)
 
         #
@@ -268,25 +270,26 @@ class PlotHandResults:
         #
         self.configFiles()
         self.getHandPos()
+        self.getHandVel()
 
         #
-        handWindow = tk.Toplevel(root)
-        fig = Figure(figsize = (15, 12), facecolor = 'gainsboro')
+        self.handWindow = tk.Toplevel(root)
+        self.fig = Figure(figsize = (15, 10), facecolor = 'gainsboro')
+        #
+        self.graph = FigureCanvasTkAgg(self.fig, master = self.handWindow)
+        self.graph.get_tk_widget().pack(side = "top", fill = 'both', expand = True)
 
         #
-        fig.suptitle('Results of the Hand', fontsize = 35, fontweight = 'bold', color = 'peru')
+        self.fig.suptitle('Results of the Hand', fontsize = 35, fontweight = 'bold', color = 'peru')
         #
         gs = gridspec.GridSpec(3,1)
-        self.axisPos = fig.add_subplot(gs[0:2], projection = '3d')
+        self.axisPos = self.fig.add_subplot(gs[0:2], projection = '3d')
+        self.axisVel = self.fig.add_subplot(gs[-1])
+        #
         self.axisPos.view_init(5, 25)
-        self.axisVel = fig.add_subplot(gs[-1])
-
+        self.axisPos.mouse_init()
         #
         self.plotData()
-        #
-        graph = FigureCanvasTkAgg(fig, master = handWindow)
-        self.axisPos.mouse_init()
-        graph.get_tk_widget().pack(side = "top", fill = 'both', expand = True)
 
 
     # ************************************* #
@@ -317,8 +320,8 @@ class PlotHandResults:
                     f.write('# x [mm], y [mm], z [mm]\n')
                 #
                 else:
-                    f.write('# HAND VELOCITY \n')
-                    f.write('# x [mm/s], y [mm/s], z [mm/s]\n')
+                    f.write('# HAND VELOCITY NORM \n')
+                    f.write('# Time [s], Velocity [mm/s]\n')
                 f.close()
 
 
@@ -327,19 +330,22 @@ class PlotHandResults:
     # ************************************ #
     def getHandPos(self):
         #
-        fileJointsPos = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_pos.text'
         self.handPos = [[] for i in range(0, 3)]
+        #
+        fileJointsPos = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_pos.text'
+        fPos = open(self.fileHandPos, 'a')
 
-        self.fPos = open(self.fileHandPos, 'a')
-
-        with open(fileJointsPos) as f:
+        with open(fileJointsPos, 'r') as f:
+            #
             for line in f:
+                #
                 if not line.strip().startswith("#"):
                     #
-                    jointsValues = [elt.strip() for elt in line.split(',')]
+                    self.jointsPosition = [elt.strip() for elt in line.split(',')]
                     T = self.TWorld
 
-                    for a, alpha, d, theta, joint in zip(self.dH_a, self.dH_alpha, self.dH_d, jointsValues[1:8], range(0, 7)):
+                    #
+                    for a, alpha, d, theta, joint in zip(self.dH_a, self.dH_alpha, self.dH_d, self.jointsPosition[1:8], range(0, 7)):
                         if joint == 1:
                             #
                             T_aux = self.transfMatix(a, alpha, d, float(theta) - 1.5707963268)
@@ -349,47 +355,161 @@ class PlotHandResults:
                         #
                         T = [[sum(a * b for a, b in zip(T_row, T_aux_col)) for T_aux_col in zip(*T_aux)] for T_row in T]
 
+                    #
                     for i, position in zip(range(0, 3), self.handPos):
                         #
                         position.append(T[i][3])
                         if i == 2:
-                            self.fPos.write('{}\n'.format(T[i][3]))
+                            fPos.write('{}\n'.format(T[i][3]))
                         else:
-                            self.fPos.write('{}, '.format(T[i][3]))
+                            fPos.write('{}, '.format(T[i][3]))
+
+
+    # ************************************ #
+    #         FUNCTION: getHandPos         #
+    # ************************************ #
+    def getHandVel(self):
+        #
+        jacobian = np.zeros((6,7));
+        z = [0] * 3
+        pos = [0] * 3
+        diff = [0] * 3
+        self.handVel = []
+        self.t = []
+        #
+        fileJointsPos = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_pos.text'
+        fileJointsVel = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_vel.text'
+        fVel = open(self.fileHandVel, 'a')
+
+        #
+        with open(fileJointsPos, 'r') as fJointPos, open(fileJointsVel, 'r') as fJointVel, open(self.fileHandPos, 'r') as fHandPos:
+            #
+            for posJoint, velJoint, posHand in zip(fJointPos, fJointVel, fHandPos):
+                #
+                if not posJoint.strip().startswith("#") and not velJoint.strip().startswith("#") and not posHand.strip().startswith("#"):
+                    #
+                    self.jointsPosition = [elt.strip() for elt in posJoint.split(',')]
+                    jointsVelocity = [elt.strip() for elt in velJoint.split(',')]
+                    handPos = [elt.strip() for elt in posHand.split(',')]
+
+                    #
+                    time = float(jointsVelocity[0])
+                    jointsVelocity = np.asarray(jointsVelocity[1:8], dtype = np.float64, order = 'C')
+                    np.place(jointsVelocity, jointsVelocity == -0.001, 0.00)
+                    #
+                    T = self.TWorld
+
+                    for a, alpha, d, theta, joint in zip(self.dH_a, self.dH_alpha, self.dH_d, self.jointsPosition[1:8], range(0, 7)):
+                        if joint == 1:
+                            #
+                            T_aux = self.transfMatix(a, alpha, d, float(theta) - 1.5707963268)
+                        else:
+                            #
+                            T_aux = self.transfMatix(a, alpha, d, float(theta))
+                        #
+                        T = [[sum(a * b for a, b in zip(T_row, T_aux_col)) for T_aux_col in zip(*T_aux)] for T_row in T]
+
+                        #
+                        for row, col, posHand in zip(range(0, 3), T, handPos):
+                            if row != 3:
+                                #
+                                z[row] = col[2]
+                                pos[row] = col[3]
+                                diff[row] = float(posHand) - pos[row]
+
+                        #
+                        cross = np.cross(z, diff)
+                        column = np.concatenate((cross, z), axis = None)
+
+                        #
+                        for row, col in zip(jacobian, column):
+                            row[joint] = col
+
+                    #
+                    handVel = np.tensordot(jacobian, jointsVelocity, axes = 1)
+                    handVelLinear = [handVel[0], handVel[1], handVel[2]]
+                    handVelLinearNorm = LA.norm(handVelLinear)
+                    #
+                    fVel.write('{}, {}\n'.format(time, handVelLinearNorm))
+                    self.t.append(time)
+                    self.handVel.append(handVelLinearNorm)
+
 
 
     # ********************************** #
     #         FUNCTION: plotData         #
     # ********************************** #
     def plotData(self):
-        self.axisPos.set_title('Hand Position', fontweight = 'bold', fontsize = 18)
-        self.axisPos.set_xlabel('y [mm]', fontsize = 10)
-        self.axisPos.set_ylabel('x [mm]', fontsize = 10)
+        #
+        self.axisPos.set_title('Hand Position', fontweight = 'bold', fontsize = 16)
+        self.axisPos.set_xlabel('x [mm]', fontsize = 10)
+        self.axisPos.set_ylabel('y [mm]', fontsize = 10)
         self.axisPos.set_zlabel('z [mm]', fontsize = 10)
-        self.axisPos.set_xlim([min(self.handPos[1]) - 1, max(self.handPos[1]) + 1])
-        self.axisPos.set_ylim([min(self.handPos[0]) + 1, max(self.handPos[0]) - 1])
-        self.axisPos.set_zlim([min(self.handPos[2]) - 1, max(self.handPos[2]) + 1])
+        self.axisPos.set_xlim([max(self.handPos[0]) + 5, min(self.handPos[0]) - 5])
+        self.axisPos.set_ylim([max(self.handPos[1]) + 5, min(self.handPos[1]) - 5])
+        self.axisPos.set_zlim([min(self.handPos[2]) - 5, max(self.handPos[2]) + 5])
 
         for i in range(0, len(self.handPos[0])):
             if i == 0:
-                self.axisPos.scatter(self.handPos[1][i], self.handPos[0][i], self.handPos[2][i], color = 'cornflowerblue',
-                                marker = '^', s = 175, alpha = 1.0)
-                x2D, y2D, _ = proj3d.proj_transform(self.handPos[1][i], self.handPos[0][i], self.handPos[2][i], self.axisPos.get_proj())
-                self.axisPos.annotate('Start', xy = (x2D, y2D), xytext = (-30, 0),
-                                 textcoords = 'offset points', ha = 'right', va = 'bottom',
-                                 bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'cornflowerblue', alpha = 0.45),
-                                 arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+                #
+                self.axisPos.scatter(self.handPos[0][i], self.handPos[1][i], self.handPos[2][i], color = 'yellowgreen',
+                                marker = 'o', s = 200, alpha = 0.75)
+                x2D, y2D, _ = proj3d.proj_transform(self.handPos[0][i], self.handPos[1][i], self.handPos[2][i], self.axisPos.get_proj())
+                self.annStart = self.axisPos.annotate('Start', xy = (x2D, y2D), xytext = (-30, 0),
+                                      textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                      bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'yellowgreen', alpha = 0.65),
+                                      arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
             elif i == len(self.handPos[0]) - 1:
-                self.axisPos.scatter(self.handPos[1][i], self.handPos[0][i], self.handPos[2][i], color = 'forestgreen',
-                                marker = 'v', s = 175, alpha = 1.0)
-                x2D, y2D, _ = proj3d.proj_transform(self.handPos[1][i], self.handPos[0][i], self.handPos[2][i], self.axisPos.get_proj())
-                self.axisPos.annotate('Current', xy = (x2D, y2D), xytext = (80, 0),
-                                 textcoords = 'offset points', ha = 'right', va = 'bottom',
-                                 bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'forestgreen', alpha = 0.45),
-                                 arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+                #
+                self.axisPos.scatter(self.handPos[0][i], self.handPos[1][i], self.handPos[2][i], color = 'gold',
+                                marker = 'o', s = 200, alpha = 0.75, label = 'Target')
+                x2D, y2D, _ = proj3d.proj_transform(self.handPos[0][i], self.handPos[1][i], self.handPos[2][i], self.axisPos.get_proj())
+                self.annTarget = self.axisPos.annotate('Target', xy = (x2D, y2D), xytext = (80, 0),
+                                       textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                       bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'gold', alpha = 0.65),
+                                       arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
             else:
-                self.axisPos.scatter(self.handPos[1][i], self.handPos[0][i], self.handPos[2][i], color = 'firebrick',
+                #
+                self.axisPos.scatter(self.handPos[0][i], self.handPos[1][i], self.handPos[2][i], color = 'firebrick',
                                 marker = '.', s = 170, alpha = 0.50)
+
+        #
+        self.axisVel.set_title('Hand Velocity Norm', fontweight = 'bold', fontsize = 16)
+        self.axisVel.set_xlabel('Time [s]', fontsize = 11)
+        self.axisVel.set_ylabel('[mm/s]', fontsize = 11)
+        self.axisVel.set_xlim(min(self.t), max(self.t))
+        self.axisVel.set_ylim(0.0, max(self.handVel) + 5)
+        self.axisVel.spines['left'].set_color('teal')
+        self.axisVel.spines['left'].set_linewidth(3)
+        self.axisVel.plot(self.t, self.handVel, color = 'teal', linewidth = 1.65, label = 'Vel [mm/s]')
+
+
+        # ******************* #
+        #   FUNCTION: update  #
+        # ******************* #
+        def update(i):
+            #
+            oldAnnStart = self.annStart
+            x2D, y2D, _ = proj3d.proj_transform(self.handPos[0][0], self.handPos[1][0], self.handPos[2][0], self.axisPos.get_proj())
+            self.annStart = self.axisPos.annotate('Start', xy = (x2D, y2D), xytext = (-30, 0),
+                                                   textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                                   bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'yellowgreen', alpha = 0.65),
+                                                   arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+            oldAnnStart.remove()
+
+            #
+            oldAnnTarget = self.annTarget
+            l = len(self.handPos[0]) - 1
+            x2D, y2D, _ = proj3d.proj_transform(self.handPos[0][l], self.handPos[1][l], self.handPos[2][l], self.axisPos.get_proj())
+            self.annTarget = self.axisPos.annotate('Target', xy = (x2D, y2D), xytext = (80, 0),
+                                                    textcoords = 'offset points', ha = 'right', va = 'bottom',
+                                                    bbox = dict(boxstyle = 'round, pad = 0.5', fc = 'gold', alpha = 0.65),
+                                                    arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3, rad = 0'))
+            oldAnnTarget.remove()
+
+        #
+        a = anim.FuncAnimation(self.fig, update, frames = 1000)
+        self.handWindow.mainloop()
 
 
     # ************************ #
