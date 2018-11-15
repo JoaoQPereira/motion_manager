@@ -6,6 +6,7 @@ import time
 import numpy as np
 import math
 import Tkinter as tk
+import ttk
 import tkMessageBox
 import tkFont
 import matplotlib.gridspec as gridspec
@@ -50,6 +51,7 @@ class JointStates:
             self.save = 1
             self.tStart = time
             self.refTime = self.tStart
+            self.severalCallback = 0
             # Open files to store the joints position and velocity
             self.fPos = open(self.filePos, 'a')
             self.fVel = open(self.fileVel, 'a')
@@ -90,7 +92,7 @@ class JointStates:
         elapsedTime = (dt.now() - self.refTime).total_seconds()
 
         # Get and save the joints values, if the elapsed time is greater that 0.075 seconds
-        if self.save and elapsedTime >= 0.1:
+        if self.save and elapsedTime >= 0.25:
             for allJoints_name in data.name:
                 # Finds the joints name to save
                 if allJoints_name in self.joints_names:
@@ -104,11 +106,17 @@ class JointStates:
             if len(pos) == self.nJoints and len(vel) == self.nJoints:
                 # Determines the time elapsed since the beginning of the movement
                 t = (dt.now() - self.tStart).total_seconds()
+                # If this is the first time that the callback is called, it stores the elapsed time
+                if not self.severalCallback: self.firstTime = t
+                t = t - self.firstTime
                 self.refTime = dt.now()
+
                 # Save the time and the joints position in the file
                 self.fPos.write('{}, {} \n'.format(t, str(pos)[1:-1]))
                 # Save the time and the joints velocity in the file
                 self.fVel.write('{}, {} \n'.format(t, str(vel)[1:-1]))
+                # Increment the auxiliary variable (mumber of times the callback is called)
+                self.severalCallback += 1
 
 
     # ************************************************ #
@@ -634,12 +642,13 @@ class Application:
         # Window settings
         self.root = tk.Tk()
         self.root.title("[Sawyer Robot]: Monitoring of the Movements")
-        self.root.geometry("550x375")
+        self.root.geometry("550x380")
         self.root.configure(background = 'gainsboro')
 
         # Font settings
         fontTitle = tkFont.Font(family = 'Helvetica', size = 12, weight = 'bold')
         self.fontButton = tkFont.Font(family = 'system', size = 10)
+        self.fontStatus = tkFont.Font(family = 'system', size = 9)
         self.root.option_add('*Dialog.msg.font', 'system 10')
 
         # ---------------> Frame settings for the recording buttons <---------------
@@ -663,7 +672,7 @@ class Application:
         resultsFrame = tk.Frame(self.root, width = 50, height = 50, background = 'white')
         resultsLabel = tk.Label(resultsFrame, text = "Show the results of the:", font = fontTitle, background = 'white')
         resultsLabel.pack(pady = 10)
-        # Joints Button
+        # Joints Buttoncoisa
         buttonJoints = tk.Button(resultsFrame, text = 'Joints', command = self.bJoints)
         buttonJoints.config(height = 2, width = 12, bg = 'goldenrod', font = self.fontButton)
         buttonJoints.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
@@ -672,9 +681,13 @@ class Application:
         buttonHand.config(height = 2, width = 12, bg = 'darkkhaki',  font = self.fontButton)
         buttonHand.pack(side = 'left', padx = 12, pady = 10, expand = 'yes')
 
+        self.status = tk.Label(self.root, text = " ")
+        self.status.config(font = self.fontStatus, bg = 'white', bd = 1, relief = 'ridge', anchor = 'nw')
+
         # Frames settings
         recordFrame.pack(side = 'top', pady = 50, fill = 'none', expand = 'no')
         resultsFrame.pack(side = 'top', fill = 'none', expand = 'no')
+        self.status.pack(side = 'bottom', fill = 'x', expand = 'no')
         self.root.mainloop()
 
 
@@ -683,6 +696,8 @@ class Application:
     # ************************************************ #
     def bStop(self):
         if self.run:
+            # Update the satus bar
+            self.status.configure(text = 'Recording: Stop  |  Results: Available')
             # Configuration variables
             self.stop = 1
             self.clear = 0
@@ -697,12 +712,19 @@ class Application:
     # ************************************************ #
     def bClear(self):
         if not self.run:
+            # Update the satus bar
+            self.status.configure(text = 'Recording: Stop  |  Results: Unavailable')
             # Configuration variables
             self.clear = 1
             self.start = 0
             self.stop = 0
             # Clean files to store the joints position and velocity
             self.jointStates.clearFiles()
+        else:
+            # Show a plot error if the movement recording isn't stopped
+            tkMessageBox.showerror(title = 'Upssss!!!',
+                                  message = 'Cannot clean the information about the executed movement! \nMake sure the movement recording is stopped.',
+                                  parent = self.root)
 
 
     # ************************************************ #
@@ -710,6 +732,8 @@ class Application:
     # ************************************************ #
     def bStart(self):
         if not self.run and not self.stop:
+            # Update the satus bar
+            self.status.configure(text = 'recording the movement...')
             # Configuration variables
             self.start = 1
             self.run = 1
@@ -722,6 +746,8 @@ class Application:
                                                 message = 'The information about the previously executed movement will be clean.\nDo you want to contine?',
                                                 parent = self.root)
             if question == 'yes':
+                # Update the satus bar
+                self.status.configure(text = 'recording the movement...')
                 # Configuration variables
                 self.start = 1
                 self.run = 1
