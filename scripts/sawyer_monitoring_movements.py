@@ -1,14 +1,15 @@
 #!/usr/bin/env python
-import rospy
 import os
 import errno
 import time
+import rospy
 import numpy as np
 import math
 import Tkinter as tk
 import ttk
 import tkMessageBox
 import tkFont
+import scipy.signal
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as anim
 from mpl_toolkits.mplot3d import proj3d
@@ -92,7 +93,7 @@ class JointStates:
         elapsedTime = (dt.now() - self.refTime).total_seconds()
 
         # Get and save the joints values, if the elapsed time is greater that 0.075 seconds
-        if self.save and elapsedTime >= 0.25:
+        if self.save and elapsedTime >= 0.10:
             for allJoints_name in data.name:
                 # Finds the joints name to save
                 if allJoints_name in self.joints_names:
@@ -223,7 +224,6 @@ class PlotJointsResults:
                                 # Get and sabe the joints velocity
                                 velocity.append((float(value) * 180) / math.pi)
 
-
     # ************************************************ #
     #                FUNCTION: plotData                #
     # ************************************************ #
@@ -247,9 +247,11 @@ class PlotJointsResults:
             axisVel.set_ylim([min(jointVel) - 5, max(jointVel) + 5])
             axisVel.spines['left'].set_color('teal')
             axisVel.spines['left'].set_linewidth(2)
-            v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel [deg/s]')
+            jointVelWithoutNoise = scipy.signal.savgol_filter(jointVel, 15, 2)
+            vWithoutNoise = axisVel.plot(self.t, jointVelWithoutNoise, color = 'black', linewidth = 3, label = 'Vel without Noise [deg/s]')
+            v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel Original [deg/s]')
             # Legend
-            lns = p + v
+            lns = p + vWithoutNoise + v
             labs = [l.get_label() for l in lns]
             leg = axisPos.legend(lns, labs, loc = 'lower right', fontsize = 9.5, shadow = True, fancybox = True)
             leg.get_frame().set_alpha(0.5)
@@ -390,6 +392,7 @@ class PlotHandResults:
         pos = [0] * 3
         diff = [0] * 3
         # Variables to plot: the time and the hand velocity
+        self.handVelNoise = []
         self.handVel = []
         self.t = []
 
@@ -411,7 +414,6 @@ class PlotHandResults:
                     # Get the time
                     time = float(jointsVelocity[0])
                     jointsVelocity = np.asarray(jointsVelocity[1:8], dtype = np.float64, order = 'C')
-                    np.place(jointsVelocity, jointsVelocity == -0.001, 0.00)
                     # World transformation matrix
                     T = self.TWorld
 
@@ -449,9 +451,14 @@ class PlotHandResults:
 
                     # Get the time and the hand velocity
                     self.t.append(time)
-                    self.handVel.append(handVelLinearNorm)
-                    # Save the time and the hand velocity in the file
-                    fVel.write('{}, {}\n'.format(time, handVelLinearNorm))
+                    self.handVelNoise.append(handVelLinearNorm)
+
+        # Savitzky-Golay filter
+        self.handVel = scipy.signal.savgol_filter(self.handVelNoise, 15, 2)
+        # Save the time and the hand velocity in the file
+        for time, velocity in zip(self.t, self.handVel):
+            fVel.write('{}, {}\n'.format(time, velocity))
+
 
 
     # ************************************************ #
