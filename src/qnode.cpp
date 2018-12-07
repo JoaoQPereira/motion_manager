@@ -367,6 +367,7 @@ bool QNode::getElements(scenarioPtr scene)
     robot_part robot_torso_specs;
     arm robot_arm_specs; // specs of the arms
     barrett_hand robot_hand_specs; // specs of the barret hand
+    electric_gripper robot_gripper_specs; // specs of the electric parallel gripper
     robot_part robot_head_specs; // specs of the head
     std::string Hname; // name of the robot
     // **** pose info **** //
@@ -484,7 +485,7 @@ bool QNode::getElements(scenarioPtr scene)
     }
 
     client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-    if(scenarioID == 1 || scenarioID ==  2 || scenarioID == 4) // Toy Vehicle scenarios (ARoS, Avatar, Sawyer)
+    if(scenarioID == 1 || scenarioID ==  2 || scenarioID == 4 || scenarioID == 6) // Toy Vehicle scenarios (ARoS, Avatar, Sawyer)
     {
         objs_prefix.push_back("BlueColumn");     // obj_id = 0
         objs_prefix.push_back("GreenColumn");    // obj_id = 1
@@ -1150,7 +1151,7 @@ bool QNode::getElements(scenarioPtr scene)
         DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
     thumb = jarde_hand.thumb;
-    thumb.uTx = DH_params_vec.at(0)*10mat_right00; // [mm]
+    thumb.uTx = DH_params_vec.at(0)*1000; // [mm]
     thumb.uTy = DH_params_vec.at(1)*1000; // [mm]
     thumb.uTz = DH_params_vec.at(2)*1000; // [mm]
     thumb.thumb_specs.alpha = std::vector<double>(5);
@@ -1168,7 +1169,12 @@ bool QNode::getElements(scenarioPtr scene)
 
     jarde_hand.thumb = thumb;
 #endif
+    //*************************************************************************************************
+    //                                  ELETRIC PARALLEL GRIPPER
+    //*************************************************************************************************
+#if HAND == 2
 
+#endif
     //*************************************************************************************************
     //                                          HEAD
     //*************************************************************************************************
@@ -1423,7 +1429,7 @@ bool QNode::getElements(scenarioPtr scene)
         Q_EMIT newElement(infoLine);
         // create robot
         scene->addRobot(robotPtr(rptr));
-#else
+#elif HAND == 0
         Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, jarde_hand,
                                 rposture, lposture,
                                 min_rlimits,max_rlimits,
@@ -1471,6 +1477,64 @@ bool QNode::getElements(scenarioPtr scene)
         Q_EMIT newElement(infoLine);
         // create robot
         scene->addRobot(rptr);
+#elif HAND == 2
+        // ****************** ELECTRIC PARALLEL GRIPPER
+        robot_gripper_specs.maxAperture = maxAp;
+        robot_gripper_specs.minAperture = minAp;
+        robot_gripper_specs.A1 = A1;
+
+        //add the joints offset
+        std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+        if (scenarioID == 1 || scenarioID == 3) // ARoS
+            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
+        else // Sawyer scenarios
+        {
+            lposture = rposture;
+            min_llimits = min_rlimits;
+            max_llimits = max_rlimits;
+        }
+#if HEAD == 1
+        Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_gripper_specs,
+                                robot_head_specs, rposture, lposture,
+                                min_rlimits, max_rlimits,
+                                min_llimits, max_llimits);
+#else
+        Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_gripper_specs,
+                                rposture, lposture,
+                                min_rlimits, max_rlimits,
+                                min_llimits, max_llimits);
+
+#endif
+        // **************************** TRANSFORMATION MATRICES
+        rptr->setMatRight(mat_right);
+        if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios
+            rptr->setMatLeft(mat_left);
+        else if(scenarioID > 3) // Sawyer scenarios
+            rptr->setMatLeft(mat_right);
+
+        // **************************** RIGHT JOINTS
+        std::vector<double> rightp;
+        rptr->getRightPosture(rightp);
+
+        // without offsets
+        std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
+
+        std::vector<string> rj = std::vector<string>(rightp.size());
+        for (size_t i=0; i<rightp.size(); i++ )
+        {
+            rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+            Q_EMIT newJoint(rj.at(i));
+        }
+
+        rptr->getLeftPosture(rightp);
+
+        // **************************** CREATE ROBOT
+        // display info of the robot
+        infoLine = rptr->getInfoLine();
+        Q_EMIT newElement(infoLine);
+        // create robot
+        scene->addRobot(robotPtr(rptr));
 #endif
     }
     else

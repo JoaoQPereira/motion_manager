@@ -135,6 +135,14 @@ namespace motion_manager
         double phi3; /**< angular displacement between the 1st and the 2nd phalax in [rad] */
     } barrett_hand;
 
+    /** this struct defines the electric gripper */
+    typedef struct
+    {
+        double maxAperture; /**< [mm] max aperture of the gripper in [mm] */
+        double minAperture; /**< [mm] min aperture of the gripper in [mm] */
+        double A1; /**< length of the 1st part of the finger in [mm] */
+    } electric_gripper;
+
     /** this struct defines a human finger */
     typedef struct
     {

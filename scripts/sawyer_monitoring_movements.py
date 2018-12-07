@@ -20,6 +20,9 @@ from datetime import datetime as dt
 from numpy import linalg as LA
 
 
+
+
+
 # -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
 #                                                                                                                                    #
 #                                                         Class JointStates                                                          #
@@ -93,7 +96,7 @@ class JointStates:
         elapsedTime = (dt.now() - self.refTime).total_seconds()
 
         # Get and save the joints values, if the elapsed time is greater that 0.075 seconds
-        if self.save and elapsedTime >= 0.10:
+        if self.save and elapsedTime >= 0.075:
             for allJoints_name in data.name:
                 # Finds the joints name to save
                 if allJoints_name in self.joints_names:
@@ -126,7 +129,7 @@ class JointStates:
     def configFiles(self):
         # Files names
         self.filePos = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_pos.text'
-        self.fileVel = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_vel.text'
+        self.fileVel = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_vel_noise.text'
         filesNames = [self.filePos, self.fileVel]
 
         for file in filesNames:
@@ -155,6 +158,117 @@ class JointStates:
 
 
 
+
+
+# -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+#                                                                                                                                    #
+#                                                         Class SavGolFilter                                                         #
+#                                                                                                                                    #
+# -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
+class SavGolFilter:
+    # ************************************************ #
+    #                  FUNCTION: init                  #
+    # ************************************************ #
+    def __init__(self):
+        # Configuration variables
+        self.nJoints = 7
+        self.fileData = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_vel_noise.text'
+        #
+        self.configFiles()
+
+
+    # ************************************************ #
+    #                 FUNCTION: getData                #
+    # ************************************************ #
+    def getData(self):
+        #
+        self.jointsVelNoise = [[] for i in range(self.nJoints)]
+        self.t = []
+
+        with open(self.fileData) as f:
+            # Read each line of the file
+            for line in f:
+                # Ignore the first two lines
+                if not line.strip().startswith("#"):
+                    # Get the joints values without commas
+                    jointsVelocities = [elt.strip() for elt in line.split(',')]
+                    self.t.append(jointsVelocities[0])
+
+                    for value, velocity in zip(jointsVelocities[1:8], self.jointsVelNoise):
+                        # Get and sabe the joints velocity
+                        velocity.append(float(value) + 0.001)
+
+
+    # ************************************************ #
+    #                 FUNCTION: filterData             #
+    # ************************************************ #
+    def filterData(self):
+        #
+        self.jointsVel = []
+        windowLength = 13
+        order = 3
+
+        for jointVel in self.jointsVelNoise:
+            #
+            velWithoutNoise = scipy.signal.savgol_filter(np.array(jointVel, dtype = np.float64), windowLength, order, mode = 'nearest')
+            self.jointsVel.append(velWithoutNoise.tolist())
+
+
+    # ************************************************ #
+    #                 FUNCTION: configFiles            #
+    # ************************************************ #
+    def configFiles(self):
+        # Files names
+        self.fileVel = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_vel.text'
+
+        # If the file doesn't exist, it is created
+        if not os.path.exists(os.path.dirname(self.fileVel)):
+            try:
+                os.makedirs(os.path.dirname(self.fileVel))
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        # Open the file
+        with open(self.fileVel, 'w') as f:
+            f.write('# SMOOTHED JOINTS VELOCITY\n')
+            f.write('# Time [s], J0 [rad/s], J1 [rad/s], J2 [rad/s], J3 [rad/s], J4 [rad/s], J5 [rad/s], J6 [rad/s]\n')
+            # Close the file
+            f.close()
+
+
+    # ************************************************ #
+    #               FUNCTION: saveFilterData           #
+    # ************************************************ #
+    def saveFilterData(self):
+        #
+        file = open(self.fileVel, 'a')
+
+        for t, value in zip(self.t, range(0 , len(self.jointsVel[0]))):
+            #
+            jointsVelFilter = [joint[value] for joint in self.jointsVel]
+            jointsVelFilter = [round(value, 4) for value in jointsVelFilter]
+            jointsVelFilter = ', '.join(map(repr, jointsVelFilter))
+            #
+            file.write('{}, {}\n'.format(t, jointsVelFilter))
+
+        #
+        file.close()
+
+
+    # ************************************************ #
+    #               FUNCTION: clearFiles               #
+    # ************************************************ #
+    def clearFiles(self):
+        # Clean files to store the joints position and velocity
+        file = open(self.fileVel, 'w').close()
+        # Write the first two lines of the files: (i) the file name and (ii) the stored variables and their units of measure
+        self.configFiles()
+
+
+
+
+
 # -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
 #                                                                                                                                    #
 #                                                      Class PlotJointsResults                                                       #
@@ -170,7 +284,7 @@ class PlotJointsResults:
         self.axisPos = [[] for i in range(self.nJoints)]
         self.axisVel = [[] for i in range(self.nJoints)]
         # Get the joints position and velocity to plot
-        self.saveData()
+        self.getData()
 
         # Window and figure settings
         jointsWindow = tk.Toplevel(root)
@@ -192,9 +306,9 @@ class PlotJointsResults:
 
 
     # ************************************************ #
-    #                FUNCTION: saveData                #
+    #                FUNCTION: getData                 #
     # ************************************************ #
-    def saveData(self):
+    def getData(self):
         # Files names
         filePos = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_pos.text'
         fileVel = '/home/sara/catkin_ws/devel/lib/motion_manager/results/robot/Joints/joints_vel.text'
@@ -223,6 +337,8 @@ class PlotJointsResults:
                             for value, velocity in zip(jointsValues[1:8], self.vel):
                                 # Get and sabe the joints velocity
                                 velocity.append((float(value) * 180) / math.pi)
+            #
+            f.close()
 
     # ************************************************ #
     #                FUNCTION: plotData                #
@@ -247,14 +363,14 @@ class PlotJointsResults:
             axisVel.set_ylim([min(jointVel) - 5, max(jointVel) + 5])
             axisVel.spines['left'].set_color('teal')
             axisVel.spines['left'].set_linewidth(2)
-            jointVelWithoutNoise = scipy.signal.savgol_filter(jointVel, 15, 2)
-            vWithoutNoise = axisVel.plot(self.t, jointVelWithoutNoise, color = 'black', linewidth = 3, label = 'Vel without Noise [deg/s]')
             v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel Original [deg/s]')
             # Legend
-            lns = p + vWithoutNoise + v
+            lns = p + v
             labs = [l.get_label() for l in lns]
             leg = axisPos.legend(lns, labs, loc = 'lower right', fontsize = 9.5, shadow = True, fancybox = True)
             leg.get_frame().set_alpha(0.5)
+
+
 
 
 
@@ -380,6 +496,9 @@ class PlotHandResults:
                         else:
                             # Save the hand position in z in the file
                             fPos.write('{}, '.format(T[i][3]))
+            #
+            f.close()
+            fPos.close()
 
 
     # ************************************************ #
@@ -392,7 +511,6 @@ class PlotHandResults:
         pos = [0] * 3
         diff = [0] * 3
         # Variables to plot: the time and the hand velocity
-        self.handVelNoise = []
         self.handVel = []
         self.t = []
 
@@ -451,14 +569,14 @@ class PlotHandResults:
 
                     # Get the time and the hand velocity
                     self.t.append(time)
-                    self.handVelNoise.append(handVelLinearNorm)
+                    self.handVel.append(handVelLinearNorm)
+                    fVel.write('{}, {}\n'.format(time, handVelLinearNorm))
 
-        # Savitzky-Golay filter
-        self.handVel = scipy.signal.savgol_filter(self.handVelNoise, 15, 2)
-        # Save the time and the hand velocity in the file
-        for time, velocity in zip(self.t, self.handVel):
-            fVel.write('{}, {}\n'.format(time, velocity))
-
+            #
+            fJointPos.close()
+            fJointVel.close()
+            fHandPos.close()
+            fVel.close()
 
 
     # ************************************************ #
@@ -621,6 +739,8 @@ class PlotHandResults:
 
 
 
+
+
 # -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* #
 #                                                                                                                                    #
 #                                                         Class Application                                                          #
@@ -638,6 +758,8 @@ class Application:
         self.run = 0
         # Instance an object of the JointsStates class (it is used to read the robot's joints)
         self.jointStates = JointStates()
+        #
+        self.filterData = SavGolFilter()
         # Launch the application interface
         self.interface()
 
@@ -712,6 +834,10 @@ class Application:
             self.start = 0
             # Unsubscribe the callback associted with "/robot/joint_states" topic
             self.jointStates.unsubscribeTopic()
+            #
+            self.filterData.getData()
+            self.filterData.filterData()
+            self.filterData.saveFilterData()
 
 
     # ************************************************ #
@@ -727,6 +853,7 @@ class Application:
             self.stop = 0
             # Clean files to store the joints position and velocity
             self.jointStates.clearFiles()
+            self.filterData.clearFiles()
         else:
             # Show a plot error if the movement recording isn't stopped
             tkMessageBox.showerror(title = 'Upssss!!!',
@@ -762,6 +889,7 @@ class Application:
                 self.stop = 0
                 # Clean files to store the joints position and velocity
                 self.jointStates.clearFiles()
+                self.filterData.clearFiles()
                 # Subscribe the "/robot/joint_states" topic
                 self.jointStates.subscribeTopic(dt.now())
 

@@ -120,6 +120,7 @@ set (HEAD 1)
 ## Hand configuration
 # HAND=0. Human hand
 # HAND=1. Barrett hand
+# HAND=2, Electric Parallel Gripper
 set (HAND 1)
 # OPEN_CLOSE_HAND=0. do not use the open and close hand functions
 # OPEN_CLOSE_HAND=1. use the open and close hand functions
