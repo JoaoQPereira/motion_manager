@@ -48,6 +48,7 @@ QNode::QNode(int argc, char** argv ) :
 {
     nodeName = "motion_manager";
     TotalTime = 0.0;
+#if HAND == 0
     right_hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
     left_hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
     right_2hand_pos.assign(3,0.0f);
@@ -56,14 +57,15 @@ QNode::QNode(int argc, char** argv ) :
     left_2hand_pos.assign(3,0.0f);
     left_2hand_vel.assign(3,0.0f);
     left_2hand_force.assign(3,0.0f);
-    robotPosture.assign(7,0.0f);
-    got_scene = false;
-    obj_in_hand = false;
-#if HAND ==1
     firstPartLocked.assign(3,false);
     needFullOpening.assign(3,0);
     closed.assign(3,false);
+#elif HAND == 1
+    closed = false;
 #endif
+    robotPosture.assign(7,0.0f);
+    got_scene = false;
+    obj_in_hand = false;
 
     // logging
     init();
@@ -122,7 +124,7 @@ bool QNode::loadScenario(const std::string& path,int id)
     // ------------------------------------------------------------------------------------------- //
     //                                   ROBOT SUBSCRIBERS                                         //
     // Sawyer scenarios
-    if(id >= 3)
+    if(id >= 2)
     {
         // Topic that contains the position of the Sawyer joints
         subJoints_state_robot = n.subscribe("/robot/joint_states", 1, &QNode::SawyerJointsCallback, this);
@@ -172,7 +174,7 @@ bool QNode::loadScenario(const std::string& path,int id)
 
         switch(id)
         {
-        case 0: case 1: case 3:
+        case 0: case 2: case 4:
             // Assembly scenario: the Toy vehicle with ARoS
             // Assembly scenario: the Toy vehicle with Jarde
             // Assembly scenario: the Toy vehicle with Sawyer
@@ -195,7 +197,7 @@ bool QNode::loadScenario(const std::string& path,int id)
             // Base (obj_id = 8)
             subBase = n.subscribe("/vrep/Base_pose",1,&QNode::BaseCallback,this);
             break;
-        case 2: case 4:
+        case 1: case 3:
             // Human assistance scenario: Serving a drink with ARoS
             // Human assistance scenario: Serving a drink with Sawyer
             // Bottle Tea (obj_id = 0)
@@ -210,7 +212,7 @@ bool QNode::loadScenario(const std::string& path,int id)
             subCup1 = n.subscribe("/vrep/Cup1_pose",1,&QNode::Cup1Callback,this);
             break;
         }
-#if MOVEIT==1
+#if MOVEIT == 1
         // planning scene of RViZ
         planning_scene_interface_ptr.reset(new moveit::planning_interface::PlanningSceneInterface());
 #endif
@@ -222,7 +224,7 @@ bool QNode::loadScenario(const std::string& path,int id)
 }
 
 
-#if MOVEIT==1
+#if MOVEIT == 1
 void QNode::loadRVizScenario(std::vector<objectPtr> &objs)
 {
     vector<string> rem_object_ids;
@@ -316,7 +318,7 @@ void QNode::resetSimTime()
 
 void QNode::resetGlobals()
 {
-#if HAND == 1
+#if HAND == 0
     for (int i =0; i < 3; ++i)
     {
         closed.at(i)=false;
@@ -366,8 +368,6 @@ bool QNode::getElements(scenarioPtr scene)
     // **** robot info **** //
     robot_part robot_torso_specs;
     arm robot_arm_specs; // specs of the arms
-    barrett_hand robot_hand_specs; // specs of the barret hand
-    electric_gripper robot_gripper_specs; // specs of the electric parallel gripper
     robot_part robot_head_specs; // specs of the head
     std::string Hname; // name of the robot
     // **** pose info **** //
@@ -407,24 +407,25 @@ bool QNode::getElements(scenarioPtr scene)
     Matrix4d mat_r_hand;
     Matrix4d mat_l_hand;
 
-    // **** Barrett Hand parameters **** //
-    double maxAp; //[m]
-    double Aw; // [m]
-    double A1; // [m]
-    double A2; // [m]
-    double A3; // [m]
-    double D3; // [m]
+#if HAND == 0
+     // **** Barrett Hand parameters **** //
+    barrett_hand robot_hand_specs; // specs of the barret hand
+    double maxAp; //[mm]
+    double Aw; // [mm]
+    double A1; // [mm]
+    double A2; // [mm]
+    double A3; // [mm]
+    double D3; // [mm]
     double phi2; // [rad]
     double phi3; // [rad]
-    // **** Human hand parameters **** //
-    double max_human_Ap; //[m]
-    human_hand jarde_hand;
-    jarde_hand.fingers = std::vector<human_finger>(4);
-    human_finger fing1 = jarde_hand.fingers.at(0);
-    human_finger fing2 = jarde_hand.fingers.at(1);
-    human_finger fing3 = jarde_hand.fingers.at(2);
-    human_finger fing4 = jarde_hand.fingers.at(3);
-    human_thumb thumb = jarde_hand.thumb;
+#elif HAND == 1
+    // **** Electric Parallel Gripper parameters **** //
+    electric_gripper robot_gripper_specs; // specs of the electric parallel gripper
+    double maxAp; //[mm]
+    double minAp;//[mm]
+    double A1; //[mm]
+    double D3; //[mm]
+#endif
 
     // **** torso parameters **** //
     robot_part torso;  // parameters of the torso (ARoS, Jarde and Sawyer)
@@ -453,9 +454,8 @@ bool QNode::getElements(scenarioPtr scene)
     int scenarioID  = scene->getID();
 
     if(scenarioID == 0)
-    {
         throw string("No scenario");
-    }
+
 
     //*************************************************************************************************
     //                               OBJECTS IN THE SCENARIO
@@ -471,7 +471,7 @@ bool QNode::getElements(scenarioPtr scene)
         throw string("Communication error");
     }
 
-    if(scenarioID == 3 || scenarioID == 5)
+    if(scenarioID == 2 || scenarioID == 4)
     {
         srvi.request.signalName = NPOSES;
         add_client.call(srvi);
@@ -485,7 +485,7 @@ bool QNode::getElements(scenarioPtr scene)
     }
 
     client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-    if(scenarioID == 1 || scenarioID ==  2 || scenarioID == 4 || scenarioID == 6) // Toy Vehicle scenarios (ARoS, Avatar, Sawyer)
+    if(scenarioID == 1 || scenarioID ==  3 || scenarioID == 5) // Toy Vehicle scenarios (ARoS, Sawyer)
     {
         objs_prefix.push_back("BlueColumn");     // obj_id = 0
         objs_prefix.push_back("GreenColumn");    // obj_id = 1
@@ -498,7 +498,7 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Base");           // obj_id = 8
         objs_prefix.push_back("Table");          // obj_id = 9
     }
-    else if (scenarioID == 3 || scenarioID == 5) // Drinking Service scenarios (ARoS, Sawyer)
+    else if (scenarioID == 2 || scenarioID == 4) // Drinking Service scenarios (ARoS, Sawyer)
     {
         objs_prefix.push_back("BottleTea");      // obj_id = 0
         objs_prefix.push_back("BottleCoffee");   // obj_id = 1
@@ -518,7 +518,10 @@ bool QNode::getElements(scenarioPtr scene)
         if (srvs.response.result == 1)
             obj_info_str = srvs.response.signalValue;
         else
+        {
+            throw string("Error: Couldn't get the information of the object");
             succ = false;
+        }
 
         if (succ)
         {
@@ -586,7 +589,7 @@ bool QNode::getElements(scenarioPtr scene)
             // add the object to the scenario
             scene->addObject(objectPtr(ob));
             // add the pose to the scenario
-            if(scenarioID == 3 || scenarioID == 5) // Drinking Service scenarios (ARoS, Sawyer)
+            if(scenarioID == 2 || scenarioID == 4) // Drinking Service scenarios (ARoS, Sawyer)
             {
                 Pose* ps = new Pose(signPrefix+string("_home"),tarRight_pos,tarRight_or,true,cnt_obj);
                 Q_EMIT newPose(ps->getName());
@@ -601,10 +604,11 @@ bool QNode::getElements(scenarioPtr scene)
         }
     }
 
+
     //*************************************************************************************************
     //                               POSES IN THE SCENARIO
     //*************************************************************************************************
-    if(scenarioID == 3 || scenarioID == 5) // Drinking Service scenarios (ARoS, Sawyer)
+    if(scenarioID == 2 || scenarioID == 4) // Drinking Service scenarios (ARoS, Sawyer)
     {
         // pose_id = 0
         poses_prefix.push_back("BottleJuice_pose1");
@@ -629,7 +633,10 @@ bool QNode::getElements(scenarioPtr scene)
             if (srvs.response.result == 1)
                 pose_info_str = srvs.response.signalValue;
             else
+            {
+                throw string("Error: Couldn't get the information of the pose");
                 succ = false;
+            }
 
             if (succ)
             {
@@ -664,28 +671,31 @@ bool QNode::getElements(scenarioPtr scene)
         }
     }
 
+
     //*************************************************************************************************
     //                                        ROBOT
     //*************************************************************************************************
     add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-    if(scenarioID <= 3)
+    if(scenarioID == 1 || scenarioID == 2)
         srvs.request.signalName = string("HumanoidName");
-    else
+    else if (scenarioID >= 3)
         srvs.request.signalName = string("RobotName");
     add_client.call(srvs);
     if (srvs.response.result == 1)
-        Hname= srvs.response.signalValue;
+        Hname = srvs.response.signalValue;
     else
+    {
+        throw string("Error: Couldn't get the name of the robot");
         succ = false;
+    }
+
 
     //*************************************************************************************************
     //                                     ROBOT ARM (OR ARMS)
     //*************************************************************************************************
     // get the handles of both arms
-    if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+    if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios (Toy Vehicle, Drinking Service)
         succ = getArmsHandles(0);
-    else if(scenarioID == 2) // Toy Vehicle scenarios (Avatar)
-        succ = getArmsHandles(1);
     else if(scenarioID >= 3) // Sawyer scenarios (Toy Vehicle, Drinking Service)
         succ = getArmsHandles(2);
 
@@ -695,29 +705,14 @@ bool QNode::getElements(scenarioPtr scene)
     // ----------------------------------------
     //                  Right arm
     // ----------------------------------------
-    if(scenarioID != 2) // ARoS and Sawyer robot
+    srvs.request.signalName = string("mat_right_arm");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        mat_right_arm_str = srvs.response.signalValue;
+    else
     {
-        srvs.request.signalName = string("mat_right_arm");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_right_arm_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
-    }
-    else // Avatar robot
-    {
-        srvs.request.signalName = string("mat_arms");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            mat_right_arm_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the arms");
-        }
+        succ = false;
+        throw string("Error: Couldn't get the transformation matrix of the arms");
     }
 
     if(!mat_right_arm_vec.empty())
@@ -727,32 +722,9 @@ bool QNode::getElements(scenarioPtr scene)
         mat_right_arm_vec.push_back(static_cast<double>(((float*)mat_right_arm_str.c_str())[k]));
 
     // ----------------------------------------
-    //                  Right hand
-    // ----------------------------------------
-    if(scenarioID == 2) // Avatar robot
-    {
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("r_mat_hand");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            r_mat_hand_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the right hand");
-        }
-
-        if(!r_mat_hand_vec.empty())
-            r_mat_hand_vec.clear();
-        floatCount = r_mat_hand_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            r_mat_hand_vec.push_back(static_cast<double>(((float*)r_mat_hand_str.c_str())[k]));
-    }
-
-    // ----------------------------------------
     //                  Left arm
     // ----------------------------------------
-    if(scenarioID == 1 || scenarioID == 3) // ARoS
+    if(scenarioID == 1 || scenarioID == 2) // ARoS
     {
         srvs.request.signalName = string("mat_left_arm");
         add_client.call(srvs);
@@ -771,29 +743,6 @@ bool QNode::getElements(scenarioPtr scene)
             mat_left_arm_vec.push_back(static_cast<double>(((float*)mat_left_arm_str.c_str())[k]));
     }
 
-    // ----------------------------------------
-    //                  Left hand
-    // ----------------------------------------
-    if(scenarioID == 2)
-    {
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("l_mat_hand");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            l_mat_hand_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the transformation matrix of the left hand");
-        }
-
-        if(!l_mat_hand_vec.empty())
-            l_mat_hand_vec.clear();
-        floatCount = l_mat_hand_str.size()/sizeof(float);
-        for (int k=0;k<floatCount;++k)
-            l_mat_hand_vec.push_back(static_cast<double>(((float*)l_mat_hand_str.c_str())[k]));
-    }
-
     rows=0;
     for(int i=0;i<3;++i){
         for(int j=0;j<4;++j)
@@ -801,53 +750,31 @@ bool QNode::getElements(scenarioPtr scene)
             if(i==3 && j<3)
             {
                 mat_right(i,j) = 0;
-                if(scenarioID >= 1 || scenarioID <= 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios (Toy Vehicle, Drinking Service)
                     mat_left(i,j) = 0;
-                if(scenarioID == 2)
-                {
-                    mat_r_hand(i,j) = 0;
-                    mat_l_hand(i,j) = 0;
-                }
             }
             else if(i==3 && j==3)
             {
                 mat_right(i,j) = 1;
-                if(scenarioID >= 1 || scenarioID <= 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios (Toy Vehicle, Drinking Service)
                     mat_left(i,j) = 1;
-                if(scenarioID == 2) // Avatar scenario
-                {
-                    mat_r_hand(i,j) = 1;
-                    mat_l_hand(i,j) = 1;
-                }
             }
             else if(i<3 && j==3)
             {
                 mat_right(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios (Toy Vehicle, Drinking Service)
                     mat_left(i,j) = mat_left_arm_vec.at(j+rows*4)*1000; //[mm]
-                if(scenarioID == 2) // Avatar scenario
-                {
-                    mat_left(i,j) = mat_right_arm_vec.at(j+rows*4)*1000; //[mm]
-                    mat_r_hand(i,j) = 0;
-                    mat_l_hand(i,j) = 0;
-                }
-
             }
             else
             {
                 mat_right(i,j) = mat_right_arm_vec.at(j+rows*4);
-                if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios (Toy Vehicle, Drinking Service)
+                if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios (Toy Vehicle, Drinking Service)
                     mat_left(i,j) = mat_left_arm_vec.at(j+rows*4);
-                if(scenarioID == 2)
-                {
-                    mat_left(i,j) = mat_right_arm_vec.at(j+rows*4);
-                    mat_r_hand(i,j) = r_mat_hand_vec.at(j+rows*4);
-                    mat_l_hand(i,j) = l_mat_hand_vec.at(j+rows*4);;
-                }
             }
         }
         ++rows;
     }
+
 
     //*************************************************************************************************
     //                                     DH PARAMETERS
@@ -885,333 +812,186 @@ bool QNode::getElements(scenarioPtr scene)
         theta_offset.push_back(DH_params_vec.at(i+21)*static_cast<double>(M_PI)/180); // [rad]
     }
 
+
+#if HAND == 0
     //*************************************************************************************************
     //                                     BARRETT HAND
     //*************************************************************************************************
-#if HAND==1
+
     // ****************** MAX APERTURE
     add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
     srvf.request.signalName = string("maxAperture_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        maxAp= srvf.response.signalValue*1000;
+        maxAp = srvf.response.signalValue*1000;
     else
+    {
+        throw string("Error: Couldn't get the information of the maximum aperture");
         succ = false;
+    }
 
     // ****************** Aw
     srvf.request.signalName = string("Aw_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        Aw= srvf.response.signalValue*1000;
+        Aw = srvf.response.signalValue*1000;
     else
+    {
+        throw string("Error: Couldn't get the information of the Aw");
         succ = false;
+    }
 
     // ****************** A1
     srvf.request.signalName = string("A1_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        A1= srvf.response.signalValue*1000;
+        A1 = srvf.response.signalValue*1000;
     else
+    {
+        throw string("Error: Couldn't get the information of the A1");
         succ = false;
+    }
 
     // ****************** A2
     srvf.request.signalName = string("A2_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        A2= srvf.response.signalValue*1000;
+        A2 = srvf.response.signalValue*1000;
     else
+    {
+        throw string("Error: Couldn't get the information of the A2");
         succ = false;
+    }
 
     // ****************** A3
     srvf.request.signalName = string("A3_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        A3= srvf.response.signalValue*1000;
+        A3 = srvf.response.signalValue*1000;
     else
+    {
+        throw string("Error: Couldn't get the information of the A3");
         succ = false;
+    }
 
     // ****************** D3
     srvf.request.signalName = string("D3_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        D3= srvf.response.signalValue*1000;
+        D3 = srvf.response.signalValue*1000;
     else
+    {
+        throw string("Error: Couldn't get the information of the D3");
         succ = false;
+    }
 
     // ****************** PH2
     srvf.request.signalName = string("phi2_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        phi2= srvf.response.signalValue;
+        phi2 = srvf.response.signalValue;
     else
+    {
+        throw string("Error: Couldn't get the information of the phi2");
         succ = false;
+    }
 
     // ****************** PH3
     srvf.request.signalName = string("phi3_info");
     add_client.call(srvf);
     if (srvf.response.result == 1)
-        phi3= srvf.response.signalValue;
-    else
-        succ = false;
-#endif
-    //*************************************************************************************************
-    //                                      HUMAN HANDS
-    //*************************************************************************************************
-#if HAND==0
-    // ----------------------------------------
-    //                 MAX APERTURE
-    // ----------------------------------------
-    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-    srvf.request.signalName = string("maxAperture_info");
-    add_client.call(srvf);
-    if (srvf.response.result == 1)
-        max_human_Ap= srvf.response.signalValue;
+        phi3 = srvf.response.signalValue;
     else
     {
+        throw string("Error: Couldn't get the information of the phi3");
         succ = false;
-        throw string("Error: Couldn't get the max aperture of tha hand");
     }
-
-    jarde_hand.maxAperture=max_human_Ap*1000; // [mm]
-
-    // ----------------------------------------
-    //                 FINGER 1
-    // ----------------------------------------
-    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-    srvs.request.signalName = string("DH_params_fing1");
-    add_client.call(srvs);
-    if (srvs.response.result == 1)
-        DH_params_str = srvs.response.signalValue;
-    else
-    {
-        succ = false;
-        throw string("Error: Couldn't get the DH parameters of the finger 1");
-    }
-
-    floatCount = DH_params_str.size()/sizeof(float);
-    if (!DH_params_vec.empty())
-        DH_params_vec.clear();
-    for (int k=0;k<floatCount;++k)
-        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-    fing1 = jarde_hand.fingers.at(0);
-    fing1.ux = DH_params_vec.at(0)*1000; // [mm]
-    fing1.uy = DH_params_vec.at(1)*1000; // [mm]
-    fing1.uz = DH_params_vec.at(2)*1000; // [mm]
-    fing1.finger_specs.alpha = std::vector<double>(4);
-    fing1.finger_specs.a = std::vector<double>(4);
-    fing1.finger_specs.d = std::vector<double>(4);
-    fing1.finger_specs.theta = std::vector<double>(4);
-
-    for(int i=0;i<4;++i)
-    {
-        fing1.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-        fing1.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-        fing1.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-        fing1.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-    }
-
-    jarde_hand.fingers.at(0) = fing1;
-
-    // ----------------------------------------
-    //                 FINGER 2
-    // ----------------------------------------
-    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-    srvs.request.signalName = string("DH_params_fing2");
-    add_client.call(srvs);
-    if (srvs.response.result == 1)
-        DH_params_str = srvs.response.signalValue;
-    else
-    {
-        succ = false;
-        throw string("Error: Couldn't get the DH parameters of the finger 2");
-    }
-
-    floatCount = DH_params_str.size()/sizeof(float);
-    if (!DH_params_vec.empty())
-        DH_params_vec.clear();
-    for (int k=0;k<floatCount;++k)
-        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-    fing2 = jarde_hand.fingers.at(1);
-    fing2.ux = DH_params_vec.at(0)*1000; // [mm]
-    fing2.uy = DH_params_vec.at(1)*1000; // [mm]
-    fing2.uz = DH_params_vec.at(2)*1000; // [mm]
-    fing2.finger_specs.alpha = std::vector<double>(4);
-    fing2.finger_specs.a = std::vector<double>(4);
-    fing2.finger_specs.d = std::vector<double>(4);
-    fing2.finger_specs.theta = std::vector<double>(4);
-
-    for(int i=0;i<4;++i)
-    {
-        fing2.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-        fing2.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-        fing2.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-        fing2.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-    }
-
-    jarde_hand.fingers.at(1) = fing2;
-
-    // ----------------------------------------
-    //                FINGER 3
-    // ----------------------------------------
-    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-    srvs.request.signalName = string("DH_params_fing3");
-    add_client.call(srvs);
-    if (srvs.response.result == 1)
-        DH_params_str = srvs.response.signalValue;
-    else
-    {
-        succ = false;
-        throw string("Error: Couldn't get the DH parameters of the finger 3");
-    }
-
-    floatCount = DH_params_str.size()/sizeof(float);
-    if (!DH_params_vec.empty())
-        DH_params_vec.clear();
-    for (int k=0;k<floatCount;++k)
-        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-    fing3 = jarde_hand.fingers.at(2);
-    fing3.ux = DH_params_vec.at(0)*1000; // [mm]
-    fing3.uy = DH_params_vec.at(1)*1000; // [mm]
-    fing3.uz = DH_params_vec.at(2)*1000; // [mm]
-    fing3.finger_specs.alpha = std::vector<double>(4);
-    fing3.finger_specs.a = std::vector<double>(4);
-    fing3.finger_specs.d = std::vector<double>(4);
-    fing3.finger_specs.theta = std::vector<double>(4);
-
-    for(int i=0;i<4;++i)
-    {
-        fing3.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-        fing3.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-        fing3.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-        fing3.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-    }
-
-    jarde_hand.fingers.at(2) = fing3;
-
-    // ----------------------------------------
-    //                FINGER 4
-    // ----------------------------------------
-    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-    srvs.request.signalName = string("DH_params_fing4");
-    add_client.call(srvs);
-    if (srvs.response.result == 1)
-        DH_params_str = srvs.response.signalValue;
-    else
-    {
-        succ = false;
-        throw string("Error: Couldn't get the DH parameters of the finger 4");
-    }
-
-    floatCount = DH_params_str.size()/sizeof(float);
-    if (!DH_params_vec.empty())
-        DH_params_vec.clear();
-    for (int k=0;k<floatCount;++k)
-        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-    fing4 = jarde_hand.fingers.at(3);
-    fing4.ux = DH_params_vec.at(0)*1000; // [mm]
-    fing4.uy = DH_params_vec.at(1)*1000; // [mm]
-    fing4.uz = DH_params_vec.at(2)*1000; // [mm]
-    fing4.finger_specs.alpha = std::vector<double>(4);
-    fing4.finger_specs.a = std::vector<double>(4);
-    fing4.finger_specs.d = std::vector<double>(4);
-    fing4.finger_specs.theta = std::vector<double>(4);
-
-    for(int i=0;i<4;++i)
-    {
-        fing4.finger_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-        fing4.finger_specs.a.at(i) = DH_params_vec.at(i+7)*1000; // [mm]
-        fing4.finger_specs.d.at(i) = DH_params_vec.at(i+11)*1000; // [mm]
-        fing4.finger_specs.theta.at(i) = DH_params_vec.at(i+15)*static_cast<double>(M_PI)/180; // [rad]
-    }
-
-    jarde_hand.fingers.at(3) = fing4;
-
-    // ----------------------------------------
-    //                THUMB
-    // ----------------------------------------
-    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-    srvs.request.signalName = string("DH_params_thumb");
-    add_client.call(srvs);
-    if (srvs.response.result == 1)
-        DH_params_str = srvs.response.signalValue;
-    else
-    {
-        succ = false;
-        throw string("Error: Couldn't get the DH parameters of the thumb");
-    }
-
-    floatCount = DH_params_str.size()/sizeof(float);
-    if (!DH_params_vec.empty())
-        DH_params_vec.clear();
-    for (int k=0;k<floatCount;++k)
-        DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
-
-    thumb = jarde_hand.thumb;
-    thumb.uTx = DH_params_vec.at(0)*1000; // [mm]
-    thumb.uTy = DH_params_vec.at(1)*1000; // [mm]
-    thumb.uTz = DH_params_vec.at(2)*1000; // [mm]
-    thumb.thumb_specs.alpha = std::vector<double>(5);
-    thumb.thumb_specs.a = std::vector<double>(5);
-    thumb.thumb_specs.d = std::vector<double>(5);
-    thumb.thumb_specs.theta = std::vector<double>(5);
-
-    for(int i=0;i<5;++i)
-    {
-        thumb.thumb_specs.alpha.at(i) = DH_params_vec.at(i+3)*static_cast<double>(M_PI)/180; // [rad]
-        thumb.thumb_specs.a.at(i) = DH_params_vec.at(i+8)*1000; // [mm]
-        thumb.thumb_specs.d.at(i) = DH_params_vec.at(i+13)*1000; // [mm]
-        thumb.thumb_specs.theta.at(i) = DH_params_vec.at(i+18)*static_cast<double>(M_PI)/180; // [rad]
-    }
-
-    jarde_hand.thumb = thumb;
-#endif
+#elif HAND == 1
     //*************************************************************************************************
     //                                  ELETRIC PARALLEL GRIPPER
     //*************************************************************************************************
-#if HAND == 2
+    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    // ****************** A1
+    srvf.request.signalName = string("A1_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        A1 = srvf.response.signalValue * 1000;
+    else
+    {
+        throw string("Error: Couldn't get the information of the A1");
+        succ = false;
+    }
 
+    // ****************** D3
+    srvf.request.signalName = string("D3_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        D3 = srvf.response.signalValue * 1000;
+    else
+    {
+        throw string("Error: Couldn't get the information of the D3");
+        succ = false;
+    }
+
+    // ****************** Max Aperture
+    srvf.request.signalName = string("maxAperture_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        maxAp = srvf.response.signalValue * 1000;
+    else
+    {
+        throw string("Error: Couldn't get the information of the maximum aperture");
+        succ = false;
+    }
+
+    // ****************** Min Aperture
+    srvf.request.signalName = string("minAperture_info");
+    add_client.call(srvf);
+    if (srvf.response.result == 1)
+        minAp = srvf.response.signalValue * 1000;
+    else
+    {
+        throw string("Error: Couldn't get the information of the minimum aperture");
+        succ = false;
+    }
 #endif
+
+
     //*************************************************************************************************
     //                                          HEAD
     //*************************************************************************************************
-#if HEAD==1
-    if(scenarioID != 2)
+#if HEAD == 1
+    add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+    srvs.request.signalName = string("HeadInfo");
+    add_client.call(srvs);
+    if (srvs.response.result == 1)
+        head_str = srvs.response.signalValue;
+    else
     {
-        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
-        srvs.request.signalName = string("HeadInfo");
-        add_client.call(srvs);
-        if (srvs.response.result == 1)
-            head_str = srvs.response.signalValue;
-        else
-        {
-            succ = false;
-            throw string("Error: Couldn't get the information of the head");
-        }
-
-        floatCount = head_str.size()/sizeof(float);
-        if (!head_vec.empty())
-            head_vec.clear();
-        for (int k=0;k<floatCount;++k)
-            head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
-
-        //position of the head
-        head.Xpos = head_vec.at(0)*1000;//[mm]
-        head.Ypos = head_vec.at(1)*1000;//[mm]
-        head.Zpos = head_vec.at(2)*1000;//[mm]
-        //orientation of the head
-        head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
-        head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
-        head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
-        //size of the head
-        head.Xsize = head_vec.at(6)*1000;//[mm]
-        head.Ysize = head_vec.at(7)*1000;//[mm]
-        head.Zsize = head_vec.at(8)*1000;//[mm]
+        succ = false;
+        throw string("Error: Couldn't get the information of the head");
     }
+
+    floatCount = head_str.size()/sizeof(float);
+    if (!head_vec.empty())
+        head_vec.clear();
+    for (int k=0;k<floatCount;++k)
+        head_vec.push_back(static_cast<double>(((float*)head_str.c_str())[k]));
+
+    //position of the head
+    head.Xpos = head_vec.at(0)*1000;//[mm]
+    head.Ypos = head_vec.at(1)*1000;//[mm]
+    head.Zpos = head_vec.at(2)*1000;//[mm]
+    //orientation of the head
+    head.Roll = head_vec.at(3)*static_cast<double>(M_PI)/180; //[rad]
+    head.Pitch = head_vec.at(4)*static_cast<double>(M_PI)/180; //[rad]
+    head.Yaw = head_vec.at(5)*static_cast<double>(M_PI)/180; //[rad]
+    //size of the head
+    head.Xsize = head_vec.at(6)*1000;//[mm]
+    head.Ysize = head_vec.at(7)*1000;//[mm]
+    head.Zsize = head_vec.at(8)*1000;//[mm]
 #endif
+
 
     //*************************************************************************************************
     //                                          TORSO
@@ -1246,77 +1026,108 @@ bool QNode::getElements(scenarioPtr scene)
     torso.Ysize = torso_vec.at(7)*1000;//[mm]
     torso.Zsize = torso_vec.at(8)*1000;//[mm]
 
+
     //*************************************************************************************************
     //                                  HOME POSTURE AND JOINTS LIMITS
     //*************************************************************************************************
     // ****************** RIGHT ARM
     add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
     // home posture
-    for (size_t i = 0; i <rposture.size(); i++)
+    for (size_t i = 0; i < rposture.size(); i++)
     {
         srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
         add_client.call(srvf);
         if (srvf.response.result == 1)
-            rposture.at(i)= srvf.response.signalValue;
+        {
+            rposture.at(i) = srvf.response.signalValue;
+        }
         else
+        {
+            throw string("Error: Couldn't get the information of the right home posture");
             succ = false;
+        }
     }
-    // minimum right limits
-    for (size_t i = 0; i <min_rlimits.size(); i++)
+
+    // minimum limits
+    for (size_t i = 0; i < min_rlimits.size(); i++)
     {
         srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_min");
         add_client.call(srvf);
         if (srvf.response.result == 1)
-            min_rlimits.at(i)= srvf.response.signalValue;
+        {
+            min_rlimits.at(i) = srvf.response.signalValue;
+        }
         else
+        {
+            throw string("Error: Couldn't get the information of the minimum right limits");
             succ = false;
+        }
     }
-    // maximum right limits
-    for (size_t i = 0; i <max_rlimits.size(); i++)
+
+    // maximum limits
+    for (size_t i = 0; i < max_rlimits.size(); i++)
     {
         srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString()+"_max");
         add_client.call(srvf);
         if (srvf.response.result == 1)
-            max_rlimits.at(i)= srvf.response.signalValue;
+        {
+            max_rlimits.at(i) = srvf.response.signalValue;
+        }
         else
+        {
+            throw string("Error: Couldn't get the information of the maximum right limits");
             succ = false;
+        }
     }
 
-    // ****************** LEFT ARM
-    if(scenarioID <= 3) // ARoS and Avatar scenarios (Toy Vehicle and Drinking Service)
+
+    if(scenarioID == 1 || scenarioID == 2) // ARoS and Avatar scenarios (Toy Vehicle and Drinking Service)
     {
+        // ****************** LEFT ARM
         add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
         //home posture
-        for (size_t i = 0; i <lposture.size(); i++)
+        for (size_t i = 0; i < lposture.size(); i++)
         {
             srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString());
             add_client.call(srvf);
             if (srvf.response.result == 1)
                 lposture.at(i)= srvf.response.signalValue;
             else
+            {
+                throw string("Error: Couldn't get the information of the left home posture");
                 succ = false;
+            }
         }
-        // minimum left limits
-        for (size_t i = 0; i <min_llimits.size(); i++)
+
+        // minimum limits
+        for (size_t i = 0; i < min_llimits.size(); i++)
         {
             srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_min");
             add_client.call(srvf);
             if (srvf.response.result == 1)
                 min_llimits.at(i)= srvf.response.signalValue;
             else
+            {
+                throw string("Error: Couldn't get the information of the minimum left limits");
                 succ = false;
+            }
         }
-        // maximum left limits
-        for (size_t i = 0; i <max_llimits.size(); i++)
+
+        // maximum limits
+        for (size_t i = 0; i < max_llimits.size(); i++)
         {
             srvf.request.signalName = string("sleft_joint"+QString::number(i).toStdString()+"_max");
             add_client.call(srvf);
             if (srvf.response.result == 1)
                 max_llimits.at(i)= srvf.response.signalValue;
             else
+            {
+                throw string("Error: Couldn't get the information of the maximum left limits");
                 succ = false;
+            }
         }
     }
+
 
     //*************************************************************************************************
     //                                  CREATE ROBOT
@@ -1334,21 +1145,19 @@ bool QNode::getElements(scenarioPtr scene)
         robot_torso_specs.Ysize = torso.Ysize;
         robot_torso_specs.Zsize = torso.Zsize;
 #if HEAD == 1
-        if(scenarioID != 2)
-        {
-            // ****************** INFO OF THE HEAD
-            robot_head_specs.Xpos = head.Xpos;
-            robot_head_specs.Ypos = head.Ypos;
-            robot_head_specs.Zpos = head.Zpos;
-            robot_head_specs.Roll =  head.Roll;
-            robot_head_specs.Pitch = head.Pitch;
-            robot_head_specs.Yaw = head.Yaw;
-            robot_head_specs.Xsize = head.Xsize;
-            robot_head_specs.Ysize = head.Ysize;
-            robot_head_specs.Zsize = head.Zsize;
-        }
+        // ****************** INFO OF THE HEAD
+        robot_head_specs.Xpos = head.Xpos;
+        robot_head_specs.Ypos = head.Ypos;
+        robot_head_specs.Zpos = head.Zpos;
+        robot_head_specs.Roll =  head.Roll;
+        robot_head_specs.Pitch = head.Pitch;
+        robot_head_specs.Yaw = head.Yaw;
+        robot_head_specs.Xsize = head.Xsize;
+        robot_head_specs.Ysize = head.Ysize;
+        robot_head_specs.Zsize = head.Zsize;
 #endif
-#if HAND==1
+
+#if HAND == 0
         // ****************** BARRETT HAND
         robot_hand_specs.maxAperture = maxAp;
         robot_hand_specs.Aw = Aw;
@@ -1361,9 +1170,9 @@ bool QNode::getElements(scenarioPtr scene)
 
         //add the joints offset
         std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
-        if (scenarioID == 1 || scenarioID == 3) // ARoS
+        if (scenarioID == 1 || scenarioID == 2) // ARoS
             std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
-        else // Sawyer scenarios
+        else if(scenarioID >= 3) // Sawyer scenarios
         {
             lposture = rposture;
             min_llimits = min_rlimits;
@@ -1383,9 +1192,9 @@ bool QNode::getElements(scenarioPtr scene)
 #endif
         // **************************** TRANSFORMATION MATRICES
         rptr->setMatRight(mat_right);
-        if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios
+        if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios
             rptr->setMatLeft(mat_left);
-        else if(scenarioID > 3) // Sawyer scenarios
+        else if(scenarioID >= 3) // Sawyer scenarios
             rptr->setMatLeft(mat_right);
 
         // **************************** RIGHT JOINTS
@@ -1399,12 +1208,12 @@ bool QNode::getElements(scenarioPtr scene)
         for (size_t i=0; i<rightp.size(); i++ )
         {
             rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
-                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString() + " [deg]");
             Q_EMIT newJoint(rj.at(i));
         }
 
         // **************************** LEFT JOINTS
-        if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios
+        if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios
         {
             std::vector<double> leftp;
             rptr->getLeftPosture(leftp);
@@ -1416,11 +1225,11 @@ bool QNode::getElements(scenarioPtr scene)
             for (size_t i=0; i<leftp.size(); i++ )
             {
                 lj.at(i) = string("left_joint "+ QString::number(i+1).toStdString()+ ": "+
-                                  QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+                                  QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString() + " [deg]");
                 Q_EMIT newJoint(lj.at(i));
             }
         }
-        else if(scenarioID > 3) // Sawyer scenarios
+        else if(scenarioID >= 3) // Sawyer scenarios
             rptr->getLeftPosture(rightp);
 
         // **************************** CREATE ROBOT
@@ -1429,88 +1238,27 @@ bool QNode::getElements(scenarioPtr scene)
         Q_EMIT newElement(infoLine);
         // create robot
         scene->addRobot(robotPtr(rptr));
-#elif HAND == 0
-        Robot *rptr = new Robot(Hname,robot_torso_specs,robot_arm_specs, jarde_hand,
-                                rposture, lposture,
-                                min_rlimits,max_rlimits,
-                                min_llimits,max_llimits);
-
-        // **************************** TRANSFORMATION MATRICES
-        rptr->setMatRight(mat_right);
-        rptr->setMatLeft(mat_left);
-        rptr->setMatRightHand(mat_r_hand);
-        rptr->setMatLeftHand(mat_l_hand);
-
-        // **************************** RIGHT JOINTS
-        std::vector<double> rightp;
-        rptr->getRightPosture(rightp);
-
-        //without offsets
-        std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
-
-        std::vector<string> rj = std::vector<string>(rightp.size());
-        for (int i=0; i<rightp.size(); i++ )
-        {
-            rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
-                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-            Q_EMIT newJoint(rj.at(i));
-        }
-
-        // **************************** LEFT JOINTS
-        std::vector<double> leftp;
-        rptr->getLeftPosture(leftp);
-
-        //without offsets
-        std::transform(leftp.begin(), leftp.end(), theta_offset.begin(), leftp.begin(), std::minus<double>());
-
-        std::vector<string> lj = std::vector<string>(leftp.size());
-        for (int i=0; i<leftp.size(); i++ )
-        {
-            lj.at(i) = string("left_joint "+ QString::number(i+1).toStdString()+ ": "+
-                              QString::number(leftp.at(i)*180/static_cast<double>(M_PI)).toStdString());
-            Q_EMIT newJoint(lj.at(i));
-        }
-
-        // **************************** CREATE ROBOT
-        // display info of the robot
-        infoLine = rptr->getInfoLine();
-        Q_EMIT newElement(infoLine);
-        // create robot
-        scene->addRobot(rptr);
-#elif HAND == 2
+#elif HAND == 1
         // ****************** ELECTRIC PARALLEL GRIPPER
         robot_gripper_specs.maxAperture = maxAp;
         robot_gripper_specs.minAperture = minAp;
         robot_gripper_specs.A1 = A1;
+        robot_gripper_specs.D3 = D3;
 
         //add the joints offset
         std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
-        if (scenarioID == 1 || scenarioID == 3) // ARoS
-            std::transform(lposture.begin(), lposture.end(), theta_offset.begin(), lposture.begin(), std::plus<double>());
-        else // Sawyer scenarios
-        {
-            lposture = rposture;
-            min_llimits = min_rlimits;
-            max_llimits = max_rlimits;
-        }
+        lposture = rposture;
+        min_llimits = min_rlimits;
+        max_llimits = max_rlimits;
 #if HEAD == 1
         Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_gripper_specs,
                                 robot_head_specs, rposture, lposture,
                                 min_rlimits, max_rlimits,
                                 min_llimits, max_llimits);
-#else
-        Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_gripper_specs,
-                                rposture, lposture,
-                                min_rlimits, max_rlimits,
-                                min_llimits, max_llimits);
-
 #endif
         // **************************** TRANSFORMATION MATRICES
         rptr->setMatRight(mat_right);
-        if(scenarioID == 1 || scenarioID == 3) // ARoS scenarios
-            rptr->setMatLeft(mat_left);
-        else if(scenarioID > 3) // Sawyer scenarios
-            rptr->setMatLeft(mat_right);
+        rptr->setMatLeft(mat_right);
 
         // **************************** RIGHT JOINTS
         std::vector<double> rightp;
@@ -1520,10 +1268,15 @@ bool QNode::getElements(scenarioPtr scene)
         std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
 
         std::vector<string> rj = std::vector<string>(rightp.size());
-        for (size_t i=0; i<rightp.size(); i++ )
+        for (size_t i = 0; i < rightp.size(); i++)
         {
-            rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
-                              QString::number(rightp.at(i)*180/static_cast<double>(M_PI)).toStdString());
+            if (i < rightp.size() - 1)
+                rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                                  QString::number(rightp.at(i) * 180/ static_cast<double>(M_PI)).toStdString() + " [deg]");
+            else
+                rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                                  QString::number(rightp.at(i)).toStdString() + " [mm]");
+
             Q_EMIT newJoint(rj.at(i));
         }
 
@@ -1874,10 +1627,11 @@ void QNode::rightProxCallback(const vrep_common::ProximitySensorData& data)
     if (this->curr_mov)
     {
         int arm_code = this->curr_mov->getArm();
+
         if (arm_code == 1)
         {
-            //right arm
-            int h_obj; int h_obj_body;
+            int h_obj;
+            int h_obj_body;
             int mov_type = this->curr_mov->getType();
 
             switch (mov_type)
@@ -1930,38 +1684,74 @@ vector<MatrixXd> QNode::realJointsPosition(std::vector<MatrixXd>& traj_mov)
 
 bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr,movementPtr mov, scenarioPtr scene)
 {
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                               Initialization of variables                                                //
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //scenario
     this->curr_scene = scene;
     int scenarioID = scene->getID();
-    this->curr_mov = mov; int mov_type = mov->getType();
+    //movement
+    this->curr_mov = mov;
+    int mov_type = mov->getType();
+    //arm code
     int arm_code = mov->getArm();
+    //movement settings
     bool plan;
     bool approach;
     bool retreat;
-    bool hand_closed;
-
-    switch (mov_type)
-    {
-    case 0: case 1: case 5: // reach-to-grasp, reaching, go-park
-        closed.at(0)=false;
-        closed.at(1)=false;
-        closed.at(2)=false;
-        break;
-    case 2: case 3: case 4: // transport, engage, disengage
-        closed.at(0)=true;
-        closed.at(1)=true;
-        closed.at(2)=true;
-        break;
-    }
-
+    //Ros communication
     ros::NodeHandle node;
+    //Time steps
     double ta;
     double tb = 0.0;
     double tx;
-    double pre_time= 0.0;
+    double pre_time = 0.0;
+    std::vector<double> timesteps_stage;
+    //Final posture
+    VectorXd f_posture;
+    bool f_reached;
+    double tol_stop_stage;
+    //Planned movement
+    MatrixXd traj;
+    MatrixXd vel;
+    double timeTot = 0.0;
+    //Plan and Approach stages
+    MatrixXd traj_plan_approach;
+    MatrixXd vel_plan_approach;
+    std::vector<double> timesteps_plan_approach;
+    bool join_plan_approach = false;
+    //Handles
     std::vector<int> handles;
-    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
-    int h_attach; // handle of the attachment point of the hand
+    //Hand
+#if HAND == 0
+    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS, N_PHALANGE + 1, 1); // matrix fingers x (phalanges + 1) with all elements set as 1
+#endif
+    int h_attach; //attachment point
+    bool hand_closed;
 
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                       Subscribers                                                        //
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    // set joints position or velocity
+    ros::ServiceClient client_enableSubscriber = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+    vrep_common::simRosEnableSubscriber srv_enableSubscriber;
+    srv_enableSubscriber.request.topicName = "/" + nodeName + "/set_joints"; // the topic name
+    srv_enableSubscriber.request.queueSize = 1; // the subscriber queue size (on V-REP side)
+    srv_enableSubscriber.request.streamCmd = simros_strmcmd_set_joint_state; // the subscriber type
+
+#if HAND == 0
+    // set the target postion of the 2nd phalanx of the fingers
+    ros::ServiceClient client_enableSubscriber_hand = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+    vrep_common::simRosEnableSubscriber srv_enableSubscriber_hand;
+    srv_enableSubscriber_hand.request.topicName = "/" + nodeName + "/set_pos_hand"; // the topic name
+    srv_enableSubscriber_hand.request.queueSize = 1; // the subscriber queue size (on V-REP side)
+    srv_enableSubscriber_hand.request.streamCmd = simros_strmcmd_set_joint_state; // the subscriber type
+#endif
+
+
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                         Handles                                                          //
+    // ------------------------------------------------------------------------------------------------------------------------ //
     switch (arm_code)
     {
     case 0: // dual arm
@@ -1969,116 +1759,149 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
         break;
     case 1: //right arm
         handles = right_handles;
-        hand_handles = right_hand_handles;
         h_attach = right_attach;
+#if HAND == 0
+        hand_handles = right_hand_handles;
+#endif
         break;
     case 2: // left arm
         handles = left_handles;
-        hand_handles = left_hand_handles;
         h_attach = left_attach;
+#if HAND == 0
+        hand_handles = left_hand_handles;
+#endif
         break;
     }
 
-    // set joints position or velocity (it depends on the settings)
-    ros::ServiceClient client_enableSubscriber=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
-    vrep_common::simRosEnableSubscriber srv_enableSubscriber;
-    srv_enableSubscriber.request.topicName="/"+nodeName+"/set_joints"; // the topic name
-    srv_enableSubscriber.request.queueSize=1; // the subscriber queue size (on V-REP side)
-    srv_enableSubscriber.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
-#if HAND==1
-    // set joints position (it is used to set the target postion of the 2nd phalanx of the fingers)
-    ros::ServiceClient client_enableSubscriber_hand=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
-    vrep_common::simRosEnableSubscriber srv_enableSubscriber_hand;
-    srv_enableSubscriber_hand.request.topicName="/"+nodeName+"/set_pos_hand"; // the topic name
-    srv_enableSubscriber_hand.request.queueSize=1; // the subscriber queue size (on V-REP side)
-    srv_enableSubscriber_hand.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
-#endif
 
-    VectorXd f_posture; // the final posture
-    bool f_reached;
-    double tol_stop_stage;
-    std::vector<double> timesteps_stage;
-    MatrixXd traj;
-    MatrixXd vel;
-    double timeTot = 0.0;
-    MatrixXd traj_plan_approach;
-    MatrixXd vel_plan_approach;
-    std::vector<double> timesteps_plan_approach;
-    bool join_plan_approach = false;
-
-    if(mov_type==0 || mov_type==2 || mov_type==3 || mov_type==4)
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                  HAND OPENED OR CLOSED                                                   //
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    switch (mov_type)
     {
-        // reach-to-grasp, transport, engage, disengage
+    case 0: case 1: case 5: // reach-to-grasp, reaching, go-park
+#if HAND == 0
+        closed.at(0) = false;
+        closed.at(1) = false;
+        closed.at(2) = false;
+#elif HAND == 1
+        closed = false;
+#endif
+        break;
+    case 2: case 3: case 4: // transport, engage, disengage
+#if HAND == 0
+        closed.at(0) = true;
+        closed.at(1) = true;
+        closed.at(2) = true;
+#elif HAND == 1
+        closed = false;
+#endif
+        break;
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                         Approach Stage (Join to the plan stage)                                          //
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    // reach-to-grasp, transport, engage, disengage
+    if(mov_type == 0 || mov_type == 2 || mov_type == 3 || mov_type == 4)
+    {
         if(traj_mov.size() > 1)
         {
-            // there is more than one stage
+            // plan stage
             string mov_descr_1 = traj_descr.at(0);
+            // approach stage
             string mov_descr_2 = traj_descr.at(1);
-            if((strcmp(mov_descr_1.c_str(),"plan")==0) && (strcmp(mov_descr_2.c_str(),"approach")==0))
+
+            if((strcmp(mov_descr_1.c_str(), "plan") == 0) && (strcmp(mov_descr_2.c_str(), "approach") == 0))
             {
+                // the movements will be joined, we need to resize the matrix
                 join_plan_approach = true;
-                traj_plan_approach.resize((traj_mov.at(0).rows() + traj_mov.at(1).rows()-1),traj_mov.at(0).cols());
-                vel_plan_approach.resize((vel_mov.at(0).rows() + vel_mov.at(1).rows()-1),vel_mov.at(0).cols());
+                traj_plan_approach.resize((traj_mov.at(0).rows() + traj_mov.at(1).rows() - 1), traj_mov.at(0).cols());
+                vel_plan_approach.resize((vel_mov.at(0).rows() + vel_mov.at(1).rows() - 1), vel_mov.at(0).cols());
             }
         }
     }
 
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                    Start Simulation                                                      //
+    // ------------------------------------------------------------------------------------------------------------------------ //
     // start the simulation
     add_client = node.serviceClient<vrep_common::simRosStartSimulation>("/vrep/simRosStartSimulation");
     vrep_common::simRosStartSimulation srvstart;
     add_client.call(srvstart);
     ros::spinOnce(); // first handle ROS messages
 
-    std::vector<MatrixXd> traj_mov_real;
-    std::vector<MatrixXd> traj_mov_w_offset;
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                   Execute Movement                                                       //
+    // ------------------------------------------------------------------------------------------------------------------------ //
     //the trajectory obtained doesn't include the joints offsets
+    std::vector<MatrixXd> traj_mov_w_offset;
     traj_mov_w_offset = traj_mov;
     //add the joints offsets
+    std::vector<MatrixXd> traj_mov_real;
     traj_mov_real = realJointsPosition(traj_mov_w_offset);
 
-    for (size_t k=0; k< traj_mov_real.size();++k)
+
+    for(size_t k = 0; k < traj_mov_real.size(); ++k)
     {
         string mov_descr = traj_descr.at(k);
-        if(strcmp(mov_descr.c_str(),"plan")==0)
+
+        // ********************************************************************** //
+        //                        Trajectory to be executed                       //
+        // ********************************************************************** //
+        // ***** Compile the information about the movement to be executed in the differents stages
+        if(strcmp(mov_descr.c_str(),"plan") == 0)
         {
-            plan=true;
-            approach=false;
-            retreat=false;
+            plan = true;
+            approach = false;
+            retreat = false;
 
             if(join_plan_approach)
             {
                 MatrixXd tt = traj_mov_real.at(k);
                 MatrixXd vv = vel_mov.at(k);
                 std::vector<double> ttsteps = timesteps.at(k);
+
+                // PLAN STAGE: add the trajectory, velocity and time steps in TOP of matrix
                 traj_plan_approach.topLeftCorner(tt.rows(),tt.cols()) = tt;
                 vel_plan_approach.topLeftCorner(vv.rows(),vv.cols()) = vv;
                 timesteps_plan_approach.reserve(ttsteps.size());
+
                 std::copy (ttsteps.begin(), ttsteps.end(), std::back_inserter(timesteps_plan_approach));
                 continue;
             }
         }
-        else if(strcmp(mov_descr.c_str(),"approach")==0)
+        else if(strcmp(mov_descr.c_str(),"approach") == 0)
         {
-            plan=false; approach=true;
-            retreat=false;
+            plan = false;
+            approach = true;
+            retreat = false;
+
             if(join_plan_approach)
             {
-                MatrixXd tt = traj_mov_real.at(k); MatrixXd tt_red = tt.bottomRows(tt.rows()-1);
-                MatrixXd vv = vel_mov.at(k); MatrixXd vv_red = vv.bottomRows(vv.rows()-1);
+                MatrixXd tt = traj_mov_real.at(k);
+                MatrixXd tt_red = tt.bottomRows(tt.rows() - 1);
+                MatrixXd vv = vel_mov.at(k);
+                MatrixXd vv_red = vv.bottomRows(vv.rows() - 1);
                 std::vector<double> ttsteps = timesteps.at(k);
+
+                // APPROACH STAGE: add the trajectory, velocity and time steps in BOTTOM of matrix
                 traj_plan_approach.bottomLeftCorner(tt_red.rows(),tt_red.cols()) = tt_red;
                 vel_plan_approach.bottomLeftCorner(vv_red.rows(),vv_red.cols()) = vv_red;
                 timesteps_plan_approach.reserve(ttsteps.size());
+
                 std::copy (ttsteps.begin(), ttsteps.end(), std::back_inserter(timesteps_plan_approach));
             }
         }
-        else if(strcmp(mov_descr.c_str(),"retreat")==0)
+        else if(strcmp(mov_descr.c_str(),"retreat") == 0)
         {
-            plan=false;
-            approach=false;
-            retreat=true;
+            plan = false;
+            approach = false;
+            retreat = true;
         }
 
+
+        // ***** Check if the object is in the robot's hand and if it has been grasped correctly
         switch (mov_type)
         {
         case 0: // reach-to-grasp
@@ -2087,21 +1910,29 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 if(obj_in_hand)
                 {
                     add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
-                    vrep_common::simRosSetObjectParent srvset_parent; // service to set a parent object
+                    vrep_common::simRosSetObjectParent srvset_parent;
                     srvset_parent.request.handle = this->curr_mov->getObject()->getHandle();
                     srvset_parent.request.parentHandle = h_attach;
                     srvset_parent.request.keepInPlace = 1; // the detected object must stay in the same place
                     add_client.call(srvset_parent);
                     if (srvset_parent.response.result != 1)
                         log(QNode::Error,string("Error in grasping the object "));
-#if HAND == 1 && OPEN_CLOSE_HAND ==1
+
+#if HAND == 0
+#if OPEN_CLOSE_HAND == 1
                     this->closeBarrettHand(arm_code);
 #else
-                    MatrixXd tt = traj_mov_real.at(k); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+                    MatrixXd tt = traj_mov_real.at(k);
+                    VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                     std::vector<double> hand_init_pos;
                     hand_init_pos.resize(init_h_posture.size());
                     VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
-                    this->closeBarrettHand_to_pos(arm_code,hand_init_pos);
+
+                    //Close the barrett hand
+                    this->closeBarrettHand_to_pos(arm_code, hand_init_pos);
+#endif
+#elif HAND == 1
+                    closed = true;
 #endif
                 }
             }
@@ -2111,25 +1942,35 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
         case 2: case 3: // transport, engage
             if(retreat)
             {
-                if(std::strcmp(mov->getObject()->getName().c_str(),"")!=0)
+                if(std::strcmp(mov->getObject()->getName().c_str(),"") != 0)
                 {
                     add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
-                    vrep_common::simRosSetObjectParent srvset_parent; // service to set a parent object
+                    vrep_common::simRosSetObjectParent srvset_parent;
                     srvset_parent.request.handle = this->curr_mov->getObject()->getHandle();
-                    srvset_parent.request.parentHandle = -1; // parentless object
+                    srvset_parent.request.parentHandle = -1;
                     srvset_parent.request.keepInPlace = 1; // the detected object must stay in the same place
                     add_client.call(srvset_parent);
                     if (srvset_parent.response.result != 1)
                         log(QNode::Error,string("Error in releasing the object "));
                 }
-#if HAND ==1 && OPEN_CLOSE_HAND ==1
-                MatrixXd tt = traj_mov_real.at(k); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
+
+#if HAND == 0
+#if OPEN_CLOSE_HAND == 1
+                MatrixXd tt = traj_mov_real.at(k);
+                VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                 std::vector<double> hand_init_pos;
                 hand_init_pos.resize(init_h_posture.size());
                 VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
-                this->openBarrettHand_to_pos(arm_code,hand_init_pos);
+
+                //open the barrett hand
+                this->openBarrettHand_to_pos(arm_code, hand_init_pos);
 #else
-                closed.at(0)=false; closed.at(1)=false; closed.at(2)=false;
+                closed.at(0) = false;
+                closed.at(1) = false;
+                closed.at(2) = false;
+#endif
+#elif HAND == 1
+                closed = false;
 #endif
             }
             break;
@@ -2139,7 +1980,16 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
             break;
         }
 
-        if(join_plan_approach && (strcmp(mov_descr.c_str(),"approach")==0))
+
+        // ***** Save the information about the movement to be executed in the differents stages
+        //          Information needed:
+        //              -> time steps
+        //              -> joints trajectory (position)
+        //              -> joints velocity
+        //              -> final posture to be reached
+        //              -> tolerances to stop the movement
+
+        if(join_plan_approach && (strcmp(mov_descr.c_str(),"approach") == 0))
         {
             traj = traj_plan_approach;
             vel = vel_plan_approach;
@@ -2154,146 +2004,236 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
         tol_stop_stage = tols_stop.at(k);
         f_posture = traj.row(traj.rows()-1);
-        f_reached=false;
+        f_reached = false;
 
-#if HAND==0
-        if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1))
-        {
-#elif HAND==1
-        if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1) &&
-             client_enableSubscriber_hand.call(srv_enableSubscriber_hand) && (srv_enableSubscriber_hand.response.subscriberID!=-1))
-        {
-            // ok, the service call was ok, and the subscriber was succesfully started on V-REP side
-            // V-REP is now listening to the desired values
-            ros::Publisher pub_hand=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand",1);
+
+#if HAND == 0
+        if ((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1) &&
+            (client_enableSubscriber_hand.call(srv_enableSubscriber_hand)) && (srv_enableSubscriber_hand.response.subscriberID != -1))
+#elif HAND == 1
+        if ((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
 #endif
-            // 5. Let's prepare a publisher of those values:
-            ros::Publisher pub=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_joints",1);
+        {
+            // ***** V-REP is now listening to the desired values
+            // Arm joints publisher
+            ros::Publisher pub = node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_joints", 1);
+            // Fingers joints publisher
+#if HAND == 0
+            ros::Publisher pubHand = node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand", 1);
+#endif
+            ros::spinOnce();
 
-            ros::spinOnce(); // handle ROS messages
-            pre_time = simulationTime - timeTot; // update the total time of the movement
+            // Total time of the movement
+            pre_time = simulationTime - timeTot;
             tb = pre_time;
 
-            for (int i = 0; i< vel.rows()-1; ++i)
+            for (int i = 0; i < vel.rows() - 1; ++i)
             {
-                VectorXd ya = vel.row(i);
-                VectorXd yb = vel.row(i+1);
-                VectorXd yat = traj.row(i);
-                VectorXd ybt = traj.row(i+1);
-
-                ta = tb;
-                double tt_step = timesteps_stage.at(i);
-                if(tt_step<0.001)
-                    tt_step = MIN_EXEC_TIMESTEP_VALUE;
-
-                tb = ta + tt_step;
-
                 bool interval = true;
                 double tx_prev;
                 double yxt_prev;
 
+                // ********************************************************************** //
+                //                            Steps information                           //
+                // ********************************************************************** //
+
+                // **** For each step of the planned movement (each stage is divided into several steps),
+                //          Get the current values of:
+                //              -> position
+                //              -> velocity
+                VectorXd ya = vel.row(i);
+                VectorXd yat = traj.row(i);
+                //          Get the next values of:
+                //              -> position
+                //              -> velocity
+                VectorXd yb = vel.row(i + 1);
+                VectorXd ybt = traj.row(i + 1);
+
+                // Get the time associated to the previous step of the planned movement
+                ta = tb;
+                // Get the values of time_step
+                double tt_step = timesteps_stage.at(i);
+
+                if(tt_step < 0.001)
+                    tt_step = MIN_EXEC_TIMESTEP_VALUE;
+
+                // Get the time associated to the current step of the planned movement
+                tb = ta + tt_step;
+
+
                 while (ros::ok() && simulationRunning && interval)
-                {// ros is running, simulation is running
+                {
+                    // Data to be published in the topic "/motion_manager/set_joints"
                     vrep_common::JointSetStateData dataTraj;
-#if HAND==1
-                    vrep_common::JointSetStateData data_hand;
+#if HAND == 0
+                    vrep_common::JointSetStateData dataHand;
 #endif
+
+                    // Total time of the movement
                     tx = simulationTime - timeTot;
+
+                    // Checks if the total time is greater than planned
                     if (tx > tb)
                         interval = false;
                     else
                     {
+                        // ********************************************************************** //
+                        //                       Joints linear interpolation                      //
+                        // ********************************************************************** //
                         double m;
-                        if((tb-ta)==0)
-                            m=1;
-                        else
-                            m = (tx-ta)/(tb-ta);
 
+                        // Linear interpolation depends on the value of m
+                        // m is determined by the following formula: (x - x0) / (x1 - x0)
+                        // In this case x is the time (in sec)
+                        if((tb - ta) == 0)
+                            m = 1;
+                        else
+                            // ta == time associated with the start of the current step
+                            // tb == time associated with the start of the next step
+                            // tx == curr total time of the movement
+                            m = (tx - ta) / (tb - ta);
+
+                        // Gets right posture of the robot
                         std::vector<double> r_post;
                         this->curr_scene->getRobot()->getRightPosture(r_post);
-                        double yx;
-                        double yxt;
-                        if(sqrt(pow((f_posture(0)-r_post.at(0)),2)+
-                                pow((f_posture(1)-r_post.at(1)),2)+
-                                pow((f_posture(2)-r_post.at(2)),2)+
-                                pow((f_posture(3)-r_post.at(3)),2)+
-                                pow((f_posture(4)-r_post.at(4)),2)+
-                                pow((f_posture(5)-r_post.at(5)),2)+
-                                pow((f_posture(6)-r_post.at(6)),2)) < tol_stop_stage)
+
+                        // Checks if the final posture has been reached, taking into account the tolerances
+                        if(sqrt(pow((f_posture(0) - r_post.at(0)), 2) +
+                                pow((f_posture(1) - r_post.at(1)), 2) +
+                                pow((f_posture(2) - r_post.at(2)), 2) +
+                                pow((f_posture(3) - r_post.at(3)), 2) +
+                                pow((f_posture(4) - r_post.at(4)), 2) +
+                                pow((f_posture(5) - r_post.at(5)), 2) +
+                                pow((f_posture(6) - r_post.at(6)), 2)) < tol_stop_stage)
                         {
-                            f_reached=true;
+                            // if the final posture was reached in the previous movement: stop robot
+                            f_reached = true;
                             break;
                         }
                         else
-                            f_reached=false;
+                            f_reached = false;
 
-                        hand_closed = (closed[0] && closed[1] && closed[2]);
+                        double yx;
+                        double yxt;
 
-                        for (int k = 0; k< vel.cols(); ++k)
+                        for (int k = 0; k < vel.cols(); ++k)
                         {
+                            // Checks if the final posture has been reached
                             if(f_reached)
                             {
-                                yx=0;
-                                yxt=yxt_prev;
+                                // Get the joints velocity at the beginning of the current micro step
+                                yx = 0;
+                                // Get the joints position at the beginning of the current micro step
+                                yxt = yxt_prev;
                             }
                             else
                             {
-                                yx = interpolate(ya(k),yb(k),m);
-                                yxt = interpolate(yat(k),ybt(k),m);
-                                yxt_prev=yxt;
+                                // Linear interpolation of the joints velocity
+                                yx = interpolate(ya(k), yb(k), m);
+                                // Linear interpolation of the joints position
+                                yxt = interpolate(yat(k), ybt(k), m);
+                                // Save the joints position at the beginning of the current micro step
+                                yxt_prev = yxt;
                             }
 
-                            if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)) || // joints of the arm
-                                    (((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed))
+
+#if HAND == 0
+                            hand_closed = (closed[0] && closed[1] && closed[2]);
+#elif HAND == 1
+                            hand_closed = closed;
+#endif
+                            // Get and save the handles of arm joints
+#if HAND == 0
+                            if(((k != vel.cols() - 1) && (k != vel.cols() - 2) && ( k != vel.cols() - 3) && (k != vel.cols() - 4)) ||
+                                    (((k == vel.cols() - 1) || (k == vel.cols() - 2) || (k == vel.cols() - 3) || (k == vel.cols() - 4)) && !hand_closed))
+#elif HAND == 1
+                            if((k != vel.cols() - 1) || ((k == vel.cols() - 1) && !hand_closed))
+#endif
                                 dataTraj.handles.data.push_back(handles.at(k));
 
+
+                            // ********************************************************************** //
+                            //                              Execution mode                            //
+                            // ********************************************************************** //
                             int exec_mode;
                             double exec_value;
-#if VEL==0
-                            // position
+#if VEL == 0
+                            // Execution mode: POSITION
                             exec_mode = 0;
+                            // joints position
                             exec_value = yxt;
-#elif VEL==1
-                            //velocity
+#elif VEL == 1
+                            // Execution mode: VELOCITY
                             exec_mode = 2;
+                            // joints velocity
                             exec_value = yx;
 #endif
+
                             switch(scenarioID)
                             {
                             case 0:
                                 break;
-                            case 1: case 3: case 4: case 5: // Toy vehicle scenario with AROS, human assistance with ARoS, Toy vehicle scenario with Sawyer, human assistance with Sawyer
-                                if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
-                                    dataTraj.setModes.data.push_back(1); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-                                else if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)))
-                                    dataTraj.setModes.data.push_back(exec_mode); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-                                if((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4))
-                                    dataTraj.values.data.push_back(exec_value);// joints of the arm
-                                else if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
-                                    dataTraj.values.data.push_back(yxt);// joint of the hand
-                                break;
-                            case 2: // Toy vehicle scenario with Jarde
-                                dataTraj.setModes.data.push_back(0); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-                                dataTraj.values.data.push_back(yxt);
+                                // scenarios:
+                                //  -> Toy Vehicle with AROS, Sawyer with BarrettHand and Sawyer with Gripper
+                                //  -> Driking Service  with AROS, Sawyer with BarrettHand and Sawyer with Gripper
+                            case 1: case 2: case 3: case 4: case 5:
+                                // **** Send the execution mode
+                                //          Values:
+                                //              -> 0 to set the POSITION
+                                //              -> 1 to set the TARGET POSITION
+                                //              -> 1 to set the TARGET VELOCITY
+#if HAND == 0
+                                if(((k != vel.cols() - 1) && (k != vel.cols() - 2) && ( k != vel.cols() - 3) && (k != vel.cols() - 4)))
+#elif HAND == 1
+                                if(k != vel.cols() - 1)
+#endif
+                                    dataTraj.setModes.data.push_back(exec_mode);
+#if HAND == 0
+                                else if((((k == vel.cols() - 1) || (k == vel.cols() - 2) || ( k == vel.cols() - 3) || (k == vel.cols() - 4))) && !hand_closed)
+#elif HAND == 1
+                                else if((k == vel.cols() - 1) && !hand_closed)
+#endif
+                                    dataTraj.setModes.data.push_back(1);
+
+
+
+                                // **** Send the joints values
+#if HAND == 0
+                                if(((k != vel.cols() - 1) && (k != vel.cols() - 2) && ( k != vel.cols() - 3) && (k != vel.cols() - 4)))
+#elif HAND == 1
+                                if(k != vel.cols() - 1)
+#endif
+                                    dataTraj.values.data.push_back(exec_value);
+#if HAND == 0
+                                else if((((k == vel.cols() - 1) || (k == vel.cols() - 2) || ( k == vel.cols() - 3) || (k == vel.cols() - 4))) && !hand_closed)
+#elif HAND == 1
+                                else if((k == vel.cols() - 1) && !hand_closed)
+#endif
+                                    dataTraj.values.data.push_back(yxt);
                                 break;
                             }
-#if HAND ==1
-                            if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3)) && ((!closed.at(0)) && (!closed.at(1)) && (!closed.at(2))))
+
+#if HAND == 0
+                            if(((k == vel.cols() - 1) || (k == vel.cols() - 2) || (k == vel.cols() - 3)) && !hand_closed)
                             {
                                 // the fingers are being addressed
-                                data_hand.handles.data.push_back(hand_handles(k+3-vel.cols(),2));
-                                data_hand.setModes.data.push_back(1); // set the target position
-                                data_hand.values.data.push_back(yxt/3.0 + 45.0f*static_cast<double>(M_PI) / 180.0f);
+                                dataHand.handles.data.push_back(hand_handles(k + 3 - vel.cols(), 2));
+                                dataHand.setModes.data.push_back(1); // set the target position
+                                dataHand.values.data.push_back(yxt / 3.0 + 45.0f * static_cast<double>(M_PI) / 180.0f);
                             }
 #endif
                         }
+
+                        // Publish the data in the topic "/motion_manager/set_joints"
                         pub.publish(dataTraj);
-#if HAND ==1
-                        pub_hand.publish(data_hand);
+#if HAND == 0
+                        pubHand.publish(dataHand);
 #endif
+
                         interval = true;
                         tx_prev = tx;
                     }
+
                     // handle ROS messages:
                     ros::spinOnce();
                 }
@@ -2305,13 +2245,14 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 }
             }
 
-            // --------------------------------- post-movement operations ------------------------------------------- //
-            //ros::spinOnce(); // handle ROS messages
+
+            // ------------------------------------------------------------------------------------------------------------------------ //
+            //                                               Post-Movement operations                                                   //
+            // ------------------------------------------------------------------------------------------------------------------------ //
             switch (mov_type)
             {
             case 0: // reach-to grasp
-                // grasp the object
-                if(approach ||(plan && (traj_mov_real.size()==1)))
+                if(approach || (plan && (traj_mov_real.size() == 1)))
                 {
                     if(obj_in_hand)
                     {
@@ -2321,6 +2262,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                         srvset_parent.request.parentHandle = h_attach;
                         srvset_parent.request.keepInPlace = 1; // the detected object must stay in the same place
                         add_client.call(srvset_parent);
+
                         if (srvset_parent.response.result != 1)
                             log(QNode::Error,string("Error in grasping the object "));
                     }
@@ -2338,19 +2280,27 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                 break;
             }
         }
-        // handle ROS messages:
+
+
+        // Handle ROS messages:
         ros::spinOnce();
-        timeTot = simulationTime; // update the total time of the movement
+        // Update the total time of the movement
+        timeTot = simulationTime;
     }
 
-    // pause the simulation
+
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                    Pause Simulation                                                      //
+    // ------------------------------------------------------------------------------------------------------------------------ //
     add_client = node.serviceClient<vrep_common::simRosPauseSimulation>("/vrep/simRosPauseSimulation");
     vrep_common::simRosPauseSimulation srvpause;
     add_client.call(srvpause);
 
-    // handle ROS messages:
+    // Handle ROS messages:
     ros::spinOnce();
-    TotalTime = simulationTime; // update the total time of the movement
+    // Update the total time of the movement
+    TotalTime = simulationTime;
+
     log(QNode::Info,string("Movement completed"));
     mov->setExecuted(true);
 
@@ -2358,7 +2308,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 }
 
 
-#if ROBOT== 1
+#if ROBOT == 1
 bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov, std::vector<std::vector<double>> timesteps)
 {
     ros::NodeHandle node;
@@ -2641,13 +2591,14 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
 #endif
 
 
-
 bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene)
 {
+#if HAND == 0
     bool hand_closed;
-    closed.at(0)=false;
-    closed.at(1)=false;
-    closed.at(2)=false;
+    closed.at(0) = false;
+    closed.at(1) = false;
+    closed.at(2) = false;
+
     ros::NodeHandle node;
     double ta;
     double tb = 0.0;
@@ -2676,14 +2627,12 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     srv_enableSubscriber.request.queueSize=1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
 
-#if HAND==1
     // set joints position (it is used to set the target postion of the 2nd phalanx of the fingers)
     ros::ServiceClient client_enableSubscriber_hand=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
     vrep_common::simRosEnableSubscriber srv_enableSubscriber_hand;
     srv_enableSubscriber_hand.request.topicName="/"+nodeName+"/set_pos_hand"; // the topic name
     srv_enableSubscriber_hand.request.queueSize=1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber_hand.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
-#endif
 
     // start the simulation
     add_client = node.serviceClient<vrep_common::simRosStartSimulation>("/vrep/simRosStartSimulation");
@@ -2786,7 +2735,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                             if (srvset_parent.response.result != 1)
                                 log(QNode::Error,string("Error in grasping the object "));
 
-#if HAND == 1 && OPEN_CLOSE_HAND ==1
+#if OPEN_CLOSE_HAND == 1
                             this->closeBarrettHand(arm_code);
 #else
                             MatrixXd tt = traj_mov_real.at(j);
@@ -2818,7 +2767,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                                 log(QNode::Error,string("Error in releasing the object "));
                         }
 
-#if HAND ==1 && OPEN_CLOSE_HAND ==1
+#if OPEN_CLOSE_HAND == 1
                         MatrixXd tt = traj_mov_real.at(j);
                         VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
 
@@ -2828,7 +2777,6 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                         VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
                         this->openBarrettHand_to_pos(arm_code,hand_init_pos);
 #else
-
                         closed.at(0)=false;
                         closed.at(1)=false;
                         closed.at(2)=false;
@@ -2851,17 +2799,13 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                 ros::spinOnce(); // handle ROS messages
                 pre_time = simulationTime - timeTot; // update the total time of the movement
 
-#if HAND==0
-                if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1))
-                {
-#elif HAND==1
+
                 if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1) &&
                      client_enableSubscriber_hand.call(srv_enableSubscriber_hand) && (srv_enableSubscriber_hand.response.subscriberID!=-1))
                 {
                     // ok, the service call was ok, and the subscriber was succesfully started on V-REP side
                     // V-REP is now listening to the desired values
                     ros::Publisher pub_hand=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand",1);
-#endif
                     // 5. Let's prepare a publisher of those values:
                     ros::Publisher pub=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_joints",1);
                     tb = pre_time;
@@ -2887,9 +2831,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                         while (ros::ok() && simulationRunning && interval)
                         {// ros is running, simulation is running
                             vrep_common::JointSetStateData dataTraj;
-#if HAND==1
                             vrep_common::JointSetStateData data_hand;
-#endif
+
                             tx = simulationTime - timeTot;
                             if (tx >= tb)
                                 interval = false;
@@ -2940,20 +2883,20 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
 
                                     int exec_mode;
                                     double exec_value;
-#if VEL==0
+#if VEL == 0
                                     // position
                                     exec_mode = 0;
                                     exec_value = yxt;
-#elif VEL==1
+#elif VEL == 1
                                     //velocity
                                     exec_mode = 2;
                                     exec_value = yx;
 #endif
                                     switch(scenarioID)
                                     {
-                                    case 0: //error
+                                    case 0:
                                         break;
-                                    case 1: case 3: case 4: case 5: // Toy vehicle scenario with AROS, empty scenario with ARoS, human assistance with ARoS, Challenging scenario with ARoS, Toy vehicle scenario with Sawyer, human assistance with Sawyer
+                                    case 1: case 2: case 3: case 4: // Toy vehicle scenario with AROS, human assistance with ARoS, Toy vehicle scenario with Sawyer, human assistance with Sawyer
                                         if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
                                             dataTraj.setModes.data.push_back(1); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
                                         else if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)))
@@ -2964,12 +2907,8 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                                         else if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
                                             dataTraj.values.data.push_back(yxt);  // joints of the hand
                                         break;
-                                    case 2: // Toy vehicle scenario with Jarde
-                                        dataTraj.setModes.data.push_back(0); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-                                        dataTraj.values.data.push_back(yxt);
-                                        break;
                                     }
-#if HAND==1
+
                                     if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3)) && ((!closed.at(0)) && (!closed.at(1)) && (!closed.at(2))))
                                     {
                                         // the fingers are being addressed
@@ -2977,12 +2916,10 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
                                         data_hand.setModes.data.push_back(1); // set the target position
                                         data_hand.values.data.push_back(yxt/3.0 + 45.0f*static_cast<double>(M_PI) / 180.0f);
                                     }
-#endif
                                 }
                                 pub.publish(dataTraj);
-#if HAND==1
                                 pub_hand.publish(data_hand);
-#endif
+
                                 interval = true;
                                 tx_prev = tx;
                             }
@@ -3057,10 +2994,11 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
     TotalTime=simulationTime;
 
     return true;
+#endif
 }
 
 
-#if ROBOT==1
+#if ROBOT == 1
 bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps_task)
 {
     ros::NodeHandle node;
@@ -3368,10 +3306,12 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
 
 bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task, taskPtr task, scenarioPtr scene)
 {
+#if HAND == 0
     bool hand_closed;
-    closed.at(0)=false;
-    closed.at(1)=false;
-    closed.at(2)=false;
+    closed.at(0) = false;
+    closed.at(1) = false;
+    closed.at(2) = false;
+
     ros::NodeHandle node;
     double ta;
     double tb = 0.0;
@@ -3400,14 +3340,12 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
     srv_enableSubscriber.request.queueSize=1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
 
-#if HAND==1
     // set joints position (it is used to set the target postion of the 2nd phalanx of the fingers)
     ros::ServiceClient client_enableSubscriber_hand=node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
     vrep_common::simRosEnableSubscriber srv_enableSubscriber_hand;
     srv_enableSubscriber_hand.request.topicName="/"+nodeName+"/set_pos_hand"; // the topic name
     srv_enableSubscriber_hand.request.queueSize=1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber_hand.request.streamCmd=simros_strmcmd_set_joint_state; // the subscriber type
-#endif
 
     // previous retreat trajectories
     MatrixXd traj_prev_retreat;
@@ -3449,31 +3387,31 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
             switch (mov_type)
             {
             case 0: case 1: case 5: // reach-to-grasp, reaching, go-park
-              closed.at(0)=false;
-              closed.at(1)=false;
-              closed.at(2)=false;
-              break;
+                closed.at(0) = false;
+                closed.at(1) = false;
+                closed.at(2) = false;
+                break;
             case 2: case 3: case 4: // transport, engage, disengage
-              closed.at(0)=true;
-              closed.at(1)=true;
-              closed.at(2)=true;
-              break;
+                closed.at(0) = true;
+                closed.at(1) = true;
+                closed.at(2) = true;
+                break;
             }
 
             switch (arm_code)
             {
             case 0: // dual arm
-              break;
+                break;
             case 1: //right arm
-              handles = right_handles;
-              hand_handles = right_hand_handles;
-              h_attach = right_attach;
-              break;
+                handles = right_handles;
+                hand_handles = right_hand_handles;
+                h_attach = right_attach;
+                break;
             case 2: // left arm
-              handles = left_handles;
-              hand_handles = left_hand_handles;
-              h_attach = left_attach;
-              break;
+                handles = left_handles;
+                hand_handles = left_hand_handles;
+                h_attach = left_attach;
+                break;
             }
 
             MatrixXd traj_ret_plan_app;
@@ -3631,7 +3569,7 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                             add_client.call(srvset_parent);
                             if (srvset_parent.response.result != 1)
                                 log(QNode::Error,string("Error in grasping the object "));
-#if HAND == 1 && OPEN_CLOSE_HAND ==1
+#if OPEN_CLOSE_HAND == 1
                             this->closeBarrettHand(arm_code);
 #else
                             MatrixXd tt = traj_mov_real.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
@@ -3660,16 +3598,16 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                             if (srvset_parent.response.result != 1)
                                 log(QNode::Error,string("Error in releasing the object "));
                         }
-#if HAND ==1 && OPEN_CLOSE_HAND ==1
+#if OPEN_CLOSE_HAND == 1
                         MatrixXd tt = traj_mov_real.at(j); VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                         std::vector<double> hand_init_pos;
                         hand_init_pos.resize(init_h_posture.size());
                         VectorXd::Map(&hand_init_pos[0], init_h_posture.size()) = init_h_posture;
                         this->openBarrettHand_to_pos(arm_code,hand_init_pos);
 #else
-                        closed.at(0)=false;
-                        closed.at(1)=false;
-                        closed.at(2)=false;
+                        closed.at(0) = false;
+                        closed.at(1) = false;
+                        closed.at(2) = false;
 #endif
                         continue;
                     }
@@ -3700,17 +3638,13 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                 ros::spinOnce(); // handle ROS messages
                 pre_time = simulationTime - timeTot; // update the total time of the movement
 
-#if HAND==0
-                if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1))
-                {
-#elif HAND==1
+
                 if ( client_enableSubscriber.call(srv_enableSubscriber)&&(srv_enableSubscriber.response.subscriberID!=-1) &&
                      client_enableSubscriber_hand.call(srv_enableSubscriber_hand) && (srv_enableSubscriber_hand.response.subscriberID!=-1))
                 {
                     // ok, the service call was ok, and the subscriber was succesfully started on V-REP side
                     // V-REP is now listening to the desired values
                     ros::Publisher pub_hand=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand",1);
-#endif
                     // 5. Let's prepare a publisher of those values:
                     ros::Publisher pub=node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_joints",1);
                     tb = pre_time;
@@ -3737,9 +3671,8 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                         {
                             // ros is running, simulation is running
                             vrep_common::JointSetStateData dataTraj;
-#if HAND==1
                             vrep_common::JointSetStateData data_hand;
-#endif
+
                             tx = simulationTime - timeTot;
                             if (tx >= tb)
                                 interval = false;
@@ -3791,20 +3724,20 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
 
                                     int exec_mode;
                                     double exec_value;
-#if VEL==0
+#if VEL == 0
                                     // position
                                     exec_mode = 0;
                                     exec_value = yxt;
-#elif VEL==1
+#elif VEL == 1
                                     //velocity
                                     exec_mode = 2;
                                     exec_value = yx;
 #endif
                                     switch(scenarioID)
                                     {
-                                    case 0: //error
+                                    case 0:
                                         break;
-                                    case 1: case 3: case 4: case 5: // Toy vehicle scenario with AROS, human assistance with ARoS, Toy vehicle scenario with Sawyer, human assistance with Sawyer
+                                    case 1: case 2: case 3: case 4: // Toy vehicle scenario with AROS, human assistance with ARoS, Toy vehicle scenario with Sawyer, human assistance with Sawyer
                                         if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
                                             dataTraj.setModes.data.push_back(1); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
                                         else if(((k!=vel.cols()-1) && (k!=vel.cols()-2) && (k!=vel.cols()-3) && (k!=vel.cols()-4)))
@@ -3814,13 +3747,8 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                                         else if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3) || (k==vel.cols()-4)) && !hand_closed)
                                             dataTraj.values.data.push_back(yxt); //joints of the hand
                                         break;
-                                    case 2: // Toy vehicle scenario with Jarde
-                                        dataTraj.setModes.data.push_back(0); // 0 to set the position, 1 to set the target position, 2 to set the target velocity
-                                        dataTraj.values.data.push_back(yxt);
-                                        break;
                                     }
 
-#if HAND==1
                                     if(((k==vel.cols()-1) || (k==vel.cols()-2) || (k==vel.cols()-3)) && ((!closed.at(0)) && (!closed.at(1)) && (!closed.at(2))))
                                     {
                                         // the fingers are being addressed
@@ -3828,13 +3756,11 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
                                         data_hand.setModes.data.push_back(1); // set the target position
                                         data_hand.values.data.push_back(yxt/3.0 + 45.0f*static_cast<double>(M_PI) / 180.0f);
                                     }
-#endif
                                 }
 
                                 pub.publish(dataTraj);
-#if HAND==1
                                 pub_hand.publish(data_hand);
-#endif
+
                                 interval = true;
                                 tx_prev = tx;
                             }
@@ -3911,13 +3837,14 @@ bool QNode::execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector
     TotalTime=simulationTime;
 
     return true;
+#endif
 }
 
 
 double QNode::interpolate(double ya, double yb, double m)
 {
     // linear interpolation
-    return ya+(yb-ya)*m;
+    return ya + (yb - ya) * m;
 }
 
 
@@ -4031,19 +3958,17 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
 
 #if HAND == 0
     const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
-                             "right_joint_thumb_TMC_aa","right_joint_fing1_MCP","right_joint_fing3_MCP","right_joint_thumb_TMC_fe"};
-    const char *r_2hand[] = {"right_joint_fing1_PIP","right_joint_fing3_PIP","right_joint_thumb_MCP"};
-    const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
-                             "left_joint_thumb_TMC_aa","left_joint_fing1_MCP","left_joint_fing3_MCP","left_joint_thumb_TMC_fe"};
-    const char *l_2hand[] = {"left_joint_fing1_PIP","left_joint_fing3_PIP","left_joint_thumb_MCP"};
-#elif HAND == 1
-    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
                              "right_BarrettHand_jointA_0","right_BarrettHand_jointB_0","right_BarrettHand_jointB_2","right_BarrettHand_jointB_1"};
     const char *r_2hand[]={"right_BarrettHand_jointC_0","right_BarrettHand_jointC_2","right_BarrettHand_jointC_1"};
 
     const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
                          "left_BarrettHand_jointA_0","left_BarrettHand_jointB_0","left_BarrettHand_jointB_2","left_BarrettHand_jointB_1"};
     const char *l_2hand[]={"left_BarrettHand_jointC_0","left_BarrettHand_jointC_2","left_BarrettHand_jointC_1"};
+#elif HAND == 1
+    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
+                             "right_gripper_jointClose"};
+    const char *l_names[] = {"left_joint0", "left_joint1", "left_joint2", "left_joint3","left_joint4", "left_joint5", "left_joint6",
+                            "left_gripper_jointClose"};
 #endif
 
     for (int i = 0; i < JOINTS_ARM+JOINTS_HAND; ++i)
@@ -4057,7 +3982,7 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
             right_forces.push_back(joints_force.at(r_index));
         }
 
-        if(this->curr_scene->getRobot()->getName()=="ARoS")
+        if(this->curr_scene->getRobot()->getName() == "ARoS")
         {
             size_t l_index = std::find(joints_names.begin(), joints_names.end(), l_names[i]) - joints_names.begin();
 
@@ -4070,29 +3995,31 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
         }
     }
 
+#if HAND == 0
     for(int i = 0; i < HAND_FINGERS; ++i)
     {
         size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_2hand[i]) - joints_names.begin();
 
         if (r_index < joints_names.size())
         {
-            right_2hand_pos.at(i)=joints_pos.at(r_index);
-            right_2hand_vel.at(i)=joints_vel.at(r_index);
-            right_2hand_force.at(i)=joints_force.at(r_index);
+            right_2hand_pos.at(i) = joints_pos.at(r_index);
+            right_2hand_vel.at(i) = joints_vel.at(r_index);
+            right_2hand_force.at(i) = joints_force.at(r_index);
         }
 
-        if(this->curr_scene->getRobot()->getName()=="ARoS")
+        if(this->curr_scene->getRobot()->getName() == "ARoS")
         {
             size_t l_index = std::find(joints_names.begin(), joints_names.end(), l_2hand[i]) - joints_names.begin();
 
             if (l_index < joints_names.size())
             {
-                left_2hand_pos.at(i)=joints_pos.at(l_index);
-                left_2hand_vel.at(i)=joints_vel.at(l_index);
-                left_2hand_force.at(i)=joints_force.at(l_index);
+                left_2hand_pos.at(i) = joints_pos.at(l_index);
+                left_2hand_vel.at(i) = joints_vel.at(l_index);
+                left_2hand_force.at(i) = joints_force.at(l_index);
             }
         }
     }
+#endif
 
     if (this->curr_scene)
     {
@@ -4102,7 +4029,7 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
         this->curr_scene->getRobot()->setRightVelocities(right_vel);
         this->curr_scene->getRobot()->setRightForces(right_forces);
 
-        if(this->curr_scene->getRobot()->getName()=="ARoS")
+        if(this->curr_scene->getRobot()->getName() == "ARoS")
         {
             std::transform(left_posture.begin(), left_posture.end(), theta_offset.begin(), left_posture.begin(), std::plus<double>());
             this->curr_scene->getRobot()->setLeftPosture(left_posture);
@@ -4178,691 +4105,420 @@ bool QNode::getArmsHandles(int robot)
     add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
     vrep_common::simRosGetObjectHandle srvgetHandle;
 
-    for (int k = 0; k < JOINTS_ARM + JOINTS_HAND; ++k)
+
+    // **** Get the object handle of the arm joints
+    for(int k = 0; k < JOINTS_ARM; ++k)
     {
-        if (k < 7)
+        srvgetHandle.request.objectName = string("right_joint")+QString::number(k).toStdString();
+        add_client.call(srvgetHandle);
+        if (srvgetHandle.response.handle !=-1)
+            right_handles.push_back(srvgetHandle.response.handle);
+        else
         {
-            srvgetHandle.request.objectName = string("right_joint")+QString::number(k).toStdString();
+            throw string("Error: Couldn't get the information about of right arm joints");
+            succ = false;
+        }
+
+        // ARoS and Jade
+        if(robot != 2)
+        {
+            srvgetHandle.request.objectName = string("left_joint")+QString::number(k).toStdString();
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                left_handles.push_back(srvgetHandle.response.handle);
+            else
+            {
+                throw string("Error: Couldn't get the information of the left arm joints");
+                succ = false;
+            }
+        }
+    }
+
+
+    // **** Get the object handle of the hand joints
+    for (int k = 0; k < JOINTS_HAND; ++k)
+    {
+        if(k == 0)
+        {
+#if HAND == 0
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointA_0");
             add_client.call(srvgetHandle);
             if (srvgetHandle.response.handle !=-1)
                 right_handles.push_back(srvgetHandle.response.handle);
             else
-                succ=false;
+            {
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointA_0");
+                succ = false;
+            }
 
             if(robot != 2)
             {
-                srvgetHandle.request.objectName = string("left_joint")+QString::number(k).toStdString();
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-        }
-        else if (k == 7)
-        {
-            switch(robot)
-            {
-            case 0: // ARoS
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointA_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointA_0");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
                     left_handles.push_back(srvgetHandle.response.handle);
                 else
-                    succ=false;
-
-                break;
-            case 1: // Jarde
-                srvgetHandle.request.objectName = string("right_joint_thumb_TMC_aa");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_thumb_TMC_aa");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
-            case 2: // Sawyer
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointA_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointA_0");
+                    succ = false;
+                }
             }
-        }
-        else if(k == 8)
-        {
-            switch(robot)
+#elif HAND == 1
+            srvgetHandle.request.objectName = string("right_gripper_jointClose");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_handles.push_back(srvgetHandle.response.handle);
+            else
             {
-            case 0: // ARoS
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
+                throw string("Error: Couldn't get the information of the right_gripper_jointClose");
+                succ = false;
+            }
+#endif
+        }
+        else if(k == 1)
+        {
+#if HAND == 0
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_handles.push_back(srvgetHandle.response.handle);
+            else
+            {
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointB_0");
+                succ = false;
+            }
 
+            if(robot !=2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointB_0");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
                     left_handles.push_back(srvgetHandle.response.handle);
                 else
-                    succ=false;
-
-                break;
-            case 1: // Jarde
-                srvgetHandle.request.objectName = string("right_joint_fing1_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing1_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
-            case 2: // Sawyer
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointB_0");
+                    succ = false;
+                }
             }
+#endif
         }
-        else if(k == 9)
+        else if(k == 2)
         {
-            switch(robot)
+#if HAND == 0
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_handles.push_back(srvgetHandle.response.handle);
+            else
             {
-            case 0: // ARoS
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointB_2");
+                succ = false;
+            }
 
+            if(robot != 2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointB_2");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
                     left_handles.push_back(srvgetHandle.response.handle);
                 else
-                    succ=false;
-
-                break;
-            case 1: // Jarde
-                srvgetHandle.request.objectName = string("right_joint_fing3_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing3_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
-            case 2: //Sawyer
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointB_2");
+                    succ = false;
+                }
             }
+#endif
         }
-        else if(k == 10)
+        else if(k == 3)
         {
-            switch(robot)
+#if HAND == 0
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_handles.push_back(srvgetHandle.response.handle);
+            else
             {
-            case 0: // ARoS
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointB_1");
+                succ = false;
+            }
 
+            if(robot != 2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointB_1");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
                     left_handles.push_back(srvgetHandle.response.handle);
                 else
-                    succ=false;
-
-                break;
-            case 1: // Jarde
-                srvgetHandle.request.objectName = string("right_joint_thumb_TMC_fe");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_thumb_TMC_fe");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
-            case 2: // Sawyer
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_handles.push_back(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                break;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointB_1");
+                    succ = false;
+                }
             }
+#endif
         }
     }
 
-    // get the complete hand handles
-    switch(robot)
-    {
-    case 0: // ARoS
-        for (int k = 0; k < HAND_FINGERS; ++k)
-        {
-            if (k!=1)
-            {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointA_")+QString::number(k).toStdString();
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
 
+    // **** Get the object handle of the fingers joints
+#if HAND == 0
+    for(int k = 0; k < HAND_FINGERS; ++k)
+    {
+        if(k != 1)
+        {
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointA_")+QString::number(k).toStdString();
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 0) = (srvgetHandle.response.handle);
+            else
+            {
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointA_");
+                succ = false;
+            }
+
+            if(robot != 2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointA_")+QString::number(k).toStdString();
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,0)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 0) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointA_");
+                    succ = false;
+                }
+            }
+        }
+
+        if(k == 0)
+        {
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 1) = (srvgetHandle.response.handle);
+            else
+            {
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointB_0");
+                succ = false;
             }
 
-            if (k == 0)
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointC_0");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 2) = (srvgetHandle.response.handle);
+            else
             {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointC_0");
+                succ = false;
+            }
 
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointC_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
+            if(robot != 2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointB_0");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,1)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 1) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointB_0");
+                    succ = false;
+                }
 
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointC_0");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,2)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 2) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointC_0");
+                    succ = false;
+                }
+            }
+        }
+        else if(k == 1)
+        {
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 1) = (srvgetHandle.response.handle);
+            else
+            {
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointB_2");
+                succ = false;
             }
 
-            if (k == 1)
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointC_2");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 2) = (srvgetHandle.response.handle);
+            else
             {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointC_2");
+                succ = false;
+            }
 
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointC_2");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
+            if(robot != 2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointB_2");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,1)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 1) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointB_2");
+                    succ = false;
+                }
 
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointC_2");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,2)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 2) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointC_2");
+                    succ = false;
+                }
+            }
+        }
+        else if(k == 2)
+        {
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 1) = (srvgetHandle.response.handle);
+            else
+            {
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointB_1");
+                succ = false;
             }
 
-            if (k == 2)
+            srvgetHandle.request.objectName = string("right_BarrettHand_jointC_1");
+            add_client.call(srvgetHandle);
+            if (srvgetHandle.response.handle !=-1)
+                right_hand_handles(k, 2) = (srvgetHandle.response.handle);
+            else
             {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
+                throw string("Error: Couldn't get the information of the right_BarrettHand_jointC_1");
+                succ = false;
+            }
 
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointC_1");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
+            if(robot != 2)
+            {
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointB_1");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,1)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 1) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointB_1");
+                    succ = false;
+                }
 
                 srvgetHandle.request.objectName = string("left_BarrettHand_jointC_1");
                 add_client.call(srvgetHandle);
                 if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,2)=(srvgetHandle.response.handle);
+                    left_hand_handles(k, 2) = (srvgetHandle.response.handle);
                 else
-                    succ=false;
+                {
+                    throw string("Error: Couldn't get the information of the left_BarrettHand_jointC_1");
+                    succ = false;
+                }
             }
         }
+    }
+#endif
 
-        break;
-    case 1: // Jarde
-        for (int k = 0; k < HAND_FINGERS; ++k)
-        {
-            if (k==2)
-            {
-                srvgetHandle.request.objectName = string("right_joint_thumb_TMC_aa");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
 
-                srvgetHandle.request.objectName = string("right_joint_thumb_TMC_fe");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_joint_thumb_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_joint_thumb_IP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,3)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_thumb_TMC_aa");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_thumb_TMC_fe");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_thumb_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_thumb_IP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,3)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-            else if(k==0)
-            {
-                srvgetHandle.request.objectName = string("right_joint_fing1_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_joint_fing1_PIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_joint_fing1_DIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing1_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing1_PIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing1_DIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-            else if(k==1)
-            {
-                srvgetHandle.request.objectName = string("right_joint_fing3_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_joint_fing3_PIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_joint_fing3_DIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing3_MCP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing3_PIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("left_joint_fing3_DIP");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    left_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-        }
-
-        break;
-    case 2: //Sawyer
-        for (int k = 0; k < HAND_FINGERS; ++k)
-        {
-            if (k!=1)
-            {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointA_")+QString::number(k).toStdString();
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,0)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-
-            if (k == 0)
-            {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointC_0");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-
-            if (k == 1)
-            {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_2");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointC_2");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-
-            if (k == 2)
-            {
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointB_1");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,1)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-
-                srvgetHandle.request.objectName = string("right_BarrettHand_jointC_1");
-                add_client.call(srvgetHandle);
-                if (srvgetHandle.response.handle !=-1)
-                    right_hand_handles(k,2)=(srvgetHandle.response.handle);
-                else
-                    succ=false;
-            }
-        }
-        break;
+    // **** Get the object handle of the sensors
+#if HAND == 0
+    add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
+    srvgetHandle.request.objectName = string("right_BarrettHand_attachProxSensor");
+    add_client.call(srvgetHandle);
+    if (srvgetHandle.response.handle !=-1)
+        right_sensor = srvgetHandle.response.handle;
+    else
+    {
+        throw string("Error: Couldn't get the information of the right_BarrettHand_attachProxSensor");
+        succ = false;
     }
 
-    switch(robot)
+    add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
+    srvgetHandle.request.objectName = string("right_BarrettHand_attachPoint");
+    add_client.call(srvgetHandle);
+    if (srvgetHandle.response.handle !=-1)
+        right_attach = srvgetHandle.response.handle;
+    else
     {
-    case 0: // ARos
-        // get the object handle of the sensors
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("right_BarrettHand_attachProxSensor");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            right_sensor=srvgetHandle.response.handle;
-        else
-            succ=false;
+        throw string("Error: Couldn't get the information of the right_BarrettHand_attachPoint");
+        succ = false;
+    }
 
+    if(robot != 2)
+    {
         add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
         srvgetHandle.request.objectName = string("left_BarrettHand_attachProxSensor");
         add_client.call(srvgetHandle);
         if (srvgetHandle.response.handle !=-1)
-            left_sensor=srvgetHandle.response.handle;
+            left_sensor = srvgetHandle.response.handle;
         else
-            succ=false;
-
-        // get the object handle of the attach points
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("right_BarrettHand_attachPoint");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            right_attach=srvgetHandle.response.handle;
-        else
-            succ=false;
+        {
+            throw string("Error: Couldn't get the information of the left_BarrettHand_attachProxSensor");
+            succ = false;
+        }
 
         add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
         srvgetHandle.request.objectName = string("left_BarrettHand_attachPoint");
         add_client.call(srvgetHandle);
         if (srvgetHandle.response.handle !=-1)
-            left_attach=srvgetHandle.response.handle;
+            left_attach = srvgetHandle.response.handle;
         else
-            succ=false;
-
-        break;
-    case 1: // Jarde
-        // get the object handle of the sensors
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("right_hand_attachProxSensor");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            right_sensor=srvgetHandle.response.handle;
-        else
-            succ=false;
-
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("left_hand_attachProxSensor");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            left_sensor=srvgetHandle.response.handle;
-        else
-            succ=false;
-
-        // get the object handle of the attach points
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("right_hand_attachPoint");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            right_attach=srvgetHandle.response.handle;
-        else
-            succ=false;
-
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("left_hand_attachPoint");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            left_attach=srvgetHandle.response.handle;
-        else
-            succ=false;
-
-        break;
-    case 2: // Sawyer
-        // get the object handle of the sensors
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("right_BarrettHand_attachProxSensor");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            right_sensor=srvgetHandle.response.handle;
-        else
-            succ=false;
-
-        // get the object handle of the attach points
-        add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-        srvgetHandle.request.objectName = string("right_BarrettHand_attachPoint");
-        add_client.call(srvgetHandle);
-        if (srvgetHandle.response.handle !=-1)
-            right_attach=srvgetHandle.response.handle;
-        else
-            succ=false;
-        break;
+        {
+            throw string("Error: Couldn't get the information of the left_BarrettHand_attachPoint");
+            succ = false;
+        }
     }
+#elif HAND == 1
+    add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
+    srvgetHandle.request.objectName = string("right_gripper_attachProxSensor");
+    add_client.call(srvgetHandle);
+    if (srvgetHandle.response.handle !=-1)
+        right_sensor = srvgetHandle.response.handle;
+    else
+    {
+        throw string("Error: Couldn't get the information of the right_gripper_attachProxSensor");
+        succ = false;
+    }
+
+    add_client = node.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
+    srvgetHandle.request.objectName = string("right_gripper_attachPoint");
+    add_client.call(srvgetHandle);
+    if (srvgetHandle.response.handle !=-1)
+        right_attach = srvgetHandle.response.handle;
+    else
+    {
+        throw string("Error: Couldn't get the information of the right_gripper_attachPoint");
+        succ = false;
+    }
+#endif
 
     return succ;
 }
 
 
-int QNode::getSteps(std::vector<double> &maxLimits, std::vector<double> &minLimits, std::vector<double> &initPosture, std::vector<double> &finalPosture)
-{
-    // Minimum number of steps
-    const int N_STEP_MIN = 5;
-    // Maximum number of steps
-    const int N_STEP_MAX = 50;
-
-    // Maximum and minimum joints limits
-    VectorXd max = VectorXd::Map(maxLimits.data(), maxLimits.size());
-    VectorXd min = VectorXd::Map(minLimits.data(), minLimits.size());
-    double den = (max-min).norm();
-
-    // Current and final position of the joints
-    VectorXd init = VectorXd::Map(initPosture.data(), initPosture.size());
-    VectorXd final = VectorXd::Map(finalPosture.data(), finalPosture.size());
-    double num = (final-init).norm();
-
-    // Number of steps (N_Min + (N_Max - N_Min) * (|| Pos_f - Pos_i || / || lim_Max - lim_Min||))
-    int n_steps = static_cast<int>(0.5 + (N_STEP_MIN + (N_STEP_MAX - N_STEP_MIN) * (num / den)));
-
-    return n_steps;
-}
-
-
-#if HAND == 1
+#if HAND == 0
 bool QNode::closeBarrettHand(int hand)
 {
     int cnt = 0;
     std::vector<int> firstPartTorqueOvershootCount(3, 0);
-    firstPartLocked.at(0)=false;
-    firstPartLocked.at(1)=false;
-    firstPartLocked.at(2)=false;
 
-    needFullOpening.at(0)=0;
-    needFullOpening.at(1)=0;
-    needFullOpening.at(2)=0;
+    firstPartLocked.at(0) = false;
+    firstPartLocked.at(1) = false;
+    firstPartLocked.at(2) = false;
 
-    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
+    needFullOpening.at(0) = 0;
+    needFullOpening.at(1) = 0;
+    needFullOpening.at(2) = 0;
+
+    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE + 1, 1);
     ros::NodeHandle node;
     std::vector<double> hand_forces;
     std::vector<double> hand_posture;
@@ -4883,7 +4539,8 @@ bool QNode::closeBarrettHand(int hand)
     ros::ServiceClient client_setIntParam = node.serviceClient<vrep_common::simRosSetObjectIntParameter>("/vrep/simRosSetObjectIntParameter");
     vrep_common::simRosSetObjectIntParameter srv_setObjInt;
 
-    while (ros::ok() && simulationRunning && (!closed[0] || !closed[1] || !closed[2]) && cnt<1000)
+
+    while (ros::ok() && simulationRunning && (!closed[0] || !closed[1] || !closed[2]) && cnt < 1000)
     {
         cnt++;
 
@@ -4914,7 +4571,7 @@ bool QNode::closeBarrettHand(int hand)
                 client_setIntParam.call(srv_setObjInt);
 
                 srv_setTarVel.request.handle = hand_handles(i,2);
-                srv_setTarVel.request.targetVelocity = closingVel/3.0f;
+                srv_setTarVel.request.targetVelocity = closingVel / 3.0f;
                 client_setTarVel.call(srv_setTarVel);
             }
             else if (!firstPartLocked.at(i))
@@ -4934,44 +4591,44 @@ bool QNode::closeBarrettHand(int hand)
 
                     // lock the first part
                     // set the position control
-                    srv_setObjInt.request.handle = hand_handles(i,1);
+                    srv_setObjInt.request.handle = hand_handles(i, 1);
                     srv_setObjInt.request.parameter = 2001;
                     srv_setObjInt.request.parameterValue = 1;
                     client_setIntParam.call(srv_setObjInt);
                     // set the force
-                    srv_setForce.request.handle = hand_handles(i,1);
-                    srv_setForce.request.forceOrTorque = closingOpeningTorque*100.0f;
+                    srv_setForce.request.handle = hand_handles(i, 1);
+                    srv_setForce.request.forceOrTorque = closingOpeningTorque * 100.0f;
                     client_setForce.call(srv_setForce);
                     // set the target position
-                    srv_setTarPos.request.handle = hand_handles(i,1);
-                    srv_setTarPos.request.targetPosition = hand_posture.at(i+1);
+                    srv_setTarPos.request.handle = hand_handles(i, 1);
+                    srv_setTarPos.request.targetPosition = hand_posture.at(i + 1);
                     client_setTarPos.call(srv_setTarPos);
 
                     // go on with the second part
-                    srv_setObjInt.request.handle = hand_handles(i,2);
+                    srv_setObjInt.request.handle = hand_handles(i, 2);
                     srv_setObjInt.request.parameter = 2001;
                     srv_setObjInt.request.parameterValue = 0;
                     client_setIntParam.call(srv_setObjInt);
 
-                    srv_setTarVel.request.handle = hand_handles(i,2);
+                    srv_setTarVel.request.handle = hand_handles(i, 2);
                     srv_setTarVel.request.targetVelocity = closingVel / 3.0f;
                     client_setTarVel.call(srv_setTarVel);
                 }
                 else
                 {
                     //make first joint to close with a predefined velocity
-                    srv_setObjInt.request.handle = hand_handles(i,1);
+                    srv_setObjInt.request.handle = hand_handles(i, 1);
                     srv_setObjInt.request.parameter = 2001;
                     srv_setObjInt.request.parameterValue = 0;
                     client_setIntParam.call(srv_setObjInt);
 
-                    srv_setTarVel.request.handle = hand_handles(i,1);
+                    srv_setTarVel.request.handle = hand_handles(i, 1);
                     srv_setTarVel.request.targetVelocity = closingVel;
                     client_setTarVel.call(srv_setTarVel);
 
                     //second joint position is 1/3 of the first
-                    srv_setTarPos.request.handle = hand_handles(i,2);
-                    srv_setTarPos.request.targetPosition = 45.0f*static_cast<double>(M_PI) / 180.0f + hand_posture.at(i+1) / 3.0f;
+                    srv_setTarPos.request.handle = hand_handles(i, 2);
+                    srv_setTarPos.request.targetPosition = 45.0f * static_cast<double>(M_PI) / 180.0f + hand_posture.at(i + 1) / 3.0f;
                     client_setTarPos.call(srv_setTarPos);
                 }
             }
@@ -4980,32 +4637,35 @@ bool QNode::closeBarrettHand(int hand)
         ros::spinOnce();
     } // while loop
 
+
     for (size_t i = 0; i < HAND_FINGERS; i++)
     {
         // set the position control
-        srv_setObjInt.request.handle = hand_handles(i,1);
+        srv_setObjInt.request.handle = hand_handles(i, 1);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
         // set the target position
-        srv_setTarPos.request.handle = hand_handles(i,1);
-        srv_setTarPos.request.targetPosition = hand_posture.at(i+1);
+        srv_setTarPos.request.handle = hand_handles(i, 1);
+        srv_setTarPos.request.targetPosition = hand_posture.at(i + 1);
         client_setTarPos.call(srv_setTarPos);
 
-        srv_setObjInt.request.handle = hand_handles(i,2);
+        srv_setObjInt.request.handle = hand_handles(i, 2);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
     }
 
     log(QNode::Info,string("Hand closed."));
+
+
     return (closed[0] && closed[1] && closed[2]);
 }
 
 
 bool QNode::openBarrettHand_to_pos(int hand, std::vector<double>& hand_posture)
 {
-    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
+    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE + 1, 1);
     ros::NodeHandle node;
     std::vector<double> hand2_pos;
 
@@ -5029,42 +4689,45 @@ bool QNode::openBarrettHand_to_pos(int hand, std::vector<double>& hand_posture)
     ros::ServiceClient client_setIntParam = node.serviceClient<vrep_common::simRosSetObjectIntParameter>("/vrep/simRosSetObjectIntParameter");
     vrep_common::simRosSetObjectIntParameter srv_setObjInt;
 
+
     for (size_t i = 0; i < HAND_FINGERS; ++i)
     {
         // set the position control
-        srv_setObjInt.request.handle = hand_handles(i,1);
+        srv_setObjInt.request.handle = hand_handles(i, 1);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
         // set the target position
-        srv_setTarPos.request.handle = hand_handles(i,1);
-        srv_setTarPos.request.targetPosition = hand_posture.at(i+1);
+        srv_setTarPos.request.handle = hand_handles(i, 1);
+        srv_setTarPos.request.targetPosition = hand_posture.at(i + 1);
         client_setTarPos.call(srv_setTarPos);
 
         // second joint in position control
         // set the position control
-        srv_setObjInt.request.handle = hand_handles(i,2);
+        srv_setObjInt.request.handle = hand_handles(i, 2);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
         // set the target position
-        srv_setTarPos.request.handle = hand_handles(i,2);
-        srv_setTarPos.request.targetPosition = 45.0f*static_cast<double>(M_PI) / 180.0f + hand_posture.at(i+1)/3.0f ;
+        srv_setTarPos.request.handle = hand_handles(i, 2);
+        srv_setTarPos.request.targetPosition = 45.0f * static_cast<double>(M_PI) / 180.0f + hand_posture.at(i + 1) / 3.0f ;
         client_setTarPos.call(srv_setTarPos);
 
         firstPartLocked[i] = false;
         needFullOpening[i] = 0;
-        closed[i]=false;
+        closed[i] = false;
     }
 
     log(QNode::Info,string("Hand open."));
+
+
     return true;
 }
 
 
 bool QNode::closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture)
 {
-    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
+    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE + 1, 1);
     ros::NodeHandle node;
     std::vector<double> hand2_pos;
 
@@ -5088,35 +4751,38 @@ bool QNode::closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture)
     ros::ServiceClient client_setIntParam = node.serviceClient<vrep_common::simRosSetObjectIntParameter>("/vrep/simRosSetObjectIntParameter");
     vrep_common::simRosSetObjectIntParameter srv_setObjInt;
 
+
     for (size_t i = 0; i < HAND_FINGERS; ++i)
     {
         // set the position control
-        srv_setObjInt.request.handle = hand_handles(i,1);
+        srv_setObjInt.request.handle = hand_handles(i, 1);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
         // set the target position
-        srv_setTarPos.request.handle = hand_handles(i,1);
-        srv_setTarPos.request.targetPosition = hand_posture.at(i+1);
+        srv_setTarPos.request.handle = hand_handles(i, 1);
+        srv_setTarPos.request.targetPosition = hand_posture.at(i + 1);
         client_setTarPos.call(srv_setTarPos);
 
         // second joint in position control
         // set the position control
-        srv_setObjInt.request.handle = hand_handles(i,2);
+        srv_setObjInt.request.handle = hand_handles(i, 2);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
         // set the target position
-        srv_setTarPos.request.handle = hand_handles(i,2);
-        srv_setTarPos.request.targetPosition = 45.0f*static_cast<double>(M_PI) / 180.0f + hand_posture.at(i+1)/3.0f ;
+        srv_setTarPos.request.handle = hand_handles(i, 2);
+        srv_setTarPos.request.targetPosition = 45.0f * static_cast<double>(M_PI) / 180.0f + hand_posture.at(i + 1) / 3.0f;
         client_setTarPos.call(srv_setTarPos);
 
         firstPartLocked[i] = true;
         needFullOpening[i] = 1;
-        closed[i]=true;
+        closed[i] = true;
     }
 
     log(QNode::Info,string("Hand closed."));
+
+
     return true;
 }
 
@@ -5124,7 +4790,7 @@ bool QNode::closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture)
 bool QNode::openBarrettHand(int hand)
 {
     int cnt = 0;
-    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE+1,1);
+    MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS,N_PHALANGE + 1, 1);
     ros::NodeHandle node;
     std::vector<double> hand_forces;
     std::vector<double> hand_posture;
@@ -5142,7 +4808,7 @@ bool QNode::openBarrettHand(int hand)
     ros::ServiceClient client_setIntParam = node.serviceClient<vrep_common::simRosSetObjectIntParameter>("/vrep/simRosSetObjectIntParameter");
     vrep_common::simRosSetObjectIntParameter srv_setObjInt;
 
-    while (ros::ok() && simulationRunning && (closed[0] || closed[1] || closed[2]) && cnt<1000)
+    while (ros::ok() && simulationRunning && (closed[0] || closed[1] || closed[2]) && cnt < 1000)
     {
         cnt++;
 
@@ -5164,28 +4830,28 @@ bool QNode::openBarrettHand(int hand)
 
         for (size_t i = 0; i < HAND_FINGERS; i++)
         {
-            srv_setObjInt.request.handle = hand_handles(i,2);
+            srv_setObjInt.request.handle = hand_handles(i, 2);
             srv_setObjInt.request.parameter = 2001;
             srv_setObjInt.request.parameterValue = 0;
             client_setIntParam.call(srv_setObjInt);
 
-            srv_setTarVel.request.handle = hand_handles(i,2);
-            srv_setTarVel.request.targetVelocity = openingVel/3.0f;
+            srv_setTarVel.request.handle = hand_handles(i, 2);
+            srv_setTarVel.request.targetVelocity = openingVel / 3.0f;
             client_setTarVel.call(srv_setTarVel);
 
             if (firstPartLocked[i])
             {
-                if(hand2_pos.at(i) < 45.5*static_cast<double>(M_PI) / 180.0)
+                if(hand2_pos.at(i) < 45.5 * static_cast<double>(M_PI) / 180.0)
                 {
                     // unlock the first part
                     // set the velocity control
-                    srv_setObjInt.request.handle = hand_handles(i,1);
+                    srv_setObjInt.request.handle = hand_handles(i, 1);
                     srv_setObjInt.request.parameter = 2001;
                     srv_setObjInt.request.parameterValue = 0;
                     client_setIntParam.call(srv_setObjInt);
 
                     //make first joints to open with a predefined velocity
-                    srv_setTarVel.request.handle = hand_handles(i,1);
+                    srv_setTarVel.request.handle = hand_handles(i, 1);
                     srv_setTarVel.request.targetVelocity = openingVel;
                     client_setTarVel.call(srv_setTarVel);
 
@@ -5197,19 +4863,19 @@ bool QNode::openBarrettHand(int hand)
                 if (needFullOpening[i] != 0)
                 {
                     // full opening is needed
-                    if (hand2_pos.at(i) < 45.5f*static_cast<double>(M_PI) / 180.0f && hand_posture.at(i+1) < 0.5f*static_cast<double>(M_PI) / 180.0f)
+                    if ((hand2_pos.at(i) < (45.5f * static_cast<double>(M_PI) / 180.0f)) && (hand_posture.at(i + 1) < (0.5f * static_cast<double>(M_PI) / 180.0f)))
                     {
                         needFullOpening[i] = 0;
                         // second joint in position control
                         // set the position control
-                        srv_setObjInt.request.handle = hand_handles(i,2);
+                        srv_setObjInt.request.handle = hand_handles(i, 2);
                         srv_setObjInt.request.parameter = 2001;
                         srv_setObjInt.request.parameterValue = 1;
                         client_setIntParam.call(srv_setObjInt);
 
                         // set the target position
-                        srv_setTarPos.request.handle = hand_handles(i,2);
-                        srv_setTarPos.request.targetPosition = 45.0f*static_cast<double>(M_PI) / 180.0f + hand_posture.at(i+1)/3.0f ;
+                        srv_setTarPos.request.handle = hand_handles(i, 2);
+                        srv_setTarPos.request.targetPosition = 45.0f * static_cast<double>(M_PI) / 180.0f + hand_posture.at(i + 1) / 3.0f ;
                         client_setTarPos.call(srv_setTarPos);
                     }
                 }
@@ -5217,45 +4883,46 @@ bool QNode::openBarrettHand(int hand)
                 {
                     // full opening is NOT needed
                     //make first joint to open with a predefined velocity
-                    srv_setObjInt.request.handle = hand_handles(i,1);
+                    srv_setObjInt.request.handle = hand_handles(i, 1);
                     srv_setObjInt.request.parameter = 2001;
                     srv_setObjInt.request.parameterValue = 0;
                     client_setIntParam.call(srv_setObjInt);
 
-                    srv_setTarVel.request.handle = hand_handles(i,1);
+                    srv_setTarVel.request.handle = hand_handles(i, 1);
                     srv_setTarVel.request.targetVelocity = openingVel;
                     client_setTarVel.call(srv_setTarVel);
 
-                    if ( hand_posture.at(i+1) <= 36.0f*static_cast<double>(M_PI) / 180.0f)
-                    {
-                        closed[i]=false;
-                    }
+                    if (hand_posture.at(i + 1) <= (36.0f * static_cast<double>(M_PI) / 180.0f))
+                        closed[i] = false;
                 }
             }
-        }// for loop
+        }
 
         ros::spinOnce();
-    }// while loop
+    }
+
 
     for (size_t i = 0; i < HAND_FINGERS; i++)
     {
         // set the position control
-        srv_setObjInt.request.handle = hand_handles(i,1);
+        srv_setObjInt.request.handle = hand_handles(i, 1);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
         // set the target position
-        srv_setTarPos.request.handle = hand_handles(i,1);
-        srv_setTarPos.request.targetPosition = hand_posture.at(i+1);
+        srv_setTarPos.request.handle = hand_handles(i, 1);
+        srv_setTarPos.request.targetPosition = hand_posture.at(i + 1);
         client_setTarPos.call(srv_setTarPos);
 
-        srv_setObjInt.request.handle = hand_handles(i,2);
+        srv_setObjInt.request.handle = hand_handles(i, 2);
         srv_setObjInt.request.parameter = 2001;
         srv_setObjInt.request.parameterValue = 1;
         client_setIntParam.call(srv_setObjInt);
     }
 
     log(QNode::Info,string("Hand open."));
+
+
     return true;
 }
 

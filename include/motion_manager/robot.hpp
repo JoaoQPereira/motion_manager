@@ -11,46 +11,7 @@ class Robot
 {
 
 public:
-#if HAND==0
-    /**
-     * @brief Robot
-     * @param name
-     * @param torsospecs
-     * @param aspecs
-     * @param hspecs
-     */
-    Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs);
-
-    /**
-     * @brief Robot
-     * @param name
-     * @param torsospecs
-     * @param aspecs
-     * @param hspecs
-     * @param r
-     * @param l
-     */
-    Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-          vector<double>& r, vector<double>& l);
-
-    /**
-     * @brief Robot
-     * @param name
-     * @param torsospecs
-     * @param aspecs
-     * @param hspecs
-     * @param r
-     * @param l
-     * @param min_rl
-     * @param max_rl
-     * @param min_ll
-     * @param max_ll
-     */
-    Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-          vector<double>& r, vector<double>& l,
-          vector<double>& min_rl, vector<double>& max_rl,
-          vector<double>& min_ll, vector<double>& max_ll);
-#else
+#if HAND == 0
     /**
      * @brief Robot
      * @param name
@@ -110,6 +71,66 @@ public:
           vector<double>& min_rl, vector<double>& max_rl,
           vector<double>& min_ll, vector<double>& max_ll);
 #endif
+#elif HAND == 1
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs);
+
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param r
+     * @param l
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+          vector<double>& r, vector<double>& l);
+
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param r
+     * @param l
+     * @param min_rl
+     * @param max_rl
+     * @param min_ll
+     * @param max_ll
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+          vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
+
+#if HEAD == 1
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param headspecs
+     * @param r
+     * @param l
+     * @param min_rl
+     * @param max_rl
+     * @param min_ll
+     * @param max_ll
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+          robot_part headspecs, vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
+#endif
 #endif
 
     /**
@@ -140,19 +161,20 @@ public:
      * @param specs
      */
     void setArm(arm& specs);
-#if HAND==0
 
-    /**
-     * @brief This method sets the specifications of the hand
-     * @param specs
-     */
-    void setHumanHand(human_hand& specs);
-#else
+#if HAND == 0
     /**
      * @brief This method sets the specifications of the hand
      * @param specs
      */
     void setBarrettHand(barrett_hand& specs);
+
+#elif HAND == 1
+    /**
+     * @brief This method sets the specifications of the electric gripper
+     * @param specs
+     */
+    void setElectricGripper(electric_gripper& specs);
 #endif
 
     /**
@@ -252,6 +274,10 @@ public:
     void setMatLeftHand(Matrix4d& m);
 
 #if HEAD==1
+    /**
+     * @brief This method sets the head of the robot
+     * @param head
+     */
     void setHead(robot_part& head);
 #endif
 
@@ -273,13 +299,7 @@ public:
      */
     arm getArm();
 
-#if HAND==0
-    /**
-     * @brief This method gets hand specifications of the robot
-     * @return
-     */
-    human_hand getHumanHand();
-#else
+#if HAND == 0
     /**
      * @brief This method gets the hand specifications of the robot
      * @return
@@ -287,17 +307,24 @@ public:
     barrett_hand getBarrettHand();
 
     /**
-     * @brief This method gets the r parameters of the hand of the robot
-     * @param rk
-     */
-    void getRK(vector<int>& rk);
-
-    /**
      * @brief This method gets the j parameters of the hand of the robot
      * @param jk
      */
     void getJK(vector<int>& jk);
+
+#elif HAND == 1
+    /**
+     * @brief This method gets hand specifications of the robot
+     * @return
+     */
+    electric_gripper getElectricGripper();
 #endif
+
+    /**
+     * @brief This method gets the r parameters of the hand of the robot
+     * @param rk
+     */
+    void getRK(vector<int>& rk);
 
     /**
      * @brief This method gets the current posture of the right arm+hand
@@ -848,12 +875,13 @@ private:
     robot_part m_head;
 #endif
     arm m_arm_specs; /**< specifications of the arm */
-#if HAND==0
-    human_hand m_human_hand_specs; /**< specifications of the hand */
-#else
+#if HAND == 0
     barrett_hand m_barrett_hand_specs; /**< specifications of the hand */
     vector<int> rk; /**< r parameters of the barrett hand */
     vector<int> jk; /**< j parameters of the barrett hand */
+#elif HAND == 1
+    electric_gripper m_electric_gripper_specs; /**< specifications of the hand */
+    vector<int> rk; /**< r parameters of the barrett hand */
 #endif
 
     DHparams m_DH_rightArm; /**< current D-H parameters of the right arm */

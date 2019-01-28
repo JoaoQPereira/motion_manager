@@ -126,14 +126,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 #endif
     // scenarios
     scenarios.clear();
+
 #if HAND == 0
-    scenarios.push_back(QString("Assembly scenario: Toy vehicle with Jarde"));
-#elif HAND == 1
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with ARoS and Bill"));
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with ARoS"));
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with Sawyer"));
-#elif HAND == 2
+#elif HAND == 1
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
 #endif
 
@@ -225,10 +224,12 @@ void MainWindow::execMove(int c, bool a)
         qnode.execMovement(this->jointsPosition_mov, this->jointsVelocity_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
     else if(c == 1) //Execute the planned movement in Robot
     {
+#if ROBOT == 1
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
             qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov, this->timesteps_mov);
+#endif
     }
-#if MOVEIT==1
+#if MOVEIT == 1
     else if(c == 2 && this->moveit_mov) //Execute the planned movement in RViz
         this->m_planner->execute(m_results);
 #endif
@@ -251,8 +252,10 @@ void MainWindow::execTask(int c, bool a)
     }
     else if(c == 1) //Execute the task in Robot
     {
+#if ROBOT == 1
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
             qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
+#endif
     }
 
     execSettings_task = a;
@@ -413,28 +416,6 @@ void MainWindow::on_pushButton_loadScenario_clicked()
             {
             case 0: // Assembly scenario
 #if HAND == 0
-                // Assembly scenario: the Toy vehicle with Jarde
-                this->scenario_id = 1;
-
-                if (qnode.loadScenario(path_vrep_toyscene_jarde,this->scenario_id))
-                {
-                    qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Jarde HAS BEEN LOADED"));
-                    ui.pushButton_getElements->setEnabled(true);
-                    ui.groupBox_getElements->setEnabled(true);
-                    ui.groupBox_homePosture->setEnabled(true);
-                    string title = string("Assembly scenario: the Toy vehicle with Jarde");
-                    init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
-                    curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
-                }
-                else
-                {
-                    qnode.log(QNode::Error,std::string("Assembly scenario: the Toy vehicle with Jarde HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
-                    ui.groupBox_getElements->setEnabled(false);
-                    ui.groupBox_homePosture->setEnabled(false);
-                    ui.pushButton_loadScenario->setEnabled(true);
-                }
-                break;
-#elif HAND == 1
                 // Assembly scenario: the Toy vehicle with ARoS
                 this->scenario_id = 0;
 
@@ -459,8 +440,8 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     ui.pushButton_loadScenario->setEnabled(true);
                 }
                 break;
-#elif HAND == 2
-                this->scenario_id = 5;
+#elif HAND == 1
+                this->scenario_id = 4;
 
                 if (qnode.loadScenario(path_vrep_toyscene_sawyer_gripper,this->scenario_id))
                 {
@@ -482,8 +463,8 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 break;
 #endif
             case 1:// Human assistance with ARoS
-#if HAND==1
-                this->scenario_id = 2;
+#if HAND == 0
+                this->scenario_id = 1;
                 if (qnode.loadScenario(path_vrep_drinking_aros,this->scenario_id))
                 {
                     qnode.log(QNode::Info,string("Human assistance scenario: Serving a drink with ARoS HAS BEEN LOADED"));
@@ -493,7 +474,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     string title = string("Human assistance scenario: Serving a drink with ARoS");
                     init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
                     curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
-#if MOVEIT==1
+#if MOVEIT == 1
                     this->m_planner.reset(new moveit_planning::HumanoidPlanner(title));
 #endif
                 }
@@ -507,8 +488,8 @@ void MainWindow::on_pushButton_loadScenario_clicked()
 #endif
                 break;
             case 2: // Assembly scenario: the Toy vehicle with Sawyer
-#if HAND == 1
-                this->scenario_id = 3;
+#if HAND == 0
+                this->scenario_id = 2;
 
                 if (qnode.loadScenario(path_vrep_toyscene_sawyer,this->scenario_id))
                 {
@@ -530,8 +511,8 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 break;
 #endif                
             case 3:// Human assistance with Sawyer
-#if HAND==1
-                this->scenario_id = 4;
+#if HAND == 0
+                this->scenario_id = 3;
 
                 if (qnode.loadScenario(path_vrep_drinking_sawyer,this->scenario_id))
                 {
@@ -592,7 +573,7 @@ void MainWindow::on_pushButton_getElements_clicked()
             ui.groupBox_task->setEnabled(false);
             ui.tabWidget_sol->setEnabled(false);
 
-            if(scenario_id == 3 || scenario_id == 4 || scenario_id == 6)
+            if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4)
             {
                 ui.radioButton_right->setEnabled(false);
                 ui.radioButton_left->setEnabled(false);
@@ -822,7 +803,7 @@ void MainWindow::on_pushButton_plan_clicked()
     ui.tabWidget_sol->setCurrentIndex(0);
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
     int planner_id = prob->getPlannerID();
-    HUMotion::hump_params  tols;
+    HUMotion::hump_params tols;
     std::vector<double> move_target;
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
@@ -850,8 +831,17 @@ void MainWindow::on_pushButton_plan_clicked()
             mTolHumpdlg->getLambda(tols.lambda_final); // joint expense factors
             mTolHumpdlg->getLambda(tols.lambda_bounce); // joint expense factors
             // --- Tolerances for the bounce posture selection ---- //
-            tols.w_max = std::vector<double>(tols.lambda_final.size(),(mTolHumpdlg->getWMax()*M_PI/180)); // max joint velocity
-            tols.alpha_max = std::vector<double>(tols.lambda_final.size(),(mTolHumpdlg->getAlphaMax()*M_PI/180)); // max joint acceleration
+#if HAND == 0
+            tols.w_max = std::vector<double>(JOINTS_ARM+JOINTS_HAND,(mTolHumpdlg->getWMax()*M_PI/180)); // max joint velocity
+            tols.alpha_max = std::vector<double>(JOINTS_ARM+JOINTS_HAND,(mTolHumpdlg->getAlphaMax()*M_PI/180)); // max joint acceleration
+#elif HAND == 1
+            tols.w_max = std::vector<double>(JOINTS_ARM,(mTolHumpdlg->getWMax()*M_PI/180)); // max joint velocity (arm)
+            for(int i = 0; i < JOINTS_HAND; ++ i)
+                    tols.w_max.push_back(mTolHumpdlg->getWMaxGripper());
+            tols.alpha_max = std::vector<double>(JOINTS_ARM,(mTolHumpdlg->getAlphaMax()*M_PI/180)); // max joint acceleration (arm)
+            for(int i = 0; i < JOINTS_HAND; ++ i)
+                    tols.alpha_max.push_back(mTolHumpdlg->getAlphaMaxGripper());
+#endif
             mTolHumpdlg->getInitVel(tols.bounds.vel_0); // initial velocity
             mTolHumpdlg->getFinalVel(tols.bounds.vel_f); // final velocity
             mTolHumpdlg->getInitAcc(tols.bounds.acc_0); // initial acceleration
@@ -900,13 +890,39 @@ void MainWindow::on_pushButton_plan_clicked()
                     qnode.log(QNode::Info,std::string("The movement has been planned successfully"));
                     this->curr_mov = prob->getMovement();
                     this->timesteps_mov.clear();
-                    this->jointsPosition_mov.clear(); this->jointsPosition_mov = h_results->trajectory_stages;
-                    this->jointsVelocity_mov.clear(); this->jointsVelocity_mov = h_results->velocity_stages;
-                    this->jointsAcceleration_mov.clear(); this->jointsAcceleration_mov = h_results->acceleration_stages;
-                    this->traj_descr_mov.clear(); this->traj_descr_mov = h_results->trajectory_descriptions;
+
+                    this->jointsPosition_mov.clear();
+                    this->jointsPosition_mov = h_results->trajectory_stages;
+
+#if HAND == 1
+                    //convert the planned gripper joint to [m]
+                    std::vector<MatrixXd> jointsPosition_mov_grripper;
+
+                    for(size_t j = 0; j < this->jointsPosition_mov.size(); ++j)
+                    {
+                        MatrixXd jointPosition_stage_gripper = this->jointsPosition_mov.at(j);
+
+                        for(int i = 0; i < jointPosition_stage_gripper.rows(); ++i)
+                            jointPosition_stage_gripper(i, 7) = jointPosition_stage_gripper(i, 7) / 1000;
+
+                        jointsPosition_mov_grripper.push_back(jointPosition_stage_gripper);
+                    }
+
+                    this->jointsPosition_mov = jointsPosition_mov_grripper;
+#endif
+
+                    this->jointsVelocity_mov.clear();
+                    this->jointsVelocity_mov = h_results->velocity_stages;
+
+                    this->jointsAcceleration_mov.clear();
+                    this->jointsAcceleration_mov = h_results->acceleration_stages;
+
+                    this->traj_descr_mov.clear();
+                    this->traj_descr_mov = h_results->trajectory_descriptions;
+
                     std::vector<double> timesteps_stage_aux;
 
-                    for(size_t i=0; i<h_results->trajectory_stages.size();++i)
+                    for(size_t i=0; i< h_results->trajectory_stages.size();++i)
                     {
                         timesteps_stage_aux.clear();
                         double t_stage = h_results->time_steps.at(i);
@@ -1556,10 +1572,23 @@ void MainWindow::on_pushButton_plan_clicked()
                 v_headers.push_back(QString("Step ")+QString::number(i));
                 for (int j=0; j<jointPosition_stage.cols();++j)
                 {
+#if HAND == 0
                     stage_step.push_back(
                                 QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
                                 QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
                                 QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+#elif HAND == 1
+                    if(j < JOINTS_ARM)
+                        stage_step.push_back(
+                                    QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                    QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                    QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+                    else
+                        stage_step.push_back(
+                                    QString::number(jointPosition_stage(i,j)*1000,'g',3)+"|"+
+                                    QString::number(jointVelocity_stage(i,j)*1000,'g',3)+"|"+
+                                    QString::number(jointAcceleration_stage(i,j)*1000,'g',3));
+#endif
                     if(!h_head){h_headers.push_back(QString("Joint ")+QString::number(j+1));}
                 }
                 h_head = true;
@@ -1737,10 +1766,12 @@ void MainWindow::on_pushButton_execMov_clicked()
             qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
         else if(usedPlat_move == 1) //Execute the planned movement in Robot
         {
+#if ROBOT == 1
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
                 qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov, this->timesteps_mov);
+#endif
         }
-#if MOVEIT==1
+#if MOVEIT == 1
         else if(usedPlat_move == 2 && this->moveit_mov) //Execute the planned movement in RViz MoveIt
             this->m_planner->execute(m_results);
 #endif
@@ -1782,6 +1813,7 @@ void MainWindow::on_pushButton_save_end_posture_clicked()
 
         this->jointsEndPosition_mov.resize(end_pos.size());
         VectorXd::Map(&this->jointsEndPosition_mov[0], end_pos.size()) = end_pos;
+
         this->jointsEndVelocity_mov.resize(end_vel.size());
         VectorXd::Map(&this->jointsEndVelocity_mov[0], end_vel.size()) = end_vel;
         this->jointsEndAcceleration_mov.resize(end_acc.size());
@@ -1791,7 +1823,7 @@ void MainWindow::on_pushButton_save_end_posture_clicked()
 
 
 void MainWindow::on_pushButton_execTask_clicked()
-{ 
+{
     //If the dialog hasn't been displayed or the user hasn't chosen the "don't ask again" option
     if(execSettings_task == false)
         mTaskExecutedlg->show();
@@ -1806,8 +1838,10 @@ void MainWindow::on_pushButton_execTask_clicked()
         }
         else if(usedPlat_task == 1) //Execute the task in Robot
         {
+#if ROBOT == 1
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
                 qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
+#endif
         }
     }
 }
@@ -2478,35 +2512,28 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         failure = string("Assembly scenario: the Toy vehicle with ARoS HAS NOT BEEN LOADED");
         break;
     case 1:
-        // Assembly scenario: the Toy vehicle with Avatar
-        path = path_vrep_toyscene_jarde;
-        title = string("Assembly scenario: the Toy vehicle with the Avatar");
-        success = string("Assembly scenario: the Toy vehicle with the Avatar HAS BEEN LOADED");
-        failure = string("Assembly scenario: the Toy vehicle with the Avatar HAS NOT BEEN LOADED");
-        break;
-    case 2:
         // Assistive scenario: beverages with ARoS
         path = path_vrep_drinking_aros;
         title = string("Human assistance scenario: Serving a drink with ARoS");
         success = string("Human assistance scenario: Serving a drink with ARoS HAS BEEN LOADED");
         failure = string("Human assistance scenario: Serving a drink with ARoS HAS NOT BEEN LOADED");
         break;
-    case 3:
+    case 2:
         // Assembly scenario: the Toy vehicle with Sawyer
         path = path_vrep_toyscene_sawyer;
         title = string("Assembly scenario: the Toy vehicle with Sawyer");
         success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
         failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
         break;
-    case 4:
+    case 3:
         // Assistive scenario: beverages with Sawyer
         path = path_vrep_drinking_sawyer;
         title = string("Human assistance scenario: Serving a drink with Sawyer");
         success = string("Human assistance scenario: Serving a drink with Sawyer HAS BEEN LOADED");
         failure = string("Human assistance scenario: Serving a drink with Sawyer HAS NOT BEEN LOADED");
         break;
-    case 5:
-        // Assembly scenario: the Toy vehicle with Sawyer
+    case 4:
+        // Assembly scenario: the Toy vehicle with Sawyer (with Gripper)
         path = path_vrep_toyscene_sawyer_gripper;
         title = string("Assembly scenario: the Toy vehicle with Sawyer");
         success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
@@ -2763,7 +2790,7 @@ void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
         ui.radioButton_right->setEnabled(true);
         ui.radioButton_left->setEnabled(true);
 
-        if(scenario_id == 3 || scenario_id == 4 || scenario_id == 6)
+        if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4)
         {
             ui.radioButton_right->setEnabled(false);
             ui.radioButton_left->setEnabled(false);
@@ -2844,28 +2871,7 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
 {
     ui.pushButton_loadScenario->setEnabled(true);
 
-#if HAND==0
-    for(int i=0; i<ui.listWidget_scenario->size().height(); ++i)
-    {
-        if (ui.listWidget_scenario->item(i)== item)
-        {
-            switch(i)
-            {
-            case(0):
-                // Assembly scenario: the Toy vehicle with Jarde
-                ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
-                                                         "Jarde has to assemble a toy vehicle on a table in front of him"));
-                break;
-            case(1):
-                //Assistive scenario: beverages with Jarde
-                break;
-            case(2):
-                //Organizing scenario: shelfs and objects with Jarde
-                break;
-            }
-        }
-    }
-#elif HAND==1
+#if HAND == 0
     for(int i=0; i<ui.listWidget_scenario->size().height(); ++i)
     {
         if (ui.listWidget_scenario->item(i)== item)
@@ -2891,6 +2897,21 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
                 //Human assistance scenario: beverages with Sawyer
                 ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
                                                          "Sawyer serves a drink to a human patient"));
+                break;
+            }
+        }
+    }
+#elif HAND == 1
+    for(int i=0; i<ui.listWidget_scenario->size().height(); ++i)
+    {
+        if (ui.listWidget_scenario->item(i)== item)
+        {
+            switch(i)
+            {
+            case 0:
+                // Assembly scenario: the Toy vehicle with Sawyer
+                ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
+                                                         "Sawyer has to assemble a toy vehicle on a table in front of him"));
                 break;
             }
         }

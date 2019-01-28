@@ -363,7 +363,7 @@ class PlotJointsResults:
             axisVel.set_ylim([min(jointVel) - 5, max(jointVel) + 5])
             axisVel.spines['left'].set_color('teal')
             axisVel.spines['left'].set_linewidth(2)
-            v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel [deg/s]')
+            v = axisVel.plot(self.t, jointVel, color = 'teal', linewidth = 1.65, label = 'Vel Original [deg/s]')
             # Legend
             lns = p + v
             labs = [l.get_label() for l in lns]

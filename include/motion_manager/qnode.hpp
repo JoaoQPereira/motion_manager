@@ -113,7 +113,7 @@ public:
      */
     bool loadScenario(const string &path,int id);
 
-#if MOVEIT==1
+#if MOVEIT == 1
     /**
      * @brief loadRVizScenario
      * @param objs
@@ -152,7 +152,7 @@ public:
      * @brief execMovement_Sawyer
      * @return
      */
-#if ROBOT==1
+#if ROBOT == 1
     bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov, std::vector<std::vector<double>> timesteps);
 #endif
 
@@ -177,7 +177,7 @@ public:
      * @param timesteps_task
      * @return
      */
-#if ROBOT==1
+#if ROBOT == 1
     bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps);
 #endif
 
@@ -444,7 +444,7 @@ private:
      */
     void init();
 
-#if HAND == 1
+#if HAND == 0
     /**
      * @brief This method closes the Barrett hand
      * @param hand
@@ -498,15 +498,6 @@ private:
      */
     void updateObjectInfo(int obj_id,std::string name, const geometry_msgs::PoseStamped &data);
 
-    /**
-     * @brief getSteps
-     * @param maxLimits
-     * @param minLimits
-     * @param initPosture
-     * @param finalPosture
-     * @return
-     */
-    int getSteps(std::vector<double> &maxLimits, std::vector<double> &minLimits, std::vector<double> &initPosture, std::vector<double> &finalPosture);
 
     int init_argc; /**< initial argc */
     char** init_argv; /**< initial argv */
@@ -543,14 +534,14 @@ private:
     ros::Subscriber subShelf_4_b; /**< ROS sunscriber to the topic /vrep/Shelf_4_b_pose (obj_id=7 in the Challenging scenario) */
     ros::Subscriber subShelf_4_c; /**< ROS sunscriber to the topic /vrep/Shelf_4_c_pose (obj_id=8 in the Challenging scenario) */
     ros::Subscriber subShelf_4_d; /**< ROS sunscriber to the topic /vrep/Shelf_4_d_pose (obj_id=9 in the Challenging scenario) */
-#if ROBOT==1
+#if ROBOT == 1
     //*********************************** Real Robot
     ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
     ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
     motionCommClient* motionComm; /**< */
     followJointTrajectoryClient* folJointTraj; /**< */
 #endif
-#if MOVEIT==1
+#if MOVEIT == 1
     boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */
 #endif
     QStringListModel logging_model; /**< list of loggings */
@@ -570,9 +561,11 @@ private:
     bool got_scene; /**< true if we got all the elements of the scenario */
     bool obj_in_hand; /**< true if the object is in the hand */
     std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
-    //*********************************** Hand
+    //*********************************** Arm handles
     std::vector<int> right_handles; /**< right arm and right hand joints handles */
     std::vector<int> left_handles; /**< left arm and left hand joints handles */
+    //*********************************** Hand
+#if HAND == 0
     MatrixXi right_hand_handles; /**< matrix of the handles of the right hand joints */
     MatrixXi left_hand_handles; /**< matrix of the handles of the left hand joints */
     std::vector<double> right_2hand_pos; /**< position of the right hand 2 phalanx */
@@ -581,13 +574,14 @@ private:
     std::vector<double> left_2hand_pos; /**< position of the left hand 2 phalanx */
     std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
     std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
-    //*********************************** Real Robot
-    std::vector<double> robotPosture; /**< position of the right arm*/
-#if HAND ==1
     std::vector<bool> firstPartLocked;
     std::vector<int> needFullOpening;
     std::vector<bool> closed;
+#elif HAND == 1
+    bool closed;
 #endif
+    //*********************************** Real Robot
+    std::vector<double> robotPosture; /**< position of the right arm*/
 
 Q_SIGNALS:
     /**

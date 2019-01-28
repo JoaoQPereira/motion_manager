@@ -1,5 +1,2 @@
-include
-include/motion_manager
-src
+../../../Documents/motion_manager/ui
 ui
-.

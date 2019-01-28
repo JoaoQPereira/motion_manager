@@ -28,6 +28,88 @@ TolDialogHUMP::TolDialogHUMP(QWidget *parent) :
         ui->groupBox_post_place->setEnabled(false);
         ui->label_pick->setEnabled(false);
     }
+
+#if HAND == 1
+    adaptationElectricGripper();
+#elif HAND == 0
+    ui->lineEdit_w_max_gripper->setText(QString::number(0));
+    ui->lineEdit_w_max_gripper->setEnabled(false);
+    ui->lineEdit_alpha_max_gripper->setText(QString::number(0));
+    ui->lineEdit_alpha_max_gripper->setEnabled(false);
+#endif
+}
+
+
+void TolDialogHUMP::adaptationElectricGripper()
+{
+    //******Disable the joints that aren't used to this type of hand
+    //Points of the hand
+    ui->lineEdit_hand_1_3->setText(QString::number(0));
+    ui->lineEdit_hand_1_3->setEnabled(false);
+    ui->lineEdit_hand_2_1->setText(QString::number(0));
+    ui->lineEdit_hand_2_1->setEnabled(false);
+    ui->lineEdit_hand_2_2->setText(QString::number(0));
+    ui->lineEdit_hand_2_2->setEnabled(false);
+    ui->lineEdit_hand_2_3->setText(QString::number(0));
+    ui->lineEdit_hand_2_3->setEnabled(false);
+    ui->lineEdit_hand_3_1->setText(QString::number(0));
+    ui->lineEdit_hand_3_1->setEnabled(false);
+    ui->lineEdit_hand_3_2->setText(QString::number(0));
+    ui->lineEdit_hand_3_2->setEnabled(false);
+    ui->lineEdit_hand_3_3->setText(QString::number(0));
+    ui->lineEdit_hand_3_3->setEnabled(false);
+    ui->lineEdit_hand_tip_3->setText(QString::number(0));
+    ui->lineEdit_hand_tip_3->setEnabled(false);
+
+    // Joint Expense Factors
+    ui->lineEdit_lambda_9->setText(QString::number(0));
+    ui->lineEdit_lambda_9->setEnabled(false);
+    ui->lineEdit_lambda_10->setText(QString::number(0));
+    ui->lineEdit_lambda_10->setEnabled(false);
+    ui->lineEdit_lambda_11->setText(QString::number(0));
+    ui->lineEdit_lambda_11->setEnabled(false);
+
+    //Boundary conditions
+    //init vel
+    ui->lineEdit_init_vel_9->setText(QString::number(0));
+    ui->lineEdit_init_vel_9->setEnabled(false);
+    ui->lineEdit_init_vel_10->setText(QString::number(0));
+    ui->lineEdit_init_vel_10->setEnabled(false);
+    ui->lineEdit_init_vel_11->setText(QString::number(0));
+    ui->lineEdit_init_vel_11->setEnabled(false);
+    //final vel
+    ui->lineEdit_final_vel_9->setText(QString::number(0));
+    ui->lineEdit_final_vel_9->setEnabled(false);
+    ui->lineEdit_final_vel_10->setText(QString::number(0));
+    ui->lineEdit_final_vel_10->setEnabled(false);
+    ui->lineEdit_final_vel_11->setText(QString::number(0));
+    ui->lineEdit_final_vel_11->setEnabled(false);
+    //init acc
+    ui->lineEdit_init_acc_9->setText(QString::number(0));
+    ui->lineEdit_init_acc_9->setEnabled(false);
+    ui->lineEdit_init_acc_10->setText(QString::number(0));
+    ui->lineEdit_init_acc_10->setEnabled(false);
+    ui->lineEdit_init_acc_11->setText(QString::number(0));
+    ui->lineEdit_init_acc_11->setEnabled(false);
+    //final acc
+    ui->lineEdit_final_acc_9->setText(QString::number(0));
+    ui->lineEdit_final_acc_9->setEnabled(false);
+    ui->lineEdit_final_acc_10->setText(QString::number(0));
+    ui->lineEdit_final_acc_10->setEnabled(false);
+    ui->lineEdit_final_acc_11->setText(QString::number(0));
+    ui->lineEdit_final_acc_11->setEnabled(false);
+
+    //Final Hand Posture
+    ui->lineEdit_final_hand_2->setText(QString::number(0));
+    ui->lineEdit_final_hand_2->setEnabled(false);
+    ui->lineEdit_final_hand_3->setText(QString::number(0));
+    ui->lineEdit_final_hand_3->setEnabled(false);
+    ui->lineEdit_final_hand_4->setText(QString::number(0));
+    ui->lineEdit_final_hand_4->setEnabled(false);
+
+    //Max vel and max acceleration of joints
+    ui->label_w_max_barrett->setEnabled(false);
+    ui->label_alpha_max_barrett->setEnabled(false);
 }
 
 
@@ -40,10 +122,21 @@ TolDialogHUMP::~TolDialogHUMP()
 void TolDialogHUMP::getTolsHand(MatrixXd &tols)
 {
    tols = MatrixXd::Constant(4,3,1);
-   tols(0,0) = ui->lineEdit_hand_1_1->text().toDouble(); tols(0,1) = ui->lineEdit_hand_1_2->text().toDouble(); tols(0,2) = ui->lineEdit_hand_1_3->text().toDouble();
-   tols(1,0) = ui->lineEdit_hand_2_1->text().toDouble(); tols(1,1) = ui->lineEdit_hand_2_2->text().toDouble(); tols(1,2) = ui->lineEdit_hand_2_3->text().toDouble();
-   tols(2,0) = ui->lineEdit_hand_3_1->text().toDouble(); tols(2,1) = ui->lineEdit_hand_3_2->text().toDouble(); tols(2,2) = ui->lineEdit_hand_3_3->text().toDouble();
-   tols(3,0) = ui->lineEdit_hand_tip_1->text().toDouble(); tols(3,1) = ui->lineEdit_hand_tip_2->text().toDouble(); tols(3,2) = ui->lineEdit_hand_tip_3->text().toDouble();
+   tols(0,0) = ui->lineEdit_hand_1_1->text().toDouble();
+   tols(0,1) = ui->lineEdit_hand_1_2->text().toDouble();
+   tols(0,2) = ui->lineEdit_hand_1_3->text().toDouble();
+
+   tols(1,0) = ui->lineEdit_hand_2_1->text().toDouble();
+   tols(1,1) = ui->lineEdit_hand_2_2->text().toDouble();
+   tols(1,2) = ui->lineEdit_hand_2_3->text().toDouble();
+
+   tols(2,0) = ui->lineEdit_hand_3_1->text().toDouble();
+   tols(2,1) = ui->lineEdit_hand_3_2->text().toDouble();
+   tols(2,2) = ui->lineEdit_hand_3_3->text().toDouble();
+
+   tols(3,0) = ui->lineEdit_hand_tip_1->text().toDouble();
+   tols(3,1) = ui->lineEdit_hand_tip_2->text().toDouble();
+   tols(3,2) = ui->lineEdit_hand_tip_3->text().toDouble();
 }
 
 
@@ -78,9 +171,11 @@ void TolDialogHUMP::getLambda(std::vector<double> &lambda)
    lambda.push_back(ui->lineEdit_lambda_6->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_7->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_8->text().toDouble());
+#if HAND == 0
    lambda.push_back(ui->lineEdit_lambda_9->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_10->text().toDouble());
    lambda.push_back(ui->lineEdit_lambda_11->text().toDouble());
+#endif
 }
 
 
@@ -118,6 +213,26 @@ void TolDialogHUMP::setWMax(double w)
 {
     ui->lineEdit_w_max->setText(QString::number(w));
 }
+
+
+#if HAND == 1
+double TolDialogHUMP::getWMaxGripper()
+{
+    return ui->lineEdit_w_max_gripper->text().toDouble();
+}
+
+
+double TolDialogHUMP::getAlphaMaxGripper()
+{
+    return ui->lineEdit_alpha_max_gripper->text().toDouble();
+}
+
+
+void TolDialogHUMP::setWMaxGripper(double w)
+{
+    ui->lineEdit_w_max_gripper->setText(QString::number(w));
+}
+#endif
 
 
 double TolDialogHUMP::getTolTarPos()
@@ -357,9 +472,11 @@ void TolDialogHUMP::setInitJointsVel(std::vector<double>& init_vel)
         ui->lineEdit_init_vel_6->setText(QString::number(init_vel.at(5)));
         ui->lineEdit_init_vel_7->setText(QString::number(init_vel.at(6)));
         ui->lineEdit_init_vel_8->setText(QString::number(init_vel.at(7)));
+#if HAND == 0
         ui->lineEdit_init_vel_9->setText(QString::number(init_vel.at(8)));
         ui->lineEdit_init_vel_10->setText(QString::number(init_vel.at(9)));
         ui->lineEdit_init_vel_11->setText(QString::number(init_vel.at(10)));
+#endif
     }
 }
 
@@ -376,9 +493,11 @@ void TolDialogHUMP::setInitJointsAcc(std::vector<double>& init_acc)
         ui->lineEdit_init_acc_6->setText(QString::number(init_acc.at(5)));
         ui->lineEdit_init_acc_7->setText(QString::number(init_acc.at(6)));
         ui->lineEdit_init_acc_8->setText(QString::number(init_acc.at(7)));
+#if HAND == 0
         ui->lineEdit_init_acc_9->setText(QString::number(init_acc.at(8)));
         ui->lineEdit_init_acc_10->setText(QString::number(init_acc.at(9)));
         ui->lineEdit_init_acc_11->setText(QString::number(init_acc.at(10)));
+#endif
     }
 }
 
@@ -387,7 +506,11 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
 {
     double D_LENGHT_TOL = 350; //Max Length of the link
     int npoints_arm = 0;
+#if HAND == 0
     int npoints_finger = 9;
+#elif HAND == 1
+    int npoints_finger = 4;
+#endif
 
     ui->lineEdit_sphere1_r->setText(QString::number(0));
     ui->lineEdit_sphere1_r->setEnabled(false);
@@ -801,6 +924,10 @@ void TolDialogHUMP::on_pushButton_save_clicked()
        stream << "# Others" << endl;
        stream << "max_velocity="<< ui->lineEdit_w_max->text().toStdString().c_str() <<endl;
        stream << "max_alpha="<< ui->lineEdit_alpha_max->text().toStdString().c_str() <<endl;
+#if HAND == 1
+       stream << "max_velocity_gripper="<< ui->lineEdit_w_max_gripper->text().toStdString().c_str() <<endl;
+       stream << "max_alpha_gripper="<< ui->lineEdit_alpha_max_gripper->text().toStdString().c_str() <<endl;
+#endif
        if (ui->checkBox_tar_av->isChecked())
            stream << "tar_av=false"<< endl;
        else
@@ -1211,6 +1338,12 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                     ui->lineEdit_w_max->setText(fields.at(1));
                 else if(QString::compare(fields.at(0),QString("max_alpha"),Qt::CaseInsensitive)==0)
                     ui->lineEdit_alpha_max->setText(fields.at(1));
+#if HAND == 1
+                else if(QString::compare(fields.at(0),QString("max_velocity_gripper"),Qt::CaseInsensitive)==0)
+                    ui->lineEdit_w_max_gripper->setText(fields.at(1));
+                else if(QString::compare(fields.at(0),QString("max_alpha_gripper"),Qt::CaseInsensitive)==0)
+                    ui->lineEdit_alpha_max_gripper->setText(fields.at(1));
+#endif
                 else if(QString::compare(fields.at(0),QString("tar_av"),Qt::CaseInsensitive)==0)
                 {
                     if(QString::compare(fields.at(1),QString("false\n"),Qt::CaseInsensitive)==0)

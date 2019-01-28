@@ -99,7 +99,7 @@ endif()
 ##Real Robot configuration
 # ROBOT=0, don't communicate with robot
 # ROBOT=1, communicate with robot
-set (ROBOT 1)
+set (ROBOT 0)
 
 ## Robot parts configuration
 # 1 means that the part is present and it is taken into account for the generation of the trajectories,
@@ -118,9 +118,8 @@ set (HEAD 1)
 # set (LEFT_FOOT 0)
 
 ## Hand configuration
-# HAND=0. Human hand
-# HAND=1. Barrett hand
-# HAND=2, Electric Parallel Gripper
+# HAND=0. Barrett hand
+# HAND=1. Electric Parallel Gripper
 set (HAND 1)
 # OPEN_CLOSE_HAND=0. do not use the open and close hand functions
 # OPEN_CLOSE_HAND=1. use the open and close hand functions

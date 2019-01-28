@@ -3,115 +3,7 @@
 
 namespace motion_manager{
 
-#if HAND==0
-Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs)
-{
-    this->m_name = name;
-    this->m_torso = torsospecs;
-    this->m_arm_specs = aspecs;
-
-    this->m_human_hand_specs = hspecs;
-
-    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    this->mat_right = Matrix4d::Constant(1);
-    this->mat_left = Matrix4d::Constant(1);
-    this->mat_r_hand = Matrix4d::Constant(1);
-    this->mat_l_hand = Matrix4d::Constant(1);
-}
-
-
-Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-             vector<double> &r, vector<double> &l)
-{
-    this->m_name = name;
-    this->m_torso = torsospecs;
-    this->m_arm_specs = aspecs;
-
-    this->m_human_hand_specs = hspecs;
-
-    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    std::copy(r.begin(),r.end(),this->rightPosture.begin());
-    std::copy(l.begin(),l.end(),this->leftPosture.begin());
-    std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
-    std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
-
-    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    this->mat_right = Matrix4d::Constant(1);
-    this->mat_left = Matrix4d::Constant(1);
-    this->mat_r_hand = Matrix4d::Constant(1);
-    this->mat_l_hand = Matrix4d::Constant(1);
-}
-
-
-Robot::Robot(string name, robot_part torsospecs, arm aspecs, human_hand hspecs,
-             vector<double> &r, vector<double> &l,
-             vector<double> &min_rl, vector<double> &max_rl,
-             vector<double> &min_ll, vector<double> &max_ll)
-{
-    this->m_name = name;
-    this->m_torso = torsospecs;
-    this->m_arm_specs = aspecs;
-
-    this->m_human_hand_specs = hspecs;
-
-    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    std::copy(r.begin(),r.end(),this->rightPosture.begin());
-    std::copy(l.begin(),l.end(),this->leftPosture.begin());
-    std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
-    std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
-
-    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    std::copy(min_rl.begin(),min_rl.end(),this->min_rightLimits.begin());
-    std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
-    std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
-    std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
-
-    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
-    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
-
-    this->mat_right = Matrix4d::Constant(1);
-    this->mat_left = Matrix4d::Constant(1);
-    this->mat_r_hand = Matrix4d::Constant(1);
-    this->mat_l_hand = Matrix4d::Constant(1);
-}
-#else
+#if HAND == 0
 Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs)
 {
     this->m_name = name;
@@ -297,6 +189,172 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, barrett_hand hspecs
     this->mat_l_hand = Matrix4d::Identity(4,4);
 }
 #endif
+
+
+#elif HAND == 1
+Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs)
+{
+    this->m_name = name;
+    this->m_torso = torsospecs;
+    this->m_arm_specs = aspecs;
+
+    this->m_electric_gripper_specs = hspecs;
+
+    this->rk.push_back(1.0);
+    this->rk.push_back(-1.0);
+
+    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->mat_right = Matrix4d::Identity(4,4);
+    this->mat_left = Matrix4d::Identity(4,4);
+    this->mat_r_hand = Matrix4d::Identity(4,4);
+    this->mat_l_hand = Matrix4d::Identity(4,4);
+}
+
+
+Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+             vector<double>& r, vector<double>& l)
+{
+    this->m_name = name;
+    this->m_torso = torsospecs;
+    this->m_arm_specs = aspecs;
+
+    this->m_electric_gripper_specs = hspecs;
+    this->rk.push_back(1.0);
+    this->rk.push_back(-1.0);
+
+    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(r.begin(),r.end(),this->rightPosture.begin());
+    std::copy(l.begin(),l.end(),this->leftPosture.begin());
+    std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
+    std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
+
+    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->mat_right = Matrix4d::Identity(4,4);
+    this->mat_left = Matrix4d::Identity(4,4);
+    this->mat_r_hand = Matrix4d::Identity(4,4);
+    this->mat_l_hand = Matrix4d::Identity(4,4);
+}
+
+
+Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+             vector<double> &r, vector<double> &l,
+             vector<double> &min_rl, vector<double> &max_rl,
+             vector<double> &min_ll, vector<double> &max_ll)
+{
+    this->m_name = name;
+    this->m_torso = torsospecs;
+    this->m_arm_specs = aspecs;
+
+    this->m_electric_gripper_specs = hspecs;
+    this->rk.push_back(1.0);
+    this->rk.push_back(-1.0);
+
+    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(r.begin(),r.end(),this->rightPosture.begin());
+    std::copy(l.begin(),l.end(),this->leftPosture.begin());
+    std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
+    std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
+
+    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(min_rl.begin(),min_rl.end(),this->min_rightLimits.begin());
+    std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
+    std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
+    std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
+
+    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->mat_right = Matrix4d::Identity(4,4);
+    this->mat_left = Matrix4d::Identity(4,4);
+    this->mat_r_hand = Matrix4d::Identity(4,4);
+    this->mat_l_hand = Matrix4d::Identity(4,4);
+}
+
+
+#if HEAD==1
+Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+             robot_part headspecs, vector<double> &r, vector<double> &l,
+             vector<double> &min_rl, vector<double> &max_rl,
+             vector<double> &min_ll, vector<double> &max_ll)
+{
+    this->m_name = name;
+    this->m_torso = torsospecs;
+    this->m_arm_specs = aspecs;
+
+    this->m_electric_gripper_specs = hspecs;
+    this->rk.push_back(1.0);
+    this->rk.push_back(-1.0);
+
+    this->m_head = headspecs;
+
+    this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftHomePosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(r.begin(),r.end(),this->rightPosture.begin());
+    std::copy(l.begin(),l.end(),this->leftPosture.begin());
+    std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
+    std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
+
+    this->min_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->min_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    std::copy(min_rl.begin(),min_rl.end(),this->min_rightLimits.begin());
+    std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
+    std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
+    std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
+
+    this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+    this->leftForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    this->mat_right = Matrix4d::Identity(4,4);
+    this->mat_left = Matrix4d::Identity(4,4);
+    this->mat_r_hand = Matrix4d::Identity(4,4);
+    this->mat_l_hand = Matrix4d::Identity(4,4);
+}
+#endif
 #endif
 
 
@@ -306,16 +364,17 @@ Robot::Robot(const Robot &hh)
     this->m_torso = hh.m_torso;
     this->m_arm_specs = hh.m_arm_specs;
 
-#if HAND==0
-    this->m_human_hand_specs = hh.m_human_hand_specs;
-#else
+#if HAND == 0
     this->m_barrett_hand_specs = hh.m_barrett_hand_specs;
     this->rk = hh.rk;
     this->jk = hh.jk;
+#elif HAND == 1
+    this->m_electric_gripper_specs = hh.m_electric_gripper_specs;
+    this->rk = hh.rk;
 #endif
 
-    this->m_DH_rightArm=hh.m_DH_rightArm;
-    this->m_DH_leftArm=hh.m_DH_leftArm;
+    this->m_DH_rightArm = hh.m_DH_rightArm;
+    this->m_DH_leftArm = hh.m_DH_leftArm;
     this->m_DH_rightHand = hh.m_DH_rightHand;
     this->m_DH_leftHand = hh.m_DH_leftHand;
 
@@ -341,25 +400,25 @@ Robot::Robot(const Robot &hh)
     this->rightHomePosture = hh.rightHomePosture;
     this->leftHomePosture = hh.leftHomePosture;
 
-    this->rightShoulderPos=hh.rightShoulderPos;
-    this->rightShoulderOr=hh.rightShoulderOr;
-    this->rightElbowPos=hh.rightElbowPos;
-    this->rightElbowOr=hh.rightElbowOr;
-    this->rightWristPos=hh.rightWristPos;
-    this->rightWristOr=hh.rightWristOr;
-    this->rightHandPos=hh.rightHandPos;
-    this->rightHandOr=hh.rightHandOr;
-    this->rightFingers=hh.rightFingers;
+    this->rightShoulderPos = hh.rightShoulderPos;
+    this->rightShoulderOr = hh.rightShoulderOr;
+    this->rightElbowPos = hh.rightElbowPos;
+    this->rightElbowOr = hh.rightElbowOr;
+    this->rightWristPos = hh.rightWristPos;
+    this->rightWristOr = hh.rightWristOr;
+    this->rightHandPos = hh.rightHandPos;
+    this->rightHandOr = hh.rightHandOr;
+    this->rightFingers = hh.rightFingers;
 
-    this->leftShoulderPos=hh.leftShoulderPos;
-    this->leftShoulderOr=hh.leftShoulderOr;
-    this->leftElbowPos=hh.leftElbowPos;
-    this->leftElbowOr=hh.leftElbowOr;
-    this->leftWristPos=hh.leftWristPos;
-    this->leftWristOr=hh.leftWristOr;
-    this->leftHandPos=hh.leftHandPos;
-    this->leftHandOr=hh.leftHandOr;
-    this->leftFingers=hh.leftFingers;
+    this->leftShoulderPos = hh.leftShoulderPos;
+    this->leftShoulderOr = hh.leftShoulderOr;
+    this->leftElbowPos = hh.leftElbowPos;
+    this->leftElbowOr = hh.leftElbowOr;
+    this->leftWristPos = hh.leftWristPos;
+    this->leftWristOr = hh.leftWristOr;
+    this->leftHandPos = hh.leftHandPos;
+    this->leftHandOr = hh.leftHandOr;
+    this->leftFingers = hh.leftFingers;
 }
 
 
@@ -387,15 +446,17 @@ void Robot::setArm(arm& specs)
 }
 
 
-#if HAND==0
-void Robot::setHumanHand(human_hand &specs)
-{
-    this->m_human_hand_specs=specs;
-}
-#else
+#if HAND == 0
 void Robot::setBarrettHand(barrett_hand& specs)
 {
     this->m_barrett_hand_specs=specs;
+}
+
+
+#elif HAND == 1
+void Robot::setElectricGripper(electric_gripper& specs)
+{
+    this->m_electric_gripper_specs = specs;
 }
 #endif
 
@@ -532,16 +593,16 @@ robot_part Robot::getTorso()
 }
 
 
-#if HAND ==1
 void Robot::getRK(vector<int> &rkk)
 {
     rkk = this->rk;
 }
 
 
+#if HAND == 0
 void Robot::getJK(vector<int> &jkk)
 {
-    jkk = jk;
+    jkk = this->jk;
 }
 #endif
 
@@ -552,15 +613,17 @@ arm Robot::getArm()
 }
 
 
-#if HAND==0
-human_hand Robot::getHumanHand()
-{
-    return this->m_human_hand_specs;
-}
-#else
+#if HAND == 0
 barrett_hand Robot::getBarrettHand()
 {
     return this->m_barrett_hand_specs;
+}
+
+
+#elif HAND == 1
+electric_gripper Robot::getElectricGripper()
+{
+    return this->m_electric_gripper_specs;
 }
 #endif
 
@@ -570,6 +633,10 @@ void Robot::getRightPosture(vector<double>& p)
     p = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
     std::copy(this->rightPosture.begin(),this->rightPosture.end(),p.begin());
+
+#if HAND == 1
+    p.at(7) = p.at(7) * 1000;
+#endif
 }
 
 
@@ -666,6 +733,10 @@ void Robot::getRightMinLimits(vector<double> &p)
     p = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
     std::copy(this->min_rightLimits.begin(),this->min_rightLimits.end(),p.begin());
+
+#if HAND == 1
+    p.at(7) = p.at(7) * 1000;
+#endif
 }
 
 
@@ -674,6 +745,10 @@ void Robot::getRightMaxLimits(vector<double> &p)
     p = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
     std::copy(this->max_rightLimits.begin(),this->max_rightLimits.end(),p.begin());
+
+#if HAND == 1
+    p.at(7) = p.at(7) * 1000;
+#endif
 }
 
 
@@ -1186,7 +1261,7 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
         this->transfMatrix(m_DH_arm.alpha.at(i), m_DH_arm.a.at(i), m_DH_arm.d.at(i), posture.at(i), T_aux);
         T = T * T_aux;
         Vector3d v;
-        if (i==1)
+        if (i == 1)
         {
             // get the shoulder
             shoulderOr = T.block(0,0,3,3);
@@ -1195,7 +1270,7 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
             shoulderPos[1] = v[1];
             shoulderPos[2] = v[2];
         }
-        else if (i==3)
+        else if (i == 3)
         {
             // get the elbow
             elbowOr = T.block(0,0,3,3);
@@ -1204,7 +1279,7 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
             elbowPos[1] = v[1];
             elbowPos[2] = v[2];
         }
-        else if (i==5)
+        else if (i == 5)
         {
             // get the wrist
             wristOr = T.block(0,0,3,3);
@@ -1213,7 +1288,7 @@ void Robot::getHandPos(int arm, vector<double> &pos, vector<double> &posture)
             wristPos[1] = v[1];
             wristPos[2] = v[2];
         }
-        else if (i==6)
+        else if (i == 6)
         {
             //get the hand
             T = T * mat_hand;
@@ -1362,116 +1437,14 @@ void Robot::computeRightHandDHparams()
 {
     this->m_DH_rightHand.clear();
 
-    for (int i = 0; i< HAND_FINGERS; ++i)
+    for (int i = 0; i < HAND_FINGERS; ++i)
     {
         vector<double> t;
         this->getRightHandPosture(t);
         DHparams f;
         vector<double> fing_pos;
-#if HAND==0
-        if (i==0)
-        {
-            f.a = vector<double>(4);
-            f.d = vector<double>(4);
-            f.alpha = vector<double>(4);
-            f.theta = vector<double>(4);
-            human_finger fing = m_human_hand_specs.fingers.at(0); // index
-            // finger positions [mm]
-            fing_pos.push_back(fing.ux);
-            fing_pos.push_back(fing.uy);
-            fing_pos.push_back(fing.uz);
-            //a [mm]
-            f.a.at(0) = fing.finger_specs.a.at(0);
-            f.a.at(1) = fing.finger_specs.a.at(1);
-            f.a.at(2) = fing.finger_specs.a.at(2);
-            f.a.at(3) = fing.finger_specs.a.at(3);
-            //d [mm]
-            f.d.at(0) = fing.finger_specs.d.at(0);
-            f.d.at(1) = fing.finger_specs.d.at(1);
-            f.d.at(2) = fing.finger_specs.d.at(2);
-            f.d.at(3) = fing.finger_specs.d.at(3);
-            //alpha [rad]
-            f.alpha.at(0) = fing.finger_specs.alpha.at(0);
-            f.alpha.at(1) = fing.finger_specs.alpha.at(1);
-            f.alpha.at(2) = fing.finger_specs.alpha.at(2);
-            f.alpha.at(3) = fing.finger_specs.alpha.at(3);
-            //theta [rad]
-            f.theta.at(0) = fing.finger_specs.theta.at(0);
-            f.theta.at(1) = fing.finger_specs.theta.at(1);
-            f.theta.at(2) = fing.finger_specs.theta.at(2);
-            f.theta.at(3) = fing.finger_specs.theta.at(3);
-        }
-        else if(i==1)
-        {
-            f.a = vector<double>(4);
-            f.d = vector<double>(4);
-            f.alpha = vector<double>(4);
-            f.theta = vector<double>(4);
 
-            human_finger fing = m_human_hand_specs.fingers.at(2); // ring
-            // finger positions [mm]
-            fing_pos.push_back(fing.ux);
-            fing_pos.push_back(fing.uy);
-            fing_pos.push_back(fing.uz);
-            //a [mm]
-            f.a.at(0) = fing.finger_specs.a.at(0);
-            f.a.at(1) = fing.finger_specs.a.at(1);
-            f.a.at(2) = fing.finger_specs.a.at(2);
-            f.a.at(3) = fing.finger_specs.a.at(3);
-            //d [mm]
-            f.d.at(0) = fing.finger_specs.d.at(0);
-            f.d.at(1) = fing.finger_specs.d.at(1);
-            f.d.at(2) = fing.finger_specs.d.at(2);
-            f.d.at(3) = fing.finger_specs.d.at(3);
-            //alpha [rad]
-            f.alpha.at(0) = fing.finger_specs.alpha.at(0);
-            f.alpha.at(1) = fing.finger_specs.alpha.at(1);
-            f.alpha.at(2) = fing.finger_specs.alpha.at(2);
-            f.alpha.at(3) = fing.finger_specs.alpha.at(3);
-            //theta [rad]
-            f.theta.at(0) = fing.finger_specs.theta.at(0);
-            f.theta.at(1) = fing.finger_specs.theta.at(1);
-            f.theta.at(2) = fing.finger_specs.theta.at(2);
-            f.theta.at(3) = fing.finger_specs.theta.at(3);
-        }
-        else if(i==2)
-        {
-            f.a = vector<double>(5);
-            f.d = vector<double>(5);
-            f.alpha = vector<double>(5);
-            f.theta = vector<double>(5);
-
-            human_thumb thumb = m_human_hand_specs.thumb; // thumb
-            // finger positions [mm]
-            fing_pos.push_back(thumb.uTx);
-            fing_pos.push_back(thumb.uTy);
-            fing_pos.push_back(thumb.uTz);
-            //a [mm]
-            f.a.at(0) = thumb.thumb_specs.a.at(0);
-            f.a.at(1) = thumb.thumb_specs.a.at(1);
-            f.a.at(2) = thumb.thumb_specs.a.at(2);
-            f.a.at(3) = thumb.thumb_specs.a.at(3);
-            f.a.at(4) = thumb.thumb_specs.a.at(4);
-            // d [mm]
-            f.d.at(0) = thumb.thumb_specs.d.at(0);
-            f.d.at(1) = thumb.thumb_specs.d.at(1);
-            f.d.at(2) = thumb.thumb_specs.d.at(2);
-            f.d.at(3) = thumb.thumb_specs.d.at(3);
-            f.d.at(4) = thumb.thumb_specs.d.at(4);
-            // alpha [rad]
-            f.alpha.at(0) = thumb.thumb_specs.alpha.at(0);
-            f.alpha.at(1) = thumb.thumb_specs.alpha.at(1);
-            f.alpha.at(2) = thumb.thumb_specs.alpha.at(2);
-            f.alpha.at(3) = thumb.thumb_specs.alpha.at(3);
-            f.alpha.at(4) = thumb.thumb_specs.alpha.at(4);
-            // theta [rad]
-            f.theta.at(0) = thumb.thumb_specs.theta.at(0);
-            f.theta.at(1) = thumb.thumb_specs.theta.at(1);
-            f.theta.at(2) = thumb.thumb_specs.theta.at(2);
-            f.theta.at(3) = thumb.thumb_specs.theta.at(3);
-            f.theta.at(4) = thumb.thumb_specs.theta.at(4);
-        }
-#else
+#if HAND == 0
         f.a = vector<double>(4);
         f.d = vector<double>(4);
         f.alpha = vector<double>(4);
@@ -1483,7 +1456,7 @@ void Robot::computeRightHandDHparams()
         fing_pos.push_back(0);
 
         //a [mm]
-        f.a.at(0) = (rk.at(i)*(m_barrett_hand_specs.Aw));
+        f.a.at(0) = (rk.at(i) * (m_barrett_hand_specs.Aw));
         f.a.at(1) = m_barrett_hand_specs.A1;
         f.a.at(2) = m_barrett_hand_specs.A2;
         f.a.at(3) = m_barrett_hand_specs.A3;
@@ -1501,11 +1474,36 @@ void Robot::computeRightHandDHparams()
         f.alpha.at(3) = -1.57;
 
         //theta [rad]
-        f.theta.at(0) = (rk.at(i)*t.at(0))-1.57*jk.at(i);
-        f.theta.at(1) = m_barrett_hand_specs.phi2+t.at(i+1);
-        f.theta.at(2) = m_barrett_hand_specs.phi3+(1/3)*t.at(i+1);
+        f.theta.at(0) = (rk.at(i) * t.at(0)) - 1.57 * jk.at(i);
+        f.theta.at(1) = m_barrett_hand_specs.phi2 + t.at(i + 1);
+        f.theta.at(2) = m_barrett_hand_specs.phi3 + (1/3) * t.at(i + 1);
         f.theta.at(3) = 0.0;
+#elif HAND == 1
+        f.a = vector<double>(2);
+        f.d = vector<double>(2);
+        f.alpha = vector<double>(2);
+        f.theta = vector<double>(2);
 
+        // finger positions [mm]
+        fing_pos.push_back(0);
+        fing_pos.push_back(0);
+        fing_pos.push_back(0);
+
+        //a [mm]
+        f.a.at(0) = 0;
+        f.a.at(1) = m_electric_gripper_specs.A1;
+
+        //d [mm]
+        f.d.at(0) = - ((m_electric_gripper_specs.maxAperture - t.at(0) * 1000) + m_electric_gripper_specs.D3);
+        f.d.at(1) = 0;
+
+        //alpha [rad]
+        f.alpha.at(0) = rk.at(i) * 1.57;
+        f.alpha.at(1) = 0;
+
+        //theta [rad]
+        f.theta.at(0) = rk.at(i) * 1.57;
+        f.theta.at(1) = 0;
 #endif
         m_DH_rightHand.push_back(f);
         right_fing_pos.push_back(fing_pos);
@@ -1524,110 +1522,7 @@ void Robot::computeLeftHandDHparams()
         vector<double> t;
         this->getLeftHandPosture(t);
 
-#if HAND==0
-        if (i==0)
-        {
-            f.a = vector<double>(4);
-            f.d = vector<double>(4);
-            f.alpha = vector<double>(4);
-            f.theta = vector<double>(4);
-            human_finger fing = m_human_hand_specs.fingers.at(0); // index
-            // finger positions [mm]
-            fing_pos.push_back(fing.ux);
-            fing_pos.push_back(fing.uy);
-            fing_pos.push_back(fing.uz);
-            //a [mm]
-            f.a.at(0) = fing.finger_specs.a.at(0);
-            f.a.at(1) = fing.finger_specs.a.at(1);
-            f.a.at(2) = fing.finger_specs.a.at(2);
-            f.a.at(3) = fing.finger_specs.a.at(3);
-            //d [mm]
-            f.d.at(0) = fing.finger_specs.d.at(0);
-            f.d.at(1) = fing.finger_specs.d.at(1);
-            f.d.at(2) = fing.finger_specs.d.at(2);
-            f.d.at(3) = fing.finger_specs.d.at(3);
-            //alpha [rad]
-            f.alpha.at(0) = fing.finger_specs.alpha.at(0);
-            f.alpha.at(1) = fing.finger_specs.alpha.at(1);
-            f.alpha.at(2) = fing.finger_specs.alpha.at(2);
-            f.alpha.at(3) = fing.finger_specs.alpha.at(3);
-            //theta [rad]
-            f.theta.at(0) = fing.finger_specs.theta.at(0);
-            f.theta.at(1) = fing.finger_specs.theta.at(1);
-            f.theta.at(2) = fing.finger_specs.theta.at(2);
-            f.theta.at(3) = fing.finger_specs.theta.at(3);
-        }
-        else if(i==1)
-        {
-            f.a = vector<double>(4);
-            f.d = vector<double>(4);
-            f.alpha = vector<double>(4);
-            f.theta = vector<double>(4);
-
-            human_finger fing = m_human_hand_specs.fingers.at(2); // ring
-            // finger positions [mm]
-            fing_pos.push_back(fing.ux);
-            fing_pos.push_back(fing.uy);
-            fing_pos.push_back(fing.uz);
-            //a [mm]
-            f.a.at(0) = fing.finger_specs.a.at(0);
-            f.a.at(1) = fing.finger_specs.a.at(1);
-            f.a.at(2) = fing.finger_specs.a.at(2);
-            f.a.at(3) = fing.finger_specs.a.at(3);
-            //d [mm]
-            f.d.at(0) = fing.finger_specs.d.at(0);
-            f.d.at(1) = fing.finger_specs.d.at(1);
-            f.d.at(2) = fing.finger_specs.d.at(2);
-            f.d.at(3) = fing.finger_specs.d.at(3);
-            //alpha [rad]
-            f.alpha.at(0) = fing.finger_specs.alpha.at(0);
-            f.alpha.at(1) = fing.finger_specs.alpha.at(1);
-            f.alpha.at(2) = fing.finger_specs.alpha.at(2);
-            f.alpha.at(3) = fing.finger_specs.alpha.at(3);
-            //theta [rad]
-            f.theta.at(0) = fing.finger_specs.theta.at(0);
-            f.theta.at(1) = fing.finger_specs.theta.at(1);
-            f.theta.at(2) = fing.finger_specs.theta.at(2);
-            f.theta.at(3) = fing.finger_specs.theta.at(3);
-        }
-        else if(i==2)
-        {
-            f.a = vector<double>(5);
-            f.d = vector<double>(5);
-            f.alpha = vector<double>(5);
-            f.theta = vector<double>(5);
-
-            human_thumb thumb = m_human_hand_specs.thumb; // thumb
-            // finger positions [mm]
-            fing_pos.push_back(thumb.uTx);
-            fing_pos.push_back(thumb.uTy);
-            fing_pos.push_back(thumb.uTz);
-            //a [mm]
-            f.a.at(0) = thumb.thumb_specs.a.at(0);
-            f.a.at(1) = thumb.thumb_specs.a.at(1);
-            f.a.at(2) = thumb.thumb_specs.a.at(2);
-            f.a.at(3) = thumb.thumb_specs.a.at(3);
-            f.a.at(4) = thumb.thumb_specs.a.at(4);
-            // d [mm]
-            f.d.at(0) = thumb.thumb_specs.d.at(0);
-            f.d.at(1) = thumb.thumb_specs.d.at(1);
-            f.d.at(2) = thumb.thumb_specs.d.at(2);
-            f.d.at(3) = thumb.thumb_specs.d.at(3);
-            f.d.at(4) = thumb.thumb_specs.d.at(4);
-            // alpha [rad]
-            f.alpha.at(0) = thumb.thumb_specs.alpha.at(0);
-            f.alpha.at(1) = thumb.thumb_specs.alpha.at(1);
-            f.alpha.at(2) = thumb.thumb_specs.alpha.at(2);
-            f.alpha.at(3) = thumb.thumb_specs.alpha.at(3);
-            f.alpha.at(4) = thumb.thumb_specs.alpha.at(4);
-            // theta [rad]
-            f.theta.at(0) = thumb.thumb_specs.theta.at(0);
-            f.theta.at(1) = thumb.thumb_specs.theta.at(1);
-            f.theta.at(2) = thumb.thumb_specs.theta.at(2);
-            f.theta.at(3) = thumb.thumb_specs.theta.at(3);
-            f.theta.at(4) = thumb.thumb_specs.theta.at(4);
-        }
-#else
+#if HAND == 0
         f.a = vector<double>(4);
         f.d = vector<double>(4);
         f.alpha = vector<double>(4);
@@ -2148,6 +2043,7 @@ void Robot::transfMatrix(double alpha, double a, double d, double theta, Matrix4
 
 void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0_pos, int id_fing, MatrixXd& Fingers)
 {
+#if HAND == 0
      Matrix4d T;
      vector<double> pos = vector<double>(3);
      Matrix4d T_aux;
@@ -2161,40 +2057,17 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
      // translate to the begenning of each finger
      T_aux = T_aux * T_H_0_pos;
 
-#if HAND == 0
-     int cnt;
-     if (id_fing == 3)
-         // thumb
-         cnt = N_PHALANGE+2;
-     else
-         cnt = N_PHALANGE+1;
-
-     for (int i=0; i< cnt; ++i)
-     {
-#else
-
      for (int i=0; i< N_PHALANGE+1; ++i)
      {
-#endif
-
          double a = p.a.at(i);
          double d = p.d.at(i);
          double alpha = p.alpha.at(i);
          double theta = p.theta.at(i);
 
-#if HAND == 0
-         T(0,0) = cos(theta); T(0,1) = -sin(theta)*cos(alpha);  T(0,2) = sin(theta)*cos(alpha);  T(0,3) = a*cos(theta);
-         T(1,0) = sin(theta); T(1,1) = cos(theta)*cos(alpha);   T(1,2) = -cos(theta)*sin(alpha); T(1,3) = a*sin(theta);
-         T(2,0) = 0.0;        T(2,1) = sin(alpha);              T(2,2) = cos(alpha);             T(2,3) = d;
-         T(3,0) = 0.0;        T(3,1) = 0.0;                     T(3,2) = 0.0;                    T(3,3) = 1.0;
-#else
-
          T(0,0) = cos(theta);            T(0,1) = -sin(theta);            T(0,2) = 0.0;         T(0,3) = a;
          T(1,0) = sin(theta)*cos(alpha); T(1,1) = cos(theta)*cos(alpha); T(1,2) = -sin(alpha); T(1,3) = -sin(alpha)*d;
          T(2,0) = sin(theta)*sin(alpha); T(2,1) = cos(theta)*sin(alpha);  T(2,2) = cos(alpha);  T(2,3) = cos(alpha)*d;
          T(3,0) = 0.0;                   T(3,1) = 0.0;                    T(3,2) = 0.0;         T(3,3) = 1.0;
-
-#endif
 
          T_aux = T_aux * T;
          pos[0] = T_aux(0,3);
@@ -2203,6 +2076,7 @@ void Robot::directKinematicsFinger(DHparams& p, Matrix4d& T_ext, Matrix4d& T_H_0
 
          Fingers(id_fing,3*i) = pos[0]; Fingers(id_fing,3*i+1) = pos[1]; Fingers(id_fing,3*i+2) = pos[2];
      }
+#endif
 }
 
 } // namespace motion_manager

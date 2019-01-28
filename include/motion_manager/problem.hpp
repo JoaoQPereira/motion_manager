@@ -190,19 +190,17 @@ private:
     /**
      * @brief This method computes the final posture of the fingers.\n
      * It takes into account the type of grip and the size of the object
-     * @param hand_id: it is 1 for right hand and 2 for the left hand
      * @return
      */
-    bool finalPostureFingers(int hand_id);
+    bool finalPostureHand();
 
     /**
      * @brief This method computes the inverse kinematics of the hand.
      * @param d_obj: diameter of the object
-     * @param hand_id: it is 1 for right hand and 2 for the left hand
      * @param sols: solution
      * @return
      */
-    bool invKinHand(double d_obj,int hand_id,std::vector<double>& sols);
+    bool invKinHand(double d_obj);
 
     /**
      * @brief getRPY
@@ -227,7 +225,7 @@ private:
     double dHOr; /**< distance between the right hand and the center of the object that is being manipulated */
     double dHOl; /**< distance between the left hand and the center of the object that is being manipulated */
     double dFF; /**< distance between the fingertip F3 and the fingertips F1 and F2 */
-    double dFH; /**< distance between the fingers and the palm of the hand */
+    double dFH; /**< distance between the fingers and the palm of the hand */ 
     std::vector<double> rightFinalPosture; /**< final posture of the right arm+hand */
     std::vector<double> rightFinalHand; /**< final posture of the right hand */
     std::vector<double> leftFinalPosture; /**< final posture of the left arm+hand */

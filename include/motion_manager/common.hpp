@@ -59,13 +59,9 @@ using namespace Eigen;
 namespace motion_manager
 {
 
-#if HAND==0
-//*************************************************************************************************
-//                                 HUMAN HAND
-    const double THETA8_HOME = 0.0; /**< constant of the joint 8 (spread of the hand) in [rad] */
-    const double THETA8_FINAL = -double(M_PI)/2; /**< constant of the joint 8 (spread of the hand) in [rad] */
-    const double TOL_GRIP = 5.0; /**< tolerance on the grip in [mm] */
-#else
+  const int JOINTS_ARM = 7; /**< number of joints per arm */
+
+#if HAND == 0
 //*************************************************************************************************
 //                                 BARRETT HAND
     const double THETA8_HOME = 0.0; /**< constant of the joint 8 (spread of the hand) in [rad] */
@@ -76,12 +72,19 @@ namespace motion_manager
     const double closingOpeningTorque = 1.0f;/**< torque applied to the fingers when they are opening/closing */
     const double closingVel = 60.0f * static_cast<double>(M_PI) / 180.0f; /**< joint velocity of the fingers when they are closing */
     const double openingVel = -120.0f * static_cast<double>(M_PI) / 180.0f;/**< joint velocity of the fingers when they are opening */
-#endif
 
     const int HAND_FINGERS = 3; /**< number of fingers per hand */
-    const int JOINTS_ARM = 7; /**< number of joints per arm */
     const int JOINTS_HAND = 4; /**< number of joints per hand */
     const int N_PHALANGE = 3; /**< number of phalanges per finger */
+#elif HAND == 1
+  //*************************************************************************************************
+  //                                 ELECTRIC PARALLEL GRIPPER
+    const double TOL_GRIP = 0; /**< tolerance on the grip in [mm] */
+    const double TOL_TOOL_GRIP = - 0.315; /**< tolerance on the grip tool in [mm] */
+    const int HAND_FINGERS = 2; /**< number of fingers per hand */
+    const int JOINTS_HAND = 1; /**< number of joints per hand */
+    const int N_PHALANGE = 0; /**< number of phalanges per finger */
+#endif
 
     /** this struct defines the position in the Cartesian space*/
     typedef struct
@@ -138,36 +141,11 @@ namespace motion_manager
     /** this struct defines the electric gripper */
     typedef struct
     {
-        double maxAperture; /**< [mm] max aperture of the gripper in [mm] */
-        double minAperture; /**< [mm] min aperture of the gripper in [mm] */
-        double A1; /**< length of the 1st part of the finger in [mm] */
+        double maxAperture; /**< [mm] max aperture of the hand in [mm] */
+        double minAperture; /**< [mm] max aperture of the hand in [mm] */
+        double A1; /**< length of the finger in [mm] */
+        double D3; /**< depth of the fingertip in [mm] */
     } electric_gripper;
-
-    /** this struct defines a human finger */
-    typedef struct
-    {
-        double ux; /**<  position of the finger with respect to the center of the palm along the x axis in [mm] */
-        double uy; /**<  position of the finger with respect to the center of the palm along the y axis in [mm] */
-        double uz; /**<  position of the finger with respect to the center of the palm along the z axis in [mm] */
-        DHparams finger_specs; /**< the Denavit-Hartenberg parameters of the finger */
-    } human_finger;
-
-    /** this struct defines a human thumb */
-    typedef struct
-    {
-        double uTx; /**<  position of the thumb with respect to the center of the palm along the x axis in [mm] */
-        double uTy; /**<  position of the thumb with respect to the center of the palm along the y axis in [mm] */
-        double uTz; /**<  position of the thumb with respect to the center of the palm along the z axis in [mm] */
-        DHparams thumb_specs; /**< the Denavit-Hartenberg parameters of the thumb */
-    } human_thumb;
-
-    /** this struct defines a human hand */
-    typedef struct
-    {
-        vector<human_finger> fingers; /**< fingers of the hand */
-        human_thumb thumb; /**<  thumb of the hand */
-        double maxAperture; /**< max aperture of the hand in [mm] */
-    } human_hand;
 
     /** this struct defines a generic part of a robot body */
     typedef struct

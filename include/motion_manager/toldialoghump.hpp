@@ -64,22 +64,42 @@ public:
     void getTolsTarget(MatrixXd& tols);
 
     /**
-     * @brief This method gets the maximum angular velocity allowed for each joint [deg/sec]
+     * @brief This method gets the maximum angular velocity allowed for each joint (arm + barrett Hand) [deg/sec]
      * @return
      */
     double getWMax();
 
     /**
-     * @brief This method gets the maximum angular acceleration allowed for each joint [deg/sec²]
+     * @brief This method gets the maximum angular acceleration allowed for each joint (arm + barrett Hand) [deg/sec²]
      * @return
      */
     double getAlphaMax();
 
     /**
-     * @brief This method gets the maximum angula velocity allowed for each joint [deg/sec]
+     * @brief This method gets the maximum angula velocity allowed for each joint (arm + barrett Hand) [deg/sec]
      * @param w
      */
     void setWMax(double w);
+
+#if HAND == 1
+    /**
+     * @brief This method gets the maximum angular velocity allowed for each gripper joint [mm/sec]
+     * @return
+     */
+    double getWMaxGripper();
+
+    /**
+     * @brief This method gets the maximum angular acceleration allowed for each gripper joint [mm/sec²]
+     * @return
+     */
+    double getAlphaMaxGripper();
+
+    /**
+     * @brief This method gets the maximum angula velocity allowed for each gripper joint [mm/sec]
+     * @param w
+     */
+    void setWMaxGripper(double w);
+#endif
 
     /**
      * @brief This method gets the tolerances in positioning the end-effector
@@ -334,6 +354,11 @@ private:
     Ui::TolDialogHUMP *ui; /**< handle of the user interface */
     string infoLine; /**< information about the tuning of the planner */
     bool rand_init;
+
+    /**
+     * @brief adaptationElectricGripper
+     */
+    void adaptationElectricGripper();
 };
 
 } // namespace motion_manager

@@ -14,8 +14,6 @@ Problem::Problem():
     this->leftFinalPosture_eng = std::vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->rightFinalHand = std::vector<double>(JOINTS_HAND);
     this->leftFinalHand = std::vector<double>(JOINTS_HAND);
-    //this->rightBouncePosture = std::vector<double>(JOINTS_ARM);
-    //this->leftBouncePosture = std::vector<double>(JOINTS_ARM);
 
     this->targetAxis = 0;
     this->solved=false;
@@ -147,35 +145,10 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         h_planner->setDH_rightArm(right_arm_DH);
         h_planner->setDH_leftArm(left_arm_DH);
 
-#if HAND==0
-        human_hand hhand = this->scene->getRobot()->getHumanHand();
-        HUMotion::HumanHand hump_hhand;
-        hump_hhand.maxAperture = hhand.maxAperture;
-        hump_hhand.thumb.uTx = hhand.thumb.uTx;
-        hump_hhand.thumb.uTy = hhand.thumb.uTy;
-        hump_hhand.thumb.uTz = hhand.thumb.uTz;
-        hump_hhand.thumb.thumb_specs.a = hhand.thumb.thumb_specs.a;
-        hump_hhand.thumb.thumb_specs.alpha = hhand.thumb.thumb_specs.alpha;
-        hump_hhand.thumb.thumb_specs.d = hhand.thumb.thumb_specs.d;
-        hump_hhand.thumb.thumb_specs.theta = hhand.thumb.thumb_specs.theta;
-        vector<HUMotion::HumanFinger> hump_fings = hump_hhand.fingers;
-        vector<human_finger> fings = hhand.fingers;
-        for(size_t i=0; i<fings.size();++i)
-        {
-            human_finger fing = fings.at(i);
-            HUMotion::HumanFinger hump_fing = hump_fings.at(i);
-            hump_fing.ux = fing.ux; hump_fing.uy = fing.uy; hump_fing.uz = fing.uz;
-            hump_fing.finger_specs.a = fing.finger_specs.a;
-            hump_fing.finger_specs.alpha = fing.finger_specs.alpha;
-            hump_fing.finger_specs.d = fing.finger_specs.d;
-            hump_fing.finger_specs.theta = fing.finger_specs.theta;
-            hump_fings.at(i) = hump_fing;
-        }
-        hump_hhand.fingers = hump_fings;
-#else
+#if HAND == 0
         barrett_hand b_hand = this->scene->getRobot()->getBarrettHand();
         std::vector<int> rk; this->scene->getRobot()->getRK(rk);
-        std::vector<int> jk; this->scene->getRobot()->getRK(jk);
+        std::vector<int> jk; this->scene->getRobot()->getJK(jk);
         HUMotion::BarrettHand hump_bhand;
 
         hump_bhand.A1 = b_hand.A1;
@@ -190,6 +163,18 @@ Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
         hump_bhand.jk = jk;
 
         h_planner->setBarrettHand(hump_bhand);
+#elif HAND == 1
+        electric_gripper e_hand = this->scene->getRobot()->getElectricGripper();
+        std::vector<int> rk; this->scene->getRobot()->getRK(rk);
+        HUMotion::ElectricGripper hump_ehand;
+
+        hump_ehand.A1 = e_hand.A1;
+        hump_ehand.D3 = e_hand.D3;
+        hump_ehand.maxAperture = e_hand.maxAperture;
+        hump_ehand.minAperture = e_hand.minAperture;
+        hump_ehand.rk = rk;
+
+        h_planner->setElectricGripper(hump_ehand);
 #endif
 #if HEAD==1
         robot_part head = this->scene->getRobot()->getHead();
@@ -394,347 +379,188 @@ void Problem::setMoveSettings(std::vector<double> &tar, std::vector<double> &fin
 }
 
 
-bool Problem::finalPostureFingers(int hand_id)
+bool Problem::finalPostureHand()
 {
-    bool success=false;
+    bool success;
+    // get the robot used in this scenario
     robotPtr hh = this->scene->getRobot();
-
     // get the object(s) involved in this movement
     objectPtr obj = this->mov->getObject();
+    // compute the diameter (plus tolerance) of the object to be grasped
+    double d_obj;
     // get the type of grip for this movement
     bool prec = this->mov->getGrip();
 
-    // compute the diameter (plus tolerance) of the object to be grasped
-    double d_obj;
+#if HAND == 0
 
     if(prec)
     {
-        d_obj = obj->getRadius()*2.0+TOL_GRIP;
-#if HAND==0
-        if(d_obj > hh->getHumanHand().maxAperture)
-        {
-            success=false;
-            throw string("impossible to grasp the object ")+obj->getName()+
-                    string(" with the grip ")+this->mov->getGripStr()+
-                    string(". The object is too large");
-        }
-#else
+        d_obj = obj->getRadius() * 2.0 + TOL_GRIP;
+
         if (d_obj > hh->getBarrettHand().maxAperture)
         {
-            success=false;
-            throw string("impossible to grasp the object ")+obj->getName()+
-                    string(" with the grip ")+this->mov->getGripStr()+
+            success = false;
+            throw string("impossible to grasp the object ") + obj->getName() +
+                    string(" with the grip ") + this->mov->getGripStr() +
                     string(". The object is too large");
         }
-#endif
     }
     else
     {
-#if HAND==0
-        d_obj = min(hh->getHumanHand().maxAperture,double(1.2)*obj->getRadius()*2+TOL_GRIP);
-
-        if(obj->getRadius()*2+TOL_GRIP > hh->getHumanHand().maxAperture)
-        {
-            success=false;
-            throw string("impossible to grasp the object ")+obj->getName()+
-                    string(" with the grip ")+this->mov->getGripStr()+
-                    string(". The object is too large");
-
-        }
-#else
         d_obj = min(hh->getBarrettHand().maxAperture,double(1.2)*obj->getRadius()*2+TOL_GRIP);
 
-        if (obj->getRadius()*2+TOL_GRIP > hh->getBarrettHand().maxAperture)
+        if (obj->getRadius() * 2 + TOL_GRIP > hh->getBarrettHand().maxAperture)
         {
-            success=false;
-            throw string("impossible to grasp the object ")+obj->getName()+
-                    string(" with the grip ")+this->mov->getGripStr()+
+            success = false;
+            throw string("impossible to grasp the object ") + obj->getName() +
+                    string(" with the grip ") + this->mov->getGripStr() +
                     string(". The object is too large");
         }
-#endif
     }
+#elif HAND == 1
 
-    // compute the inverse kinematics of the hand
-    std::vector<double> sols;
-    bool inv_succ;
-    double theta;
-    double thetaT;
+    if(prec)
+        d_obj = obj->getRadius() * 2.0 + TOL_GRIP;
+    else
+        d_obj = double(1.035) * obj->getRadius() * 2.0 + TOL_GRIP;
+
+    if(d_obj > hh->getElectricGripper().maxAperture)
+    {
+        success = false;
+        throw string("impossible to grasp the object ") + obj->getName() +
+                string(" with the grip ") + this->mov->getGripStr() +
+                string(". The object is too large");
+    }
+    else if(d_obj < hh->getElectricGripper().minAperture + TOL_GRIP)
+    {
+        success = false;
+        throw string("impossible to grasp the object ") + obj->getName() +
+                string(" with the grip ") + this->mov->getGripStr() +
+                string(". The object is too small");
+    }
+#endif
 
     try
     {
-        inv_succ = this->invKinHand(d_obj,hand_id,sols);
-        if (inv_succ)
-        {
-            theta = sols.at(0);
-            thetaT = sols.at(1);
-        }
-        else
-            throw string("Error: hand inverse kinematic not solved");
+        success = this->invKinHand(d_obj);
+
+        if(!success)
+            throw string("Error: Hand inverse kinematic not solved");
     }
     catch(const string str)
     {
-        success=false;
+        success = false;
         throw str;
-    }
-
-    success=true;
-
-    switch(this->mov->getArm())
-    {
-    case 0: // both arms
-        //TO DO;
-        break;
-    case 1: // right arm
-        this->rightFinalHand.at(0) = THETA8_FINAL;
-        this->rightFinalPosture.at(JOINTS_ARM) = THETA8_FINAL;
-        this->rightFinalPosture_diseng.at(JOINTS_ARM) = THETA8_FINAL;
-        this->rightFinalPosture_eng.at(JOINTS_ARM) = THETA8_FINAL;
-#if HAND == 0
-        this->rightFinalHand.at(1) = theta;
-        this->rightFinalHand.at(2) = theta;
-        this->rightFinalHand.at(3) = thetaT;
-        this->rightFinalPosture.at(JOINTS_ARM+1)=theta;
-        this->rightFinalPosture.at(JOINTS_ARM+2)=theta;
-        this->rightFinalPosture.at(JOINTS_ARM+3)=thetaT;
-        this->rightFinalPosture_diseng.at(JOINTS_ARM+1)=theta;
-        this->rightFinalPosture_diseng.at(JOINTS_ARM+2)=theta;
-        this->rightFinalPosture_diseng.at(JOINTS_ARM+3)=thetaT;
-        this->rightFinalPosture_eng.at(JOINTS_ARM+1)=theta;
-        this->rightFinalPosture_eng.at(JOINTS_ARM+2)=theta;
-        this->rightFinalPosture_eng.at(JOINTS_ARM+3)=thetaT;
-#else
-        // we consider:
-        // 1. the spread of the fingers F1 and F2 always at home ( theta8 = THETA8_home)
-        // 2. the displacement of the other joints is equal (theta9=theta10=theta11)
-        for (int i=0; i< HAND_FINGERS; ++i)
-        {
-             this->rightFinalHand.at(i+1) = theta;
-             this->rightFinalPosture.at(JOINTS_ARM+i+1)=theta;
-        }
-#endif
-        if(prec)
-            this->dHOr = this->dFH;
-        else
-            this->dHOr = obj->getRadius()+TOL_GRIP;
-        break;
-    case 2: // left arm
-        this->leftFinalHand.at(0) = THETA8_FINAL; // spread of F1 and F2
-        this->leftFinalPosture.at(JOINTS_ARM)=THETA8_FINAL;
-#if HAND==0
-        this->leftFinalHand.at(1) = theta;
-        this->leftFinalHand.at(2) = theta;
-        this->leftFinalHand.at(3) = thetaT;
-        this->leftFinalPosture.at(JOINTS_ARM+1)=theta;
-        this->leftFinalPosture.at(JOINTS_ARM+2)=theta;
-        this->leftFinalPosture.at(JOINTS_ARM+3)=thetaT;
-        this->leftFinalPosture_diseng.at(JOINTS_ARM+1)=theta;
-        this->leftFinalPosture_diseng.at(JOINTS_ARM+2)=theta;
-        this->leftFinalPosture_diseng.at(JOINTS_ARM+3)=thetaT;
-        this->leftFinalPosture_eng.at(JOINTS_ARM+1)=theta;
-        this->leftFinalPosture_eng.at(JOINTS_ARM+2)=theta;
-        this->leftFinalPosture_eng.at(JOINTS_ARM+3)=thetaT;
-#else
-        // we consider:
-        // 1. the spread of the fingers F1 and F2 always at home ( theta8 = THETA8_final)
-        // 2. the displacement of the other joints is equal (theta9=theta10=theta11)
-        for (int i = 0; i<HAND_FINGERS; ++i)
-        {
-             this->leftFinalHand.at(i+1) = theta;
-             this->leftFinalPosture.at(JOINTS_ARM+i+1)=theta;
-        }
-#endif
-        if(prec)
-            this->dHOl = this->dFH;
-        else
-            this->dHOl = obj->getRadius()+TOL_GRIP;
-        break;
     }
 
     return success;
 }
 
 
-bool Problem::invKinHand(double d_obj,int hand_id,std::vector<double>& sols)
+bool Problem::invKinHand(double d_obj)
 {
     robotPtr hh = this->scene->getRobot();
+    bool success = true;
 
-    bool success = false;
-    sols = std::vector<double>(2);
-    double theta;
-    double thetaT;
-
-#if HAND==0
-    human_hand hand = hh->getHumanHand();
-    human_finger middle = hand.fingers.at(1);
-    human_thumb thumb = hand.thumb;
-    double maxAp = hand.maxAperture;
-    int k;
-
-    // middle finger
-    //double ux = middle.ux;
-    double uy;
-    double uz = middle.uz;
-    double Lp = middle.finger_specs.a.at(1);
-    double Lmi = middle.finger_specs.a.at(2);
-    double Ld = middle.finger_specs.a.at(3);
-    double alpha0;
-    double theta0;
-
-    // thumb
-    //double uTx = thumb.uTx;
-    double uTy;
-    //double uTz = thumb.uTz;
-    double LTm = thumb.thumb_specs.a.at(2);
-    double LTp = thumb.thumb_specs.a.at(3);
-    double LTd = thumb.thumb_specs.a.at(4);
-    double alpha0T;
-    double alpha1T = thumb.thumb_specs.alpha.at(1);
-    double theta0T = thumb.thumb_specs.theta.at(0);
-    double theta1T = THETA8_FINAL;
-
-    switch(hand_id)
-    {
-    case 1: // right hand
-        k=1;
-        uy = middle.uy;
-        alpha0 = middle.finger_specs.alpha.at(0);
-        theta0 = middle.finger_specs.theta.at(0);
-        uTy = thumb.uTy;
-        alpha0T = thumb.thumb_specs.alpha.at(0);
-        break;
-    case 2: // left hand
-        k=-1;
-        uy = -middle.uy;
-        alpha0 = -middle.finger_specs.alpha.at(0);
-        theta0 = -middle.finger_specs.theta.at(0);
-        uTy = -thumb.uTy;
-        alpha0T = thumb.thumb_specs.alpha.at(0)-90*M_PI/180;
-        break;
-    }
-#else
+#if HAND == 0
     double A1 = hh->getBarrettHand().A1;
     double A2 = hh->getBarrettHand().A2;
     double A3 = hh->getBarrettHand().A3;
     double D3 = hh->getBarrettHand().D3;
     double phi2 = hh->getBarrettHand().phi2;
     double phi3 = hh->getBarrettHand().phi3;
-    double maxAp = hh->getBarrettHand().maxAperture;
-    double fnew; // dFF
-    double dfnew;// ddFF
 
-    double x0 = 60.0* M_PI/180.0; // initial approximation
-    double xold = x0;
-    theta = xold;
-    double xnew = 140.0* M_PI/180.0;
-#endif
-
-    if (d_obj > maxAp){ throw string(" the object is too big to be grasped");}
-    int cnt=0;
-#if HAND==0
-    // initial approximation
-    double xold = 30.0* M_PI/180.0;
-    double xoldT = k*30.0* M_PI/180.0;
-    theta = xold;
-    thetaT = xoldT;
-    double xnew = 140.0* M_PI/180.0;
-    double xnewT = k*140.0* M_PI/180.0;
     double fnew;
     double dfnew;
-    double fnewT;
-    double dfnewT;
-    double dMH;
-    double dTH;
 
-    while((abs(xnew-xold)>1e-4 || abs(xnewT-xoldT)>1e-4) && cnt <100)
-    {
-        cnt++;
-        xold=theta;
-        xoldT=thetaT;
+    double x0 = 60.0 * M_PI / 180.0; // initial approximation
+    double xold = x0;
+    double theta = xold;
+    double xnew = 140.0 * M_PI / 180.0;
+    int cnt = 0;
 
-        fnew = k*(uy
-                 -Ld*cos(theta/3)*(sin((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)) - cos((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)))
-                 +Lmi*cos((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta))
-                 -Ld*sin(theta/3)*(sin((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)) + cos((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)))
-                 -Lmi*sin((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta))
-                 +Lp*cos(theta)*sin(theta0) +Lp*cos(alpha0)*cos(theta0)*sin(theta))
-                  -d_obj/2;
-        dfnew = -k*((Ld*cos(theta/3)*(sin((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)) + cos((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta))))/3
-                    +Ld*cos(theta/3)*((5*sin((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)))/3 + (5*cos((2*theta)/3)*(sin(theta0)*sin(theta)-cos(alpha0)*cos(theta0)*cos(theta)))/3)
-                    +(5*Lmi*cos((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)))/3
-                    -(Ld*sin(theta/3)*(sin((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)) - cos((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta))))/3
-                    -Ld*sin(theta/3)*((5*sin((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)))/3 - (5*cos((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)))/3)
-                    +(5*Lmi*sin((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)))/3
-                    +Lp*sin(theta0)*sin(theta) -Lp*cos(alpha0)*cos(theta0)*cos(theta));
-        fnewT = -k*(LTp*sin((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T)+cos(alpha1T)*sin(theta0T)*sin(theta1T)-cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T))+sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)))
-                 -uTy
-                 +LTm*sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T))
-                 +LTd*cos((11*thetaT)/12)*(cos((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))) + sin((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))
-                 +LTd*sin((11*thetaT)/12)*(cos((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))) - sin((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))
-                 -LTm*cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))
-                 +LTp*cos((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))
-                 +d_obj/2;
-        dfnewT = -k*(LTm*cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T))
-                     -(21*LTp*sin((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))/10
-                     +(11*LTd*cos((11*thetaT)/12)*(cos((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)))
-                                                   -sin((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)))))/12
-                     +LTd*cos((11*thetaT)/12)*((21*cos((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))/10
-                                               -(21*sin((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))/10)
-                     -(11*LTd*sin((11*thetaT)/12)*(cos((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)))
-                                                   +sin((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)))))/12
-                     -LTd*sin((11*thetaT)/12)*((21*cos((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))/10
-                                               +(21*sin((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))/10)
-                     +(21*LTp*cos((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))/10
-                     +LTm*sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)));
-        xnew=xold-fnew/dfnew;
-        theta = xnew;
-        xnewT=xoldT-fnewT/dfnewT;
-        thetaT = xnewT;
-    }
-    if (cnt < 100)
-        success = true;
-    theta=xnew;
-    thetaT=abs(xnewT);
-    dMH = k*(uy
-             -Ld*cos(theta/3)*(sin((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)) - cos((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)))
-             +Lmi*cos((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta))
-             -Ld*sin(theta/3)*(sin((2*theta)/3)*(cos(theta)*sin(theta0) + cos(alpha0)*cos(theta0)*sin(theta)) + cos((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta)))
-             -Lmi*sin((2*theta)/3)*(sin(theta0)*sin(theta) - cos(alpha0)*cos(theta0)*cos(theta))
-             +Lp*cos(theta)*sin(theta0) +Lp*cos(alpha0)*cos(theta0)*sin(theta));
-    dTH =k*(LTp*sin((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T)+cos(alpha1T)*sin(theta0T)*sin(theta1T)-cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T))+sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T)))
-             -uTy
-             +LTm*sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T))
-             +LTd*cos((11*thetaT)/12)*(cos((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))) + sin((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))
-             +LTd*sin((11*thetaT)/12)*(cos((11*thetaT)/10)*(cos(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) + sin(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))) - sin((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))))
-             -LTm*cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))
-             +LTp*cos((11*thetaT)/10)*(sin(thetaT)*(sin(alpha0T)*sin(alpha1T)*cos(theta0T) + cos(alpha1T)*sin(theta0T)*sin(theta1T) - cos(alpha0T)*cos(alpha1T)*cos(theta0T)*cos(theta1T)) - cos(thetaT)*(cos(theta1T)*sin(theta0T) + cos(alpha0T)*cos(theta0T)*sin(theta1T))));
-    this->dFF = dMH + dTH;
-    this->dFH =uz+Lp*sin(alpha0)*sin(theta) + Ld*cos(theta/3)*(cos((2*theta)/3)*sin(alpha0)*sin(theta) + sin((2*theta)/3)*sin(alpha0)*cos(theta))
-              +Ld*sin(theta/3)*(cos((2*theta)/3)*sin(alpha0)*cos(theta) - sin((2*theta)/3)*sin(alpha0)*sin(theta))
-              +Lmi*cos((2*theta)/3)*sin(alpha0)*sin(theta)
-              +Lmi*sin((2*theta)/3)*sin(alpha0)*cos(theta);
-    sols.at(0)=theta;
-    sols.at(1)=thetaT;
-#else
-    while(abs(xnew-xold)>1e-4 && cnt <100)
+    while(abs(xnew - xold) > 1e-4)
     {
-        cnt++;
-        xold=theta;
-        fnew=2*cos((4/3)*theta+phi2+phi3)*A3-2*sin((4/3)*theta+phi2+phi3)*D3+
-                2*cos(theta+phi2)*A2+2*A1-d_obj;
-        dfnew=-(8/3)*sin((4/3)*theta+phi2+phi3)*A3-(8/3)*cos((4/3)*theta+phi2+phi3)*D3-
-                2*sin(theta+phi2)*A2;
-        xnew=xold-fnew/dfnew;
+        xold = theta;
+        fnew = 2 * cos((4/3) * theta + phi2 + phi3) * A3 - 2 * sin((4/3) * theta + phi2 + phi3) * D3 +
+               2 * cos(theta + phi2) * A2 + 2 * A1 - d_obj;
+        dfnew = -(8/3) * sin((4/3) * theta + phi2 + phi3) * A3- (8/3) * cos((4/3) * theta + phi2 + phi3) * D3-
+                2 * sin(theta + phi2) * A2;
+        xnew = xold - fnew / dfnew;
         theta = xnew;
+        cnt++;
     }
-    if (cnt < 100)
-        success = true;
-    theta=xnew;
-    this->dFF = 2*cos((4/3)*theta+phi2+phi3)*A3-2*sin((4/3)*theta+phi2+phi3)*D3+
-            2*cos(theta+phi2)*A2+2*A1;
-    this->dFH = sin((4/3)*theta+phi2+phi3)*A3+cos((4/3)*theta+phi2+phi3)*D3+sin(theta+phi2)*A2;
-    sols.at(0)=theta;
-    sols.at(1)=theta;
+
+    if (cnt > 100)
+        success = false;
+
+    this->dFF = 2 * cos((4/3) * theta + phi2 + phi3) * A3 - 2 * sin((4/3) * theta + phi2 + phi3) * D3 +
+                2 * cos(theta + phi2) * A2 + 2 * A1;
+    this->dFH = sin((4/3) * theta + phi2 + phi3) * A3 + cos((4/3) * theta + phi2 + phi3) * D3 + sin(theta + phi2) * A2;
+
+
+#elif HAND == 1
+    double A1 = hh->getElectricGripper().A1;
+    double maxAp = hh->getElectricGripper().maxAperture;
+
+    double d = maxAp - d_obj;
+    this->dFH = A1;
 #endif
+
+
+    if(success)
+    {
+        bool prec = this->mov->getGrip();
+        int arm = this->mov->getArm();
+
+        switch(arm)
+        {
+        case 0: // both arms
+            break;
+        case 1: // right arm
+#if HAND == 0
+            this->rightFinalHand.at(0) = THETA8_FINAL;
+            this->rightFinalPosture.at(JOINTS_ARM) = THETA8_FINAL;
+            this->rightFinalPosture_diseng.at(JOINTS_ARM) = THETA8_FINAL;
+            this->rightFinalPosture_eng.at(JOINTS_ARM) = THETA8_FINAL;
+
+            for (int i = 0; i < HAND_FINGERS; ++i)
+            {
+                 this->rightFinalHand.at(i+1) = theta;
+                 this->rightFinalPosture.at(JOINTS_ARM + i + 1) = theta;
+            }
+#elif HAND == 1
+            this->rightFinalHand.at(0) = d;
+            this->rightFinalPosture.at(JOINTS_ARM) = d;
+            this->rightFinalPosture_diseng.at(JOINTS_ARM) = d;
+            this->rightFinalPosture_eng.at(JOINTS_ARM) = d;
+#endif
+            if(prec)
+                this->dHOr = this->dFH;
+            else
+                this->dHOr = d_obj / 2 + TOL_GRIP;
+            break;
+        case 2: // left arm
+#if HAND == 0
+            this->leftFinalHand.at(0) = THETA8_FINAL; // spread of F1 and F2
+            this->leftFinalPosture.at(JOINTS_ARM) = THETA8_FINAL;
+
+            for (int i = 0; i < HAND_FINGERS; ++i)
+            {
+                 this->leftFinalHand.at(i + 1) = theta;
+                 this->leftFinalPosture.at(JOINTS_ARM + i + 1) = theta;
+            }
+#elif HAND == 1
+            this->leftFinalHand.at(0) = d;
+            this->leftFinalPosture.at(JOINTS_ARM) = d;
+#endif
+            if(prec)
+                this->dHOl = this->dFH - 3;
+            else
+                this->dHOl = d_obj / 2 + TOL_GRIP;
+            break;
+        }
+    }
 
     return success;
 }
@@ -800,106 +626,113 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     int mov_type = this->mov->getType();
     int sceneID = this->scene->getID();
     params.mov_specs.support_obj = "Table";
-#if HAND==0
-    // Human Hand
-    int hand_code = 0;
-#else
+
+#if HAND == 0
     // Barrett Hand
     int hand_code = 1;
+#elif HAND == 1
+    // Electric Parallel Gripper
+    int hand_code = 2;
 #endif
 
-#if HEAD == 1
-    int head_code = 1;
-#else
-    int head_code = 0;
-#endif
-
-    double dHO;
     std::vector<double> finalHand;
     std::vector<double> homePosture;
     std::vector<double> initPosture;
+    std::vector<double> eng_to_tar;
+
+    double dHO;
     targetPtr tar;
     objectPtr obj; engagePtr eng;
     objectPtr obj_eng; engagePtr eng1;
     posePtr pose;
-    if(mov_type!=1 && mov_type!=5)
+
+    std::vector<double> target;
+    std::vector<double> tar_pose;
+    std::vector<double> place_location;
+
+    if(mov_type != 1 && mov_type != 5)
     {
         try
         {
-            this->finalPostureFingers(arm_code);
+            this->finalPostureHand();
         }
         catch(const string message)
         {
             throw message;
         }
+
         obj = this->mov->getObject();
         pose = this->mov->getPose();
+
         // engaging info
         obj_eng = this->mov->getObjectEng();
         eng = obj->getEngagePoint();
         eng1 = obj_eng->getEngagePoint();
     }
 
-    std::vector<double> eng_to_tar;
+
     switch(arm_code)
     {
     case 0: // both arms
         break;
     case 1://right arm
-        if(obj!=nullptr)
+        if(obj != nullptr)
             obj->getEngTarRight(eng_to_tar);
+
         this->scene->getRobot()->getRightPosture(initPosture);
         this->scene->getRobot()->getRightArmHomePosture(homePosture);
-        if(mov_type==5)
+
+        if(mov_type == 5)
             this->scene->getRobot()->getRightHandHomePosture(finalHand);
-        else if(mov_type==1)
+        else if(mov_type == 1)
             finalHand=this->move_final_hand;
         else
         {
-            dHO=this->dHOr;
+            dHO = this->dHOr;
             tar = obj->getTargetRight();
             finalHand = this->rightFinalHand;
         }
         break;
     case 2:// left arm
-        if(obj!=nullptr)
+        if(obj != nullptr)
             obj->getEngTarLeft(eng_to_tar);
+
         this->scene->getRobot()->getLeftPosture(initPosture);
         this->scene->getRobot()->getLeftArmHomePosture(homePosture);
-        if(mov_type==5)
+
+        if(mov_type == 5)
              this->scene->getRobot()->getLeftHandHomePosture(finalHand);
-        else if(mov_type==1)
-            finalHand=this->move_final_hand;
+        else if(mov_type == 1)
+            finalHand = this->move_final_hand;
         else
         {
-            dHO=this->dHOl;
+            dHO = this->dHOl;
             finalHand = this->leftFinalHand;
             tar = obj->getTargetLeft();
         }
         break;
     }
 
-    std::vector<double> target;
-    std::vector<double> tar_pose;
-    std::vector<double> place_location;
-    if(mov_type!=1 && mov_type!=5)
+
+    if(mov_type != 1 && mov_type != 5)
     {
         // compute the position of the target when the object will be engaged
         pos eng1_pos = eng1->getPos(); // position related to the world of the engage point of the other object
         orient eng1_or = eng1->getOr(); // orientation of the engage point of the other object
-        std::vector<double> rpy_eng1 = {eng1_or.roll,eng1_or.pitch,eng1_or.yaw};
-        Matrix3d Rot_eng1; this->RPY_matrix(rpy_eng1,Rot_eng1);
+        std::vector<double> rpy_eng1 = {eng1_or.roll, eng1_or.pitch, eng1_or.yaw};
+        Matrix3d Rot_eng1; this->RPY_matrix(rpy_eng1, Rot_eng1);
+
         pos new_tar;
-        std::vector<double> rpy = {tar->getOr().roll,tar->getOr().pitch,tar->getOr().yaw};
-        Matrix3d Rot_tar; this->RPY_matrix(rpy,Rot_tar);
+        std::vector<double> rpy = {tar->getOr().roll, tar->getOr().pitch, tar->getOr().yaw};
+        Matrix3d Rot_tar; this->RPY_matrix(rpy, Rot_tar);
         Vector3d v(eng_to_tar.at(0),eng_to_tar.at(1),eng_to_tar.at(2));
         Vector3d eng_to_tar_w = Rot_tar*v;
-        new_tar.Xpos=eng1_pos.Xpos - eng_to_tar_w(0);
-        new_tar.Ypos=eng1_pos.Ypos - eng_to_tar_w(1);
-        new_tar.Zpos=eng1_pos.Zpos - eng_to_tar_w(2);
+        new_tar.Xpos = eng1_pos.Xpos - eng_to_tar_w(0);
+        new_tar.Ypos = eng1_pos.Ypos - eng_to_tar_w(1);
+        new_tar.Zpos = eng1_pos.Zpos - eng_to_tar_w(2);
 
         orient eng_or = eng->getOr(); // orientation of the engage point of the object to engage
-        std::vector<double> rpy_eng = {eng_or.roll,eng_or.pitch,eng_or.yaw};
+        std::vector<double> rpy_eng = {eng_or.roll, eng_or.pitch, eng_or.yaw};
         Matrix3d Rot_eng; this->RPY_matrix(rpy_eng,Rot_eng);
         Matrix3d Rot_eng_inv = Rot_eng.transpose();
         Matrix3d Rot_eng_tar = Rot_eng_inv * Rot_tar;
@@ -916,14 +749,14 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         HUMotion::objectPtr hump_obj;
         target = {tar->getPos().Xpos, tar->getPos().Ypos, tar->getPos().Zpos,tar->getOr().roll,tar->getOr().pitch,tar->getOr().yaw};
         tar_pose = {pose->getPos().Xpos, pose->getPos().Ypos, pose->getPos().Zpos, pose->getOr().roll, pose->getOr().pitch, pose->getOr().yaw};
+
         std::vector<double> position = {obj->getPos().Xpos,obj->getPos().Ypos,obj->getPos().Zpos};
         std::vector<double> orientation = {obj->getOr().roll,obj->getOr().pitch,obj->getOr().yaw};
         std::vector<double> dimension = {obj->getSize().Xsize,obj->getSize().Ysize,obj->getSize().Zsize};
         hump_obj.reset(new HUMotion::Object(obj->getName()));
-        hump_obj->setParams(position,orientation,dimension);
+        hump_obj->setParams(position, orientation, dimension);
 
         // movement settings
-        //params.mov_specs.griptype = this->mov->getGrip();
         params.mov_specs.dHO = dHO;
         params.mov_specs.obj = hump_obj;
     }
@@ -941,22 +774,22 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     case 0:// reach-to-grasp
         params.mov_specs.target = target;
         curr_time = this->GetTimeMs64();
-        res =  this->h_planner->plan_pick(params,initPosture);
-        this->exec_time = double(this->GetTimeMs64()-curr_time);
+        res = this->h_planner->plan_pick(params,initPosture);
+        this->exec_time = double(this->GetTimeMs64() - curr_time);
         break;
     case 1:// reaching
         if(this->use_posture)
         {
             curr_time = this->GetTimeMs64();
             res = this->h_planner->plan_move(params,initPosture,this->move_final_arm);
-            this->exec_time = double(this->GetTimeMs64()-curr_time);
+            this->exec_time = double(this->GetTimeMs64() - curr_time);
         }
         else
         {
             params.mov_specs.target=this->move_target;
             curr_time = this->GetTimeMs64();
             res = this->h_planner->plan_move(params,initPosture);
-            this->exec_time = double(this->GetTimeMs64()-curr_time);
+            this->exec_time = double(this->GetTimeMs64() - curr_time);
         }
         break;
     case 2://transport
@@ -965,36 +798,35 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         params.mov_specs.target = tar_pose;
         curr_time = this->GetTimeMs64();
         res = this->h_planner->plan_place(params,initPosture);
-        this->exec_time = double(this->GetTimeMs64()-curr_time);
+        this->exec_time = double(this->GetTimeMs64() - curr_time);
         break;
     case 3://engage
         params.mov_specs.support_obj = obj_eng->getName();
         params.mov_specs.target = place_location;
         curr_time = this->GetTimeMs64();
         res = this->h_planner->plan_place(params,initPosture);
-        this->exec_time = double(this->GetTimeMs64()-curr_time);
+        this->exec_time = double(this->GetTimeMs64() - curr_time);
         break;
     case 4:// disengage
         break;
     case 5:// go-park
         curr_time = this->GetTimeMs64();
         res = this->h_planner->plan_move(params,initPosture,homePosture);
-        this->exec_time = double(this->GetTimeMs64()-curr_time);
+        this->exec_time = double(this->GetTimeMs64() - curr_time);
         break;
     }
 
     this->h_params = params;
-    if(res!=nullptr)
-    {
+
+    if(res != nullptr)
         if(res->status==0)
             this->solved=true;
-    }
 
     return res;
 }
 
 
-#if MOVEIT==1
+#if MOVEIT == 1
 moveit_planning::PlanningResultPtr Problem::solve(moveit_planning::moveit_params &params)
 {
     this->solved = false;
@@ -1003,12 +835,9 @@ moveit_planning::PlanningResultPtr Problem::solve(moveit_planning::moveit_params
     int sceneID = this->scene->getID();
     params.support_surface = "Table";
 
-#if HAND==0
-    // Human Hand
-    int hand_code = 0;
-#elif HAND == 1
+#if HAND == 0
     // Barrett Hand
-    int hand_code = 1;
+    int hand_code = 0;
 #endif
     double dHO;
     std::vector<double> finalHand;
@@ -1021,7 +850,7 @@ moveit_planning::PlanningResultPtr Problem::solve(moveit_planning::moveit_params
     {
         try
         { // compute the final posture of the fingers according to the object involved in the movement
-            this->finalPostureFingers(arm_code);
+            this->finalPostureHand();
         }
         catch(const string message)
         {
