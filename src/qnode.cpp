@@ -1918,10 +1918,9 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                     if (srvset_parent.response.result != 1)
                         log(QNode::Error,string("Error in grasping the object "));
 
-#if HAND == 0
-#if OPEN_CLOSE_HAND == 1
+#if HAND == 0 && OPEN_CLOSE_HAND == 1
                     this->closeBarrettHand(arm_code);
-#else
+#elif HAND == 0 && OPEN_CLOSE_HAND == 0
                     MatrixXd tt = traj_mov_real.at(k);
                     VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                     std::vector<double> hand_init_pos;
@@ -1930,7 +1929,6 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
                     //Close the barrett hand
                     this->closeBarrettHand_to_pos(arm_code, hand_init_pos);
-#endif
 #elif HAND == 1
                     closed = true;
 #endif
@@ -1954,8 +1952,7 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
                         log(QNode::Error,string("Error in releasing the object "));
                 }
 
-#if HAND == 0
-#if OPEN_CLOSE_HAND == 1
+#if HAND == 0 && OPEN_CLOSE_HAND == 1
                 MatrixXd tt = traj_mov_real.at(k);
                 VectorXd init_h_posture = tt.block<1,JOINTS_HAND>(0,JOINTS_ARM);
                 std::vector<double> hand_init_pos;
@@ -1964,11 +1961,10 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
                 //open the barrett hand
                 this->openBarrettHand_to_pos(arm_code, hand_init_pos);
-#else
+#elif HAND == 0 && OPEN_CLOSE_HAND == 0
                 closed.at(0) = false;
                 closed.at(1) = false;
                 closed.at(2) = false;
-#endif
 #elif HAND == 1
                 closed = false;
 #endif
@@ -2339,7 +2335,7 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
     // Get the initial position of the robot arm in the V-REP simulator
     MatrixXd traj = traj_mov_real.at(0);
     VectorXd iP = traj.row(0);
-    vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - 4));
+    vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - JOINTS_HAND));
 
     // Calculate the difference between the initial posture in simulation and the current posture of the robot
     vector<double> diff;
@@ -2465,14 +2461,14 @@ bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<Mat
 
                 // Get only the position, velocity and acceleration of the robot arm joints
                 // Current step
-                vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - 4));
-                vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - 4));
-                vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - 4));
+                vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - JOINTS_HAND));
+                vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - JOINTS_HAND));
+                vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - JOINTS_HAND));
                 // Get only the position, velocity and acceleration of the robot arm joints
                 // Next step
-                vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - 4));
-                vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - 4));
-                vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - 4));
+                vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - JOINTS_HAND));
+                vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - JOINTS_HAND));
+                vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - JOINTS_HAND));
 
                 // ********************************************************************** //
                 //                       Joints linear interpolation                      //
@@ -3038,7 +3034,7 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
     MatrixXd traj = traj_first_mov.at(0);
     // Arm's inital posture
     VectorXd iP = traj.row(0);
-    vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - 4));
+    vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - JOINTS_HAND));
 
     // Calculate the difference between the initial posture in simulation and the current posture of the robot
     vector<double> diff;
@@ -3176,14 +3172,14 @@ bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<M
 
                     // Get only the position, velocity and acceleration of the robot arm joints
                     // Current step
-                    vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - 4));
-                    vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - 4));
-                    vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - 4));
+                    vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - JOINTS_HAND));
+                    vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - JOINTS_HAND));
+                    vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - JOINTS_HAND));
                     // Get only the position, velocity and acceleration of the robot arm joints
                     // Next step
-                    vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - 4));
-                    vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - 4));
-                    vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - 4));
+                    vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - JOINTS_HAND));
+                    vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - JOINTS_HAND));
+                    vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - JOINTS_HAND));
 
                     // ********************************************************************** //
                     //                       Joints linear interpolation                      //

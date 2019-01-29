@@ -922,7 +922,7 @@
          <item>
           <widget class="QLineEdit" name="lineEdit_w_max_gripper">
            <property name="text">
-            <string>20.0</string>
+            <string>150.0</string>
            </property>
           </widget>
          </item>
@@ -994,14 +994,14 @@
          <item>
           <widget class="QLineEdit" name="lineEdit_alpha_max">
            <property name="text">
-            <string>20.0</string>
+            <string>10.0</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLineEdit" name="lineEdit_alpha_max_gripper">
            <property name="text">
-            <string>20.0</string>
+            <string>10.0</string>
            </property>
           </widget>
          </item>

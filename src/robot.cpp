@@ -251,6 +251,21 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
     this->max_rightLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->max_leftLimits = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+    {
+        rightPosture.at(i + JOINTS_ARM) = rightPosture.at(i + JOINTS_ARM) * 1000;
+        leftPosture.at(i + JOINTS_ARM) = leftPosture.at(i + JOINTS_ARM) * 1000;
+        rightHomePosture.at(i + JOINTS_ARM) = rightHomePosture.at(i + JOINTS_ARM) * 1000;
+        leftHomePosture.at(i + JOINTS_ARM) = leftHomePosture.at(i + JOINTS_ARM) * 1000;
+
+        min_rightLimits.at(i + JOINTS_ARM) = min_rightLimits.at(i + JOINTS_ARM) * 1000;
+        min_leftLimits.at(i + JOINTS_ARM) = min_leftLimits.at(i + JOINTS_ARM) * 1000;
+        max_rightLimits.at(i + JOINTS_ARM) = max_rightLimits.at(i + JOINTS_ARM) * 1000;
+        max_leftLimits.at(i + JOINTS_ARM) = max_leftLimits.at(i + JOINTS_ARM) * 1000;
+    }
+#endif
+
     this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->rightForces = vector<double>(JOINTS_ARM+JOINTS_HAND);
@@ -295,6 +310,21 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
     std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
     std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
     std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+    {
+        rightPosture.at(i + JOINTS_ARM) = rightPosture.at(i + JOINTS_ARM) * 1000;
+        leftPosture.at(i + JOINTS_ARM) = leftPosture.at(i + JOINTS_ARM) * 1000;
+        rightHomePosture.at(i + JOINTS_ARM) = rightHomePosture.at(i + JOINTS_ARM) * 1000;
+        leftHomePosture.at(i + JOINTS_ARM) = leftHomePosture.at(i + JOINTS_ARM) * 1000;
+
+        min_rightLimits.at(i + JOINTS_ARM) = min_rightLimits.at(i + JOINTS_ARM) * 1000;
+        min_leftLimits.at(i + JOINTS_ARM) = min_leftLimits.at(i + JOINTS_ARM) * 1000;
+        max_rightLimits.at(i + JOINTS_ARM) = max_rightLimits.at(i + JOINTS_ARM) * 1000;
+        max_leftLimits.at(i + JOINTS_ARM) = max_leftLimits.at(i + JOINTS_ARM) * 1000;
+    }
+#endif
 
     this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
@@ -343,6 +373,21 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
     std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
     std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
     std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+    {
+        rightPosture.at(i + JOINTS_ARM) = rightPosture.at(i + JOINTS_ARM) * 1000;
+        leftPosture.at(i + JOINTS_ARM) = leftPosture.at(i + JOINTS_ARM) * 1000;
+        rightHomePosture.at(i + JOINTS_ARM) = rightHomePosture.at(i + JOINTS_ARM) * 1000;
+        leftHomePosture.at(i + JOINTS_ARM) = leftHomePosture.at(i + JOINTS_ARM) * 1000;
+
+        min_rightLimits.at(i + JOINTS_ARM) = min_rightLimits.at(i + JOINTS_ARM) * 1000;
+        min_leftLimits.at(i + JOINTS_ARM) = min_leftLimits.at(i + JOINTS_ARM) * 1000;
+        max_rightLimits.at(i + JOINTS_ARM) = max_rightLimits.at(i + JOINTS_ARM) * 1000;
+        max_leftLimits.at(i + JOINTS_ARM) = max_leftLimits.at(i + JOINTS_ARM) * 1000;
+    }
+#endif
 
     this->rightVelocities= vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftVelocities = vector<double>(JOINTS_ARM+JOINTS_HAND);
@@ -464,48 +509,88 @@ void Robot::setElectricGripper(electric_gripper& specs)
 void Robot::setRightPosture(vector<double> &r)
 {
     std::copy(r.begin(),r.end(),this->rightPosture.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        rightPosture.at(i + JOINTS_ARM) = rightPosture.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setLeftPosture(vector<double> &l)
 {
     std::copy(l.begin(),l.end(),this->leftPosture.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        leftPosture.at(i + JOINTS_ARM) = leftPosture.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setRightHomePosture(vector<double> &r)
 {
     std::copy(r.begin(),r.end(),this->rightHomePosture.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        rightHomePosture.at(i + JOINTS_ARM) = rightHomePosture.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setLeftHomePosture(vector<double> &l)
 {
     std::copy(l.begin(),l.end(),this->leftHomePosture.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        leftHomePosture.at(i + JOINTS_ARM) = leftHomePosture.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setRightMinLimits(vector<double> &min_rl)
 {
     std::copy(min_rl.begin(),min_rl.end(),this->min_rightLimits.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        min_rightLimits.at(i + JOINTS_ARM) = min_rightLimits.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setRightMaxLimits(vector<double> &max_rl)
 {
     std::copy(max_rl.begin(),max_rl.end(),this->max_rightLimits.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        max_rightLimits.at(i + JOINTS_ARM) = max_rightLimits.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setLeftMinLimits(vector<double> &min_ll)
 {
     std::copy(min_ll.begin(),min_ll.end(),this->min_leftLimits.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        min_leftLimits.at(i + JOINTS_ARM) = min_leftLimits.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
 void Robot::setLeftMaxLimits(vector<double> &max_ll)
 {
     std::copy(max_ll.begin(),max_ll.end(),this->max_leftLimits.begin());
+
+#if HAND == 1
+    for(size_t i = 0; i < JOINTS_HAND; ++i)
+        max_leftLimits.at(i + JOINTS_ARM) = max_leftLimits.at(i + JOINTS_ARM) * 1000;
+#endif
 }
 
 
@@ -633,10 +718,6 @@ void Robot::getRightPosture(vector<double>& p)
     p = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
     std::copy(this->rightPosture.begin(),this->rightPosture.end(),p.begin());
-
-#if HAND == 1
-    p.at(7) = p.at(7) * 1000;
-#endif
 }
 
 
@@ -650,7 +731,7 @@ void Robot::getRightArmPosture(vector<double> &p)
 
 void Robot::getRightHandPosture(vector<double> &p)
 {
-     p = vector<double>(JOINTS_HAND);
+    p = vector<double>(JOINTS_HAND);
 
     std::copy(this->rightPosture.begin()+JOINTS_ARM,this->rightPosture.end(),p.begin());
 }
@@ -733,10 +814,6 @@ void Robot::getRightMinLimits(vector<double> &p)
     p = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
     std::copy(this->min_rightLimits.begin(),this->min_rightLimits.end(),p.begin());
-
-#if HAND == 1
-    p.at(7) = p.at(7) * 1000;
-#endif
 }
 
 
@@ -745,10 +822,6 @@ void Robot::getRightMaxLimits(vector<double> &p)
     p = vector<double>(JOINTS_ARM+JOINTS_HAND);
 
     std::copy(this->max_rightLimits.begin(),this->max_rightLimits.end(),p.begin());
-
-#if HAND == 1
-    p.at(7) = p.at(7) * 1000;
-#endif
 }
 
 
