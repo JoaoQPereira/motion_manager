@@ -63,7 +63,11 @@ QNode::QNode(int argc, char** argv ) :
 #elif HAND == 1
     closed = false;
 #endif
-    robotPosture.assign(7,0.0f);
+#if ROBOT == 1
+    robotPosture.assign(8, 0.0f);
+    robotVel.assign(8, 0.0f);
+    robotForce.assign(8, 0.0f);
+#endif
     got_scene = false;
     obj_in_hand = false;
 
@@ -128,6 +132,7 @@ bool QNode::loadScenario(const std::string& path,int id)
     {
         // Topic that contains the position of the Sawyer joints
         subJoints_state_robot = n.subscribe("/robot/joint_states", 1, &QNode::SawyerJointsCallback, this);
+        subGripper_state_robot = n.subscribe("/io/end_effector/right_gripper/state", 1, &QNode::SawyerGripperCallback, this);
 
         // ------------------------------------------------------------------------------------------- //
         //                                   ROBOT ACTIONLIBS                                          //
@@ -4042,6 +4047,8 @@ void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
     // Save the names and positions of the joints
     std::vector<std::string> joints_names = state.name;
     std::vector<double> joints_pos(state.position.begin(),state.position.end());
+    std::vector<double> joints_vel(state.velocity.begin(), state.velocity.end());
+    std::vector<double> joints_for(state.effort.begin(), state.effort.end());
 
     // Name of arm joints
     const char *r_names[] = {"right_j0", "right_j1", "right_j2", "right_j3","right_j4", "right_j5", "right_j6"};
@@ -4052,7 +4059,32 @@ void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
         size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_names[i]) - joints_names.begin();
 
         if (r_index < joints_names.size())
+        {
             robotPosture.at(i) = joints_pos.at(r_index);
+            robotVel.at(i) = joints_vel.at(r_index);
+            robotForce.at(i) = joints_for.at(r_index);
+        }
+    }
+}
+
+
+void QNode::SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state)
+{
+    std::vector<intera_core_msgs::IODataStatus> signals = state.signals;
+
+    for(int i = 0; i < signals.size(); ++i)
+    {
+        signals.at(i).data.erase(signals.at(i).data.begin(), signals.at(i).data.begin() + 1);
+        signals.at(i).data.erase(signals.at(i).data.end() - 1, signals.at(i).data.end());
+
+        if(signals.at(i).name == "is_calibrated")
+            gripperCalibrated = (strcasecmp("true", signals.at(i).data.c_str()) == 0);
+        else if(signals.at(i).name == "position_response_m")
+            robotPosture.at(JOINTS_ARM) = atof(signals.at(i).data.c_str());
+        else if(signals.at(i).name == "speed_mps")
+            robotVel.at(JOINTS_ARM) = atof(signals.at(i).data.c_str());
+        else if(signals.at(i).name == "force_response_n")
+            robotForce.at(JOINTS_ARM) = atof(signals.at(i).data.c_str());
     }
 }
 #endif

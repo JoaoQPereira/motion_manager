@@ -99,7 +99,7 @@ endif()
 ##Real Robot configuration
 # ROBOT=0, don't communicate with robot
 # ROBOT=1, communicate with robot
-set (ROBOT 0)
+set (ROBOT 1)
 
 ## Robot parts configuration
 # 1 means that the part is present and it is taken into account for the generation of the trajectories,

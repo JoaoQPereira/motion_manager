@@ -200,8 +200,8 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
 
     this->m_electric_gripper_specs = hspecs;
 
-    this->rk.push_back(1.0);
     this->rk.push_back(-1.0);
+    this->rk.push_back(1.0);
 
     this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
@@ -233,8 +233,8 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
     this->m_arm_specs = aspecs;
 
     this->m_electric_gripper_specs = hspecs;
-    this->rk.push_back(1.0);
     this->rk.push_back(-1.0);
+    this->rk.push_back(1.0);
 
     this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
@@ -288,8 +288,8 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
     this->m_arm_specs = aspecs;
 
     this->m_electric_gripper_specs = hspecs;
-    this->rk.push_back(1.0);
     this->rk.push_back(-1.0);
+    this->rk.push_back(1.0);
 
     this->rightPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
     this->leftPosture = vector<double>(JOINTS_ARM+JOINTS_HAND);
@@ -349,8 +349,8 @@ Robot::Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hs
     this->m_arm_specs = aspecs;
 
     this->m_electric_gripper_specs = hspecs;
-    this->rk.push_back(1.0);
     this->rk.push_back(-1.0);
+    this->rk.push_back(1.0);
 
     this->m_head = headspecs;
 
@@ -1567,7 +1567,7 @@ void Robot::computeRightHandDHparams()
         f.a.at(1) = m_electric_gripper_specs.A1;
 
         //d [mm]
-        f.d.at(0) = - ((m_electric_gripper_specs.maxAperture - t.at(0) * 1000) + m_electric_gripper_specs.D3);
+        f.d.at(0) = - (t.at(0) + m_electric_gripper_specs.D3) / 2;
         f.d.at(1) = 0;
 
         //alpha [rad]

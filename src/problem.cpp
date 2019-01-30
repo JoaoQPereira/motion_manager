@@ -501,9 +501,9 @@ bool Problem::invKinHand(double d_obj)
 
 #elif HAND == 1
     double A1 = hh->getElectricGripper().A1;
-    double maxAp = hh->getElectricGripper().maxAperture;
+    double minAp = hh->getElectricGripper().minAperture;
 
-    double d = maxAp - d_obj;
+    double d = -(minAp - d_obj);
     this->dFH = A1;
 #endif
 

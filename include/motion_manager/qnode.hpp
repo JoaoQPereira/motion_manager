@@ -20,6 +20,8 @@
 
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <intera_motion_msgs/MotionCommandAction.h>
+#include <intera_core_msgs/IODeviceStatus.h>
+#include <intera_core_msgs/IODataStatus.h>
 #include <actionlib/client/simple_action_client.h>
 #include <unistd.h>
 
@@ -428,6 +430,8 @@ private:
      * @param state
      */
     void SawyerJointsCallback(const sensor_msgs::JointState &state);
+
+    void SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state);
 #endif
 
     /**
@@ -537,6 +541,7 @@ private:
 #if ROBOT == 1
     //*********************************** Real Robot
     ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
+    ros::Subscriber subGripper_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
     ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
     motionCommClient* motionComm; /**< */
     followJointTrajectoryClient* folJointTraj; /**< */
@@ -580,8 +585,13 @@ private:
 #elif HAND == 1
     bool closed;
 #endif
+#if ROBOT == 1
     //*********************************** Real Robot
     std::vector<double> robotPosture; /**< position of the right arm*/
+    std::vector<double> robotVel; /**< velocity of the right arm*/
+    std::vector<double> robotForce; /**< forces of the right arm*/
+    bool gripperCalibrated;
+#endif
 
 Q_SIGNALS:
     /**
