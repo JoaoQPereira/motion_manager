@@ -21,11 +21,14 @@
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <intera_motion_msgs/MotionCommandAction.h>
 #include <intera_core_msgs/IODeviceStatus.h>
+#include <intera_core_msgs/IOComponentCommand.h>
 #include <intera_core_msgs/IODataStatus.h>
+#include <intera_core_msgs/RobotAssemblyState.h>
 #include <actionlib/client/simple_action_client.h>
 #include <unistd.h>
 
 #include <boost/log/core.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
@@ -155,7 +158,7 @@ public:
      * @return
      */
 #if ROBOT == 1
-    bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov, std::vector<std::vector<double>> timesteps);
+    bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<std::vector<double>> timesteps);
 #endif
 
     /**
@@ -426,11 +429,21 @@ private:
 
  #if ROBOT == 1
     /**
+     * @brief
+     * @param state
+     */
+    void SawyerStateCallback(const intera_core_msgs::RobotAssemblyState &state);
+
+    /**
      * @brief This is the callback to retrieve the state of the joints (Robot Sawyer)
      * @param state
      */
     void SawyerJointsCallback(const sensor_msgs::JointState &state);
 
+    /**
+     * @brief
+     * @param state
+     */
     void SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state);
 #endif
 
@@ -541,8 +554,8 @@ private:
 #if ROBOT == 1
     //*********************************** Real Robot
     ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
-    ros::Subscriber subGripper_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
-    ros::Publisher pubEnable_robot; /** < ROS publisher to the topic /robot/set_super_enable */
+    ros::Subscriber subGripper_state_robot; /**< ROS subscriber to the topic */
+    ros::Subscriber subState_robot; /**< ROS subscriber to the topic */
     motionCommClient* motionComm; /**< */
     followJointTrajectoryClient* folJointTraj; /**< */
 #endif
@@ -591,6 +604,7 @@ private:
     std::vector<double> robotVel; /**< velocity of the right arm*/
     std::vector<double> robotForce; /**< forces of the right arm*/
     bool gripperCalibrated;
+    bool robotEnabled;
 #endif
 
 Q_SIGNALS:

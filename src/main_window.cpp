@@ -226,7 +226,7 @@ void MainWindow::execMove(int c, bool a)
     {
 #if ROBOT == 1
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
-            qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov, this->timesteps_mov);
+            qnode.execMovement_Sawyer(this->jointsPosition_mov, this->timesteps_mov);
 #endif
     }
 #if MOVEIT == 1
@@ -252,7 +252,7 @@ void MainWindow::execTask(int c, bool a)
     }
     else if(c == 1) //Execute the task in Robot
     {
-#if ROBOT == 1
+#if ROBOT == 2
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
             qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
 #endif
@@ -1768,7 +1768,7 @@ void MainWindow::on_pushButton_execMov_clicked()
         {
 #if ROBOT == 1
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
-                qnode.execMovement_Sawyer(this->jointsPosition_mov, this->jointsVelocity_mov, this->jointsAcceleration_mov, this->timesteps_mov);
+                qnode.execMovement_Sawyer(this->jointsPosition_mov, this->timesteps_mov);
 #endif
         }
 #if MOVEIT == 1
@@ -1838,7 +1838,7 @@ void MainWindow::on_pushButton_execTask_clicked()
         }
         else if(usedPlat_task == 1) //Execute the task in Robot
         {
-#if ROBOT == 1
+#if ROBOT == 2
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
                 qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
 #endif

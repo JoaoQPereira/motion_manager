@@ -131,6 +131,7 @@ bool QNode::loadScenario(const std::string& path,int id)
     if(id >= 2)
     {
         // Topic that contains the position of the Sawyer joints
+        subState_robot = n.subscribe("/robot/state", 1, &QNode::SawyerStateCallback, this);
         subJoints_state_robot = n.subscribe("/robot/joint_states", 1, &QNode::SawyerJointsCallback, this);
         subGripper_state_robot = n.subscribe("/io/end_effector/right_gripper/state", 1, &QNode::SawyerGripperCallback, this);
 
@@ -2022,7 +2023,6 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 #if HAND == 0
             ros::Publisher pubHand = node.advertise<vrep_common::JointSetStateData>("/"+nodeName+"/set_pos_hand", 1);
 #endif
-            ros::spinOnce();
 
             // Total time of the movement
             pre_time = simulationTime - timeTot;
@@ -2310,282 +2310,365 @@ bool QNode::execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>&
 
 
 #if ROBOT == 1
-bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<MatrixXd>& acc_mov, std::vector<std::vector<double>> timesteps)
+bool QNode::execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<std::vector<double>> timesteps)
 {
     ros::NodeHandle node;
-    bool homePostureEqual;
+    ros::Rate r(0.5); //0.5 Hz = 2 second
+    ros::Rate rCommGrip(8); //8 Hz = 0.125 seconds
+    bool isGripInitPos;
+    bool isArmInitPos;
+
 
     // ------------------------------------------------------------------------------------------------------------------------ //
-    //                                                        PUBLISHERS                                                        //
+    //                                          Initialization of the robot and gripper                                         //
     // ------------------------------------------------------------------------------------------------------------------------ //
-    // Topics to enable/disable the movement of robot joints
-    pubEnable_robot = node.advertise<std_msgs::Bool>("/robot/set_super_enable", 1);
+    // ******* Enable the Robot
+    if(!robotEnabled)
+    {
+        // Topic to enable/disable the movement of robot joints
+        ros::Publisher pubEnableRobot = node.advertise<std_msgs::Bool>("/robot/set_super_enable", 1, true);
 
-    // Enables the robot before attempting to control any of the motors
-    std_msgs::Bool enable_msg;
-    enable_msg.data = true;
-    pubEnable_robot.publish(enable_msg);
+        // Wait until the "motion_manager" node has been identified as a topic publisher
+        while(pubEnableRobot.getNumSubscribers() == 0)
+            r.sleep();
 
-    // Handle ROS messages
-    ros::spinOnce();
+        // Enable for the robot before attempting to control any of the motors
+        std_msgs::Bool enableMsg;
+        enableMsg.data = true;
+        pubEnableRobot.publish(enableMsg);
+
+        ros::spinOnce();
+    }
+
+
+    // ******* Calibrate the Electric Gripper
+#if HAND == 1
+    // Topic to send the commands to the right_gripper
+    ros::Publisher pubCommandGripper = node.advertise<intera_core_msgs::IOComponentCommand>("/io/end_effector/right_gripper/command", 1);
+
+    // Wait until the "motion_manager" node has been identified as a topic publisher
+    while(pubCommandGripper.getNumSubscribers() == 0)
+        r.sleep();
+
+    if(!gripperCalibrated)
+    {
+        // Enable the gripper before attempting to control any of the motors
+        intera_core_msgs::IOComponentCommand calibrateGripperMsg;
+        calibrateGripperMsg.time = ros::Time::now();
+        calibrateGripperMsg.op = "set";
+        calibrateGripperMsg.args = "{\"signals\": {\"calibrate\": {\"data\": [true], \"format\": {\"type\": \"bool\"}}}}";
+        pubCommandGripper.publish(calibrateGripperMsg);
+
+        // Wait the gripper to be calibrated
+        r.sleep();
+        ros::spinOnce();
+    }
+#endif
+
 
     // ------------------------------------------------------------------------------------------------------------------------ //
-    //                                 MOVE TO THE INITIAL POSTURE: MOTION CONTROLLER INTERFACE                                 //
+    //                                     Trajectory to be performed by the robot and gripper                                   //
     // ------------------------------------------------------------------------------------------------------------------------ //
-    // Get the trajectory planned by the HUMP
     vector<MatrixXd> traj_mov_w_offset = traj_mov;
-    // The trajectory planned doesn't include the joints offsets, so it's necessary to add these values.
     vector<MatrixXd> traj_mov_real = realJointsPosition(traj_mov_w_offset);
 
-    // Get the initial position of the robot arm in the V-REP simulator
-    MatrixXd traj = traj_mov_real.at(0);
-    VectorXd iP = traj.row(0);
-    vector<double> simulationPosture(&iP[0], iP.data() + (iP.cols() * iP.rows() - JOINTS_HAND));
 
-    // Calculate the difference between the initial posture in simulation and the current posture of the robot
-    vector<double> diff;
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                                     Initial Postures                                                     //
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    MatrixXd traj = traj_mov_real.at(0);
+    VectorXd iniPost = traj.row(0);
+
+
+    // **************************************
+    // *             ROBOTIC ARM            *
+    // **************************************
+    // Determine the difference between the initial posture in the simulator and the current posture
+    vector<double> simPosArm(&iniPost[0], iniPost.data() + (iniPost.cols() * iniPost.rows() - JOINTS_HAND));
+    vector<double> robPosArm(robotPosture.begin(), robotPosture.end() - JOINTS_HAND);
+
+    vector<double> diffPosArm;
     for(int i = 0; i < JOINTS_ARM; ++i)
-        diff.push_back(simulationPosture.at(i) - robotPosture.at(i));
+        diffPosArm.push_back(abs(simPosArm.at(i) - robPosArm.at(i)));
 
     // Get the highest value in the vector with differences between the joints
-    double max_diff = *std::max_element(diff.begin(), diff.end());
-    // Clear the diff vector
-    diff.clear();
-    // Position threshold in radians across each joint when move is considered successful
-    double tol_maxDiff = 0.005; // 0.005 rad => 0.28647889757º
+    double maxDiffPosArm = *std::max_element(diffPosArm.begin(), diffPosArm.end());
+    // Position error threshold where a move will be considered successful
+    double tolArm = 0.005; //radian
 
-    if(max_diff < tol_maxDiff)
-        // ******************************************************************************* //
-        //                              The postures are equal                             //
-        // ******************************************************************************* //
-        homePostureEqual = true;
-    else
+
+    if(robotEnabled && (maxDiffPosArm > tolArm))
     {
-        // ******************************************************************************* //
-        //       The postures are different: Moving the robot to the initial posture       //
-        // ******************************************************************************* //
-        log(QNode::Info, string("moving the Sawyer robot to the initial posture... "));
-
         // For joint trajectories, we specify the maximum value of speed and acceleration per joint
-        intera_motion_msgs::WaypointOptions wayPointOptions;
-        wayPointOptions.max_joint_speed_ratio = 0.1; // speed: values defined between 0.01 and 1
+        intera_motion_msgs::WaypointOptions waypointOpt;
+        waypointOpt.max_joint_speed_ratio = 0.1;
         for(int i = 0; i < JOINTS_ARM; ++i)
-            wayPointOptions.max_joint_accel.push_back(0.05); // acceleration: values defined between 0.001 and 1
+            waypointOpt.max_joint_accel.push_back(0.05);
 
-        // Define the first waypoint of the trajectory - initial posture of the robot
-        intera_motion_msgs::Waypoint initialPoint;
-        initialPoint.options = wayPointOptions;
-        initialPoint.joint_positions = robotPosture;
-        // Define the last waypoint of the trajectory - desired posture = initial posture in simulator
+        // Define the first waypoint of the trajectory = initial posture of the robot
+        intera_motion_msgs::Waypoint initPoint;
+        initPoint.options = waypointOpt;
+        initPoint.joint_positions = robPosArm;
+        // Define the last waypoint of the trajectory = initial posture in simulator
         intera_motion_msgs::Waypoint finalPoint;
-        finalPoint.options = wayPointOptions;
-        finalPoint.joint_positions = simulationPosture;
+        finalPoint.options = waypointOpt;
+        finalPoint.joint_positions = simPosArm;
 
         // Define trajectory to be planned and executed. This has to pass through all waypoints defined previously
-        // The motion controller supports two basic methods for interpolation between waypoints: JOINT and CARTESIAN mode
-        intera_motion_msgs::Trajectory trajectory;
-        trajectory.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
-        trajectory.waypoints.push_back(initialPoint);
-        trajectory.waypoints.push_back(finalPoint);
-        trajectory.trajectory_options.interpolation_type = "JOINT";
+        intera_motion_msgs::Trajectory traj;
+        traj.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
+        traj.waypoints.push_back(initPoint);
+        traj.waypoints.push_back(finalPoint);
+        traj.trajectory_options.interpolation_type = "JOINT";
 
         // Define the goal message
-        intera_motion_msgs::MotionCommandGoal newStartPosture;
-        newStartPosture.command = newStartPosture.MOTION_START;
-        newStartPosture.trajectory = trajectory;
+        intera_motion_msgs::MotionCommandGoal goStartPos;
+        goStartPos.command = goStartPos.MOTION_START;
+        goStartPos.trajectory = traj;
 
         // Send the goal message to the action server "/motion/motion_command"
-        motionComm->sendGoal(newStartPosture);
-        // After 30 sec the function return false, if the goal hasn't reached
+        motionComm->sendGoal(goStartPos);
         motionComm->waitForResult(ros::Duration(45));
 
         if(motionComm->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-            // The initial posture was reached
-            log(QNode::Info,string("Initial posture reached."));
-            homePostureEqual = true;
-        }
+            isArmInitPos = true;
         else
         {
-            // It isn't possible to reach the desired posture. We can check the list of possible errors which are
-            // returned from action server in the result message
-            log(QNode::Error, string("Error in reaching the initial posture of the robot."));
-            homePostureEqual = false;
+            log(QNode::Error, string("Error in reaching the initial posture of the robotic arm."));
+            isArmInitPos = false;
             return false;
         }
-
-        // Sleep for the specified number of seconds
-        sleep(5);
     }
 
-    // Handle ROS messages
-    ros::spinOnce();
 
-    // ------------------------------------------------------------------------------------------------------------------------ //
-    //                               EXECUTE THE PLANNED TRAJECTORY: JOINT TRAJECTORY ACTION SERVER                             //
-    // ------------------------------------------------------------------------------------------------------------------------ //
-    // If Sawyer robot is in its initial posture: the execution of the planned movements begins
-    if(homePostureEqual)
+    // **************************************
+    // *          ELECTRIC GRIPPER          *
+    // **************************************
+#if HAND == 1
+    // Determine the difference between the initial posture in the simulator and the current posture
+    double simPosGripper = iniPost[7];
+    double robPosGripper = robotPosture.at(7);
+    double diffPosGripper = simPosGripper - robPosGripper;
+    // Position error threshold where a move will be considered successful
+    double tolGripper = 0.0025; //meters = 1 mm
+
+    if(gripperCalibrated && (abs(diffPosGripper) > tolGripper))
     {
-        // Position, velocity and acceleration of the arm along the planned movement
-        vector<vector<double>> pos_arm;
-        vector<vector<double>> vel_arm;
-        vector<vector<double>> acc_arm;
-        // The obtained values must be reached a few seconds after the start of the movement
-        vector<double> timeFromStart;
-        timeFromStart.push_back(0.0);
-        // Number of steps to be executed along the planned movement
-        int nTotalSteps = 1;
+        // Set the gripper dead zone describing the position error threshold where a move will be considered successful
+        intera_core_msgs::IOComponentCommand deadZoneGripperMsg;
+        deadZoneGripperMsg.time = ros::Time::now();
+        deadZoneGripperMsg.op = "set";
+        deadZoneGripperMsg.args = string("{\"signals\": {\"dead_zone_m\": {\"data\": [") +
+                boost::str(boost::format("%.4f") % (tolGripper)) +
+                string("], \"format\": {\"type\": \"float\"}}}}");
+        pubCommandGripper.publish(deadZoneGripperMsg);
+        rCommGrip.sleep();
 
-        for(size_t k = 0; k < traj_mov_real.size(); ++k)
-        {
-            // ************************************************************************** //
-            //                             Stages information                             //
-            // ************************************************************************** //
-            // For each stage of the planned movement ("Plan", "Approach" or "Retreat"),
-            // we get the values of: position, velocity, aceleration and time_steps
-            MatrixXd pos_stage = traj_mov_real.at(k);
-            MatrixXd vel_stage = vel_mov.at(k);
-            MatrixXd acc_stage = acc_mov.at(k);
-            vector<double> timesteps_stage = timesteps.at(k);
 
-            for(int kk = 0; kk < pos_stage.rows() - 1; ++kk)
-            {
-                // ********************************************************************** //
-                //                           Steps information                            //
-                // ********************************************************************** //
-                // For each step of the planned movement (each stage is divided into several steps),
-                // Get the current values of: position, velocity, aceleration
-                VectorXd pos_step_curr = pos_stage.row(kk);
-                VectorXd vel_step_curr = vel_stage.row(kk);
-                VectorXd acc_step_curr = acc_stage.row(kk);
-                // Get the next values of: position, velocity, aceleration
-                VectorXd pos_step_next = pos_stage.row(kk + 1);
-                VectorXd vel_step_next = vel_stage.row(kk + 1);
-                VectorXd acc_step_next = acc_stage.row(kk + 1);
+        // Set the position of gripper
+        intera_core_msgs::IOComponentCommand setPosGripperMsg;
+        setPosGripperMsg.time = ros::Time::now();
+        setPosGripperMsg.op = "set";
+        setPosGripperMsg.args = string("{\"signals\": {\"position_m\": {\"data\": [") +
+                boost::str(boost::format("%.4f") % (simPosGripper)) +
+                string("], \"format\": {\"type\": \"float\"}}}}");
+        pubCommandGripper.publish(setPosGripperMsg);
 
-                // Get only the position, velocity and acceleration of the robot arm joints
-                // Current step
-                vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - JOINTS_HAND));
-                vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - JOINTS_HAND));
-                vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - JOINTS_HAND));
-                // Get only the position, velocity and acceleration of the robot arm joints
-                // Next step
-                vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - JOINTS_HAND));
-                vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - JOINTS_HAND));
-                vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - JOINTS_HAND));
+        // Wait for the gripper to reach the desired posture
+        r.sleep();
+        ros::spinOnce();
 
-                // ********************************************************************** //
-                //                       Joints linear interpolation                      //
-                // ********************************************************************** //
-                // Adds the position, velocity and acceleration obtained for the first step in plan stage
-                if(k == 0 && kk == 0)
-                {
-                    pos_arm.push_back(pos_arm_curr);
-                    vel_arm.push_back(vel_arm_curr);
-                    acc_arm.push_back(acc_arm_curr);
-                }
-
-                // Divide each step into several micro steps (1s correspond to 5 MicroStep)
-                int microSteps = (int)round(timesteps_stage.at(kk) * 5.0);
-                // Determine the time associated with execution of each microSteps
-                double t_inc = timesteps_stage.at(kk) / microSteps;
-
-                for(int n = 1; n <= microSteps; ++n)
-                {
-                    // Position, velocity and acceleration for each micro step of the planned movement
-                    vector<double> pos_arm_microSteps;
-                    vector<double> vel_arm_microSteps;
-                    vector<double> acc_arm_microSteps;
-
-                    // Each micro step starts at 0 sec and ends after the time step determined by the HUMP
-                    double t_curr = 0.0;
-                    double t_next = timesteps_stage.at(kk);
-
-                    // Linear interpolation depends on the value of m
-                    // m is determined by the following formula: (x - x0) / (x1 - x0)
-                    // In this case x is the time (in sec)
-                    double m = ((n * t_inc) - t_curr) / (t_next - t_curr);
-
-                    for(int i = 0; i < JOINTS_ARM; ++i)
-                    {
-                        // Linear interpolation of the joints' position
-                        pos_arm_microSteps.push_back(interpolate(pos_arm_curr.at(i), pos_arm_next.at(i), m));
-
-                        // At the end of the planned movement, the velocity and acceleration of the joints are
-                        // set to zero, ensuring no noise. The planned value is close to 0!
-                        if((k == traj_mov_real.size() - 1) && (kk == pos_stage.rows() - 2) && (n == microSteps))
-                        {
-                            vel_arm_microSteps.push_back(0.0);
-                            acc_arm_microSteps.push_back(0.0);
-                        }
-                        else
-                        {
-                            // Linear interpolation of the joints' velocity
-                            vel_arm_microSteps.push_back(interpolate(vel_arm_curr.at(i), vel_arm_next.at(i), m));
-                            // Linear interpolation of the joints' acceleration
-                            acc_arm_microSteps.push_back(interpolate(acc_arm_curr.at(i), acc_arm_next.at(i), m));
-                        }
-                    }
-
-                    // Save the position, velocity and acceleration of the robot's joints
-                    pos_arm.push_back(pos_arm_microSteps);
-                    vel_arm.push_back(vel_arm_microSteps);
-                    acc_arm.push_back(acc_arm_microSteps);
-
-                    // Save the time associated with each micro step of the planned movement
-                    timeFromStart.push_back(timeFromStart.back() + t_inc);
-                    // Increment the number of steps
-                    ++nTotalSteps;
-                }
-            }
-        }
-
-        // ************************************************************************** //
-        //                             Message to publish                             //
-        // ************************************************************************** //
-        // Define trajectory to be planned and executed. This has to pass through all points defined previously
-        trajectory_msgs::JointTrajectory trajPlannedHUMP;
-        trajPlannedHUMP.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
-        trajPlannedHUMP.header.stamp = ros::Time::now();
-
-        for(int step = 0; step < nTotalSteps; ++step)
-        {
-            // Points to be reached along the execution of the planned movement
-            trajectory_msgs::JointTrajectoryPoint pointTraj;
-            pointTraj.positions = pos_arm.at(step);
-            //pointTraj.velocities = vel_arm.at(step);
-            //pointTraj.accelerations = acc_arm.at(step);
-            pointTraj.time_from_start = ros::Duration(timeFromStart.at(step));
-
-            // Adds the point to the trajectory to be executed by the robot
-            trajPlannedHUMP.points.push_back(pointTraj);
-        }
-
-        // Define the goal message
-        control_msgs::FollowJointTrajectoryGoal plannedTrajectory;
-        plannedTrajectory.trajectory = trajPlannedHUMP;
-
-        // Send the goal message to the action server "/robot/limb/right/follow_joint_trajectory"
-        folJointTraj->sendGoal(plannedTrajectory);
-        // After 30 sec the function return false, if the goal hasn't reached
-        folJointTraj->waitForResult(ros::Duration(45));
-
-        if(folJointTraj->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-            // The final posture was reached
-            log(QNode::Info,string("Final posture reached."));
+        if(abs(simPosGripper - robotPosture.at(7)) < tolGripper)
+            isGripInitPos = true;
         else
         {
-            // It isn't possible to reach the desired posture. We can check the list of possible errors which are
-            // returned from action server in the result message
-            log(QNode::Error, string("Error in reaching the final posture of the robot."));
+            log(QNode::Error, string("Error in reaching the initial posture of the electric gripper."));
+            isGripInitPos = false;
             return false;
         }
-
-        log(QNode::Info,string("Movement completed."));
-        // Handle ROS messages
-        ros::spinOnce();
     }
+#endif
+
+
+    // ------------------------------------------------------------------------------------------------------------------------ //
+    //                                              Perform the planned trajectory                                              //
+    // ------------------------------------------------------------------------------------------------------------------------ //
+#if HAND == 0
+    if(isArmInitPos)
+#elif HAND == 1
+    if(isArmInitPos && isGripInitPos)
+#endif
+    {
+        log(QNode::Error, string("The robotic arm and electric gripper are in their initials postures."));
+    }
+
+
+
+    //    // ------------------------------------------------------------------------------------------------------------------------ //
+    //    //                               EXECUTE THE PLANNED TRAJECTORY: JOINT TRAJECTORY ACTION SERVER                             //
+    //    // ------------------------------------------------------------------------------------------------------------------------ //
+    //    // If Sawyer robot is in its initial posture: the execution of the planned movements begins
+    //    if(homePostureEqual)
+    //    {
+    //        // Position, velocity and acceleration of the arm along the planned movement
+    //        vector<vector<double>> pos_arm;
+    //        vector<vector<double>> vel_arm;
+    //        vector<vector<double>> acc_arm;
+    //        // The obtained values must be reached a few seconds after the start of the movement
+    //        vector<double> timeFromStart;
+    //        timeFromStart.push_back(0.0);
+    //        // Number of steps to be executed along the planned movement
+    //        int nTotalSteps = 1;
+
+    //        for(size_t k = 0; k < traj_mov_real.size(); ++k)
+    //        {
+    //            // ************************************************************************** //
+    //            //                             Stages information                             //
+    //            // ************************************************************************** //
+    //            // For each stage of the planned movement ("Plan", "Approach" or "Retreat"),
+    //            // we get the values of: position, velocity, aceleration and time_steps
+    //            MatrixXd pos_stage = traj_mov_real.at(k);
+    //            MatrixXd vel_stage = vel_mov.at(k);
+    //            MatrixXd acc_stage = acc_mov.at(k);
+    //            vector<double> timesteps_stage = timesteps.at(k);
+
+    //            for(int kk = 0; kk < pos_stage.rows() - 1; ++kk)
+    //            {
+    //                // ********************************************************************** //
+    //                //                           Steps information                            //
+    //                // ********************************************************************** //
+    //                // For each step of the planned movement (each stage is divided into several steps),
+    //                // Get the current values of: position, velocity, aceleration
+    //                VectorXd pos_step_curr = pos_stage.row(kk);
+    //                VectorXd vel_step_curr = vel_stage.row(kk);
+    //                VectorXd acc_step_curr = acc_stage.row(kk);
+    //                // Get the next values of: position, velocity, aceleration
+    //                VectorXd pos_step_next = pos_stage.row(kk + 1);
+    //                VectorXd vel_step_next = vel_stage.row(kk + 1);
+    //                VectorXd acc_step_next = acc_stage.row(kk + 1);
+
+    //                // Get only the position, velocity and acceleration of the robot arm joints
+    //                // Current step
+    //                vector<double> pos_arm_curr(&pos_step_curr[0], pos_step_curr.data() + (pos_step_curr.cols() * pos_step_curr.rows() - JOINTS_HAND));
+    //                vector<double> vel_arm_curr(&vel_step_curr[0], vel_step_curr.data() + (vel_step_curr.cols() * vel_step_curr.rows() - JOINTS_HAND));
+    //                vector<double> acc_arm_curr(&acc_step_curr[0], acc_step_curr.data() + (acc_step_curr.cols() * acc_step_curr.rows() - JOINTS_HAND));
+    //                // Get only the position, velocity and acceleration of the robot arm joints
+    //                // Next step
+    //                vector<double> pos_arm_next(&pos_step_next[0], pos_step_next.data() + (pos_step_next.cols() * pos_step_next.rows() - JOINTS_HAND));
+    //                vector<double> vel_arm_next(&vel_step_next[0], vel_step_next.data() + (vel_step_next.cols() * vel_step_next.rows() - JOINTS_HAND));
+    //                vector<double> acc_arm_next(&acc_step_next[0], acc_step_next.data() + (acc_step_next.cols() * acc_step_next.rows() - JOINTS_HAND));
+
+    //                // ********************************************************************** //
+    //                //                       Joints linear interpolation                      //
+    //                // ********************************************************************** //
+    //                // Adds the position, velocity and acceleration obtained for the first step in plan stage
+    //                if(k == 0 && kk == 0)
+    //                {
+    //                    pos_arm.push_back(pos_arm_curr);
+    //                    vel_arm.push_back(vel_arm_curr);
+    //                    acc_arm.push_back(acc_arm_curr);
+    //                }
+
+    //                // Divide each step into several micro steps (1s correspond to 5 MicroStep)
+    //                int microSteps = (int)round(timesteps_stage.at(kk) * 5.0);
+    //                // Determine the time associated with execution of each microSteps
+    //                double t_inc = timesteps_stage.at(kk) / microSteps;
+
+    //                for(int n = 1; n <= microSteps; ++n)
+    //                {
+    //                    // Position, velocity and acceleration for each micro step of the planned movement
+    //                    vector<double> pos_arm_microSteps;
+    //                    vector<double> vel_arm_microSteps;
+    //                    vector<double> acc_arm_microSteps;
+
+    //                    // Each micro step starts at 0 sec and ends after the time step determined by the HUMP
+    //                    double t_curr = 0.0;
+    //                    double t_next = timesteps_stage.at(kk);
+
+    //                    // Linear interpolation depends on the value of m
+    //                    // m is determined by the following formula: (x - x0) / (x1 - x0)
+    //                    // In this case x is the time (in sec)
+    //                    double m = ((n * t_inc) - t_curr) / (t_next - t_curr);
+
+    //                    for(int i = 0; i < JOINTS_ARM; ++i)
+    //                    {
+    //                        // Linear interpolation of the joints' position
+    //                        pos_arm_microSteps.push_back(interpolate(pos_arm_curr.at(i), pos_arm_next.at(i), m));
+
+    //                        // At the end of the planned movement, the velocity and acceleration of the joints are
+    //                        // set to zero, ensuring no noise. The planned value is close to 0!
+    //                        if((k == traj_mov_real.size() - 1) && (kk == pos_stage.rows() - 2) && (n == microSteps))
+    //                        {
+    //                            vel_arm_microSteps.push_back(0.0);
+    //                            acc_arm_microSteps.push_back(0.0);
+    //                        }
+    //                        else
+    //                        {
+    //                            // Linear interpolation of the joints' velocity
+    //                            vel_arm_microSteps.push_back(interpolate(vel_arm_curr.at(i), vel_arm_next.at(i), m));
+    //                            // Linear interpolation of the joints' acceleration
+    //                            acc_arm_microSteps.push_back(interpolate(acc_arm_curr.at(i), acc_arm_next.at(i), m));
+    //                        }
+    //                    }
+
+    //                    // Save the position, velocity and acceleration of the robot's joints
+    //                    pos_arm.push_back(pos_arm_microSteps);
+    //                    vel_arm.push_back(vel_arm_microSteps);
+    //                    acc_arm.push_back(acc_arm_microSteps);
+
+    //                    // Save the time associated with each micro step of the planned movement
+    //                    timeFromStart.push_back(timeFromStart.back() + t_inc);
+    //                    // Increment the number of steps
+    //                    ++nTotalSteps;
+    //                }
+    //            }
+    //        }
+
+    //        // ************************************************************************** //
+    //        //                             Message to publish                             //
+    //        // ************************************************************************** //
+    //        // Define trajectory to be planned and executed. This has to pass through all points defined previously
+    //        trajectory_msgs::JointTrajectory trajPlannedHUMP;
+    //        trajPlannedHUMP.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
+    //        trajPlannedHUMP.header.stamp = ros::Time::now();
+
+    //        for(int step = 0; step < nTotalSteps; ++step)
+    //        {
+    //            // Points to be reached along the execution of the planned movement
+    //            trajectory_msgs::JointTrajectoryPoint pointTraj;
+    //            pointTraj.positions = pos_arm.at(step);
+    //            //pointTraj.velocities = vel_arm.at(step);
+    //            //pointTraj.accelerations = acc_arm.at(step);
+    //            pointTraj.time_from_start = ros::Duration(timeFromStart.at(step));
+
+    //            // Adds the point to the trajectory to be executed by the robot
+    //            trajPlannedHUMP.points.push_back(pointTraj);
+    //        }
+
+    //        // Define the goal message
+    //        control_msgs::FollowJointTrajectoryGoal plannedTrajectory;
+    //        plannedTrajectory.trajectory = trajPlannedHUMP;
+
+    //        // Send the goal message to the action server "/robot/limb/right/follow_joint_trajectory"
+    //        folJointTraj->sendGoal(plannedTrajectory);
+    //        // After 30 sec the function return false, if the goal hasn't reached
+    //        folJointTraj->waitForResult(ros::Duration(45));
+
+    //        if(folJointTraj->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    //            // The final posture was reached
+    //            log(QNode::Info,string("Final posture reached."));
+    //        else
+    //        {
+    //            // It isn't possible to reach the desired posture. We can check the list of possible errors which are
+    //            // returned from action server in the result message
+    //            log(QNode::Error, string("Error in reaching the final posture of the robot."));
+    //            return false;
+    //        }
+
+    //        log(QNode::Info,string("Movement completed."));
+    //        // Handle ROS messages
+    //        ros::spinOnce();
+    //    }
 
     return true;
 }
@@ -2999,7 +3082,7 @@ bool QNode::execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd
 }
 
 
-#if ROBOT == 1
+#if ROBOT == 2
 bool QNode::execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps_task)
 {
     ros::NodeHandle node;
@@ -4042,6 +4125,12 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
 
 
 #if ROBOT == 1
+void QNode::SawyerStateCallback(const intera_core_msgs::RobotAssemblyState &state)
+{
+    robotEnabled = state.enabled;
+}
+
+
 void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
 {
     // Save the names and positions of the joints
@@ -4061,8 +4150,8 @@ void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
         if (r_index < joints_names.size())
         {
             robotPosture.at(i) = joints_pos.at(r_index);
-            robotVel.at(i) = joints_vel.at(r_index);
-            robotForce.at(i) = joints_for.at(r_index);
+            //robotVel.at(i) = joints_vel.at(r_index);
+            //robotForce.at(i) = joints_for.at(r_index);
         }
     }
 }
@@ -4074,17 +4163,16 @@ void QNode::SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state)
 
     for(int i = 0; i < signals.size(); ++i)
     {
-        signals.at(i).data.erase(signals.at(i).data.begin(), signals.at(i).data.begin() + 1);
-        signals.at(i).data.erase(signals.at(i).data.end() - 1, signals.at(i).data.end());
+        //string data = signals.at(i).data.substr(1, signals.at(i).data.size() - 2);
 
-        if(signals.at(i).name == "is_calibrated")
-            gripperCalibrated = (strcasecmp("true", signals.at(i).data.c_str()) == 0);
-        else if(signals.at(i).name == "position_response_m")
-            robotPosture.at(JOINTS_ARM) = atof(signals.at(i).data.c_str());
-        else if(signals.at(i).name == "speed_mps")
-            robotVel.at(JOINTS_ARM) = atof(signals.at(i).data.c_str());
-        else if(signals.at(i).name == "force_response_n")
-            robotForce.at(JOINTS_ARM) = atof(signals.at(i).data.c_str());
+        if(!signals.at(i).name.compare("is_calibrated"))
+            gripperCalibrated = (strcasecmp("true", signals.at(i).data.substr(1, signals.at(i).data.size() - 2).c_str()) == 0);
+        else if(!signals.at(i).name.compare("position_response_m"))
+            robotPosture.at(JOINTS_ARM) = atof(signals.at(i).data.substr(1, signals.at(i).data.size() - 2).c_str());
+//        else if(!signals.at(i).name.compare("speed_mps"))
+//            robotVel.at(JOINTS_ARM) = atof(data.c_str());
+//        else if(!signals.at(i).name.compare("force_response_n"))
+//            robotForce.at(JOINTS_ARM) = atof(data.c_str());
     }
 }
 #endif
