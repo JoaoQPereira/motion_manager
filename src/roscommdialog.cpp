@@ -121,7 +121,6 @@ void RosCommDialog::on_button_connect_clicked(bool check)
                 ui->line_edit_host->setReadOnly(false);
                 ui->checkbox_remember_settings->setEnabled(true);
                 ui->checkbox_use_environment->setEnabled(true);
-                qnode->on_end();
             }
             else
             {
@@ -154,7 +153,6 @@ void RosCommDialog::on_button_connect_clicked(bool check)
                 ui->line_edit_host->setReadOnly(false);
                 ui->checkbox_remember_settings->setEnabled(true);
                 ui->checkbox_use_environment->setEnabled(true);
-                qnode->on_end();
             }
             else
             {
@@ -185,7 +183,6 @@ void RosCommDialog::on_button_connect_clicked(bool check)
         ui->line_edit_host->setReadOnly(false);
         ui->checkbox_remember_settings->setEnabled(true);
         ui->checkbox_use_environment->setEnabled(true);
-        qnode->on_end();
 
         status = "Node disconnected from ROS" ;
         bstatus=false;

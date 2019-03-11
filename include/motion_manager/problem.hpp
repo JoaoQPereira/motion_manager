@@ -4,19 +4,12 @@
 #include <sys/time.h>
 #include "movement.hpp"
 #include "scenario.hpp"
-#if MOVEIT==1
-#include <aros_moveit_planner/humanoid_moveit_planner.hpp>
-#endif
 #include <humplanner.hpp>
 
 
 namespace motion_manager
 {
-#if MOVEIT==1
-typedef boost::shared_ptr<moveit_planning::HumanoidPlanner> moveit_plannerPtr; /**< shared pointer to a moveit humanoid planner */
-#endif
 typedef boost::shared_ptr<HUMotion::HUMPlanner> h_plannerPtr; /**< shared pointer to a human-like motion planner */
-
 typedef boost::shared_ptr<Scenario> scenarioPtr; /**< shared pointer to a scenario */
 typedef boost::shared_ptr<Movement> movementPtr; /**< shared pointer to a movement */
 
@@ -36,17 +29,6 @@ public:
      * @param scene
      */
     Problem(int planner_id,Movement* mov,Scenario* scene);
-
-#if MOVEIT==1
-    /**
-     * @brief Problem
-     * @param planner_id
-     * @param mov
-     * @param scene
-     * @param m_plannerPtr
-     */
-    Problem(int planner_id,Movement* mov,Scenario* scene, moveit_plannerPtr m_plannerPtr);
-#endif
 
     /**
      * @brief Problem, a copy constructor
@@ -113,16 +95,6 @@ public:
      * @return
      */
     HUMotion::planning_result_ptr solve(HUMotion::hump_params& params);
-
-#if MOVEIT==1
-    /**
-     * @brief This method solves the problem given the tolerances and the parameters
-     * humanoid planner
-     * @param params
-     * @return
-     */
-    moveit_planning::PlanningResultPtr solve(moveit_planning::moveit_params& params);
-#endif
 
     /**
      * @brief This method gets the information of the problem
@@ -235,9 +207,6 @@ private:
     std::vector<double> leftFinalPosture_diseng; /**< final posture of the left arm+hand for disengaging movements*/
     std::vector<double> leftFinalPosture_eng; /**< final posture of the left arm+hand for engaging movements*/
     MatrixXd optimalTraj; /**< human-like optimized trajectory */
-#if MOVEIT==1
-    moveit_planning::moveit_params m_params; /**< parameters of the moveit Humanoid planner */
-#endif
     HUMotion::hump_params h_params; /**< parameters of the HUMP planner */
     movementPtr mov; /**< movement to be planned */
     scenarioPtr scene; /**< current scene */
@@ -253,9 +222,6 @@ private:
     std::vector<double> move_final_arm;/**< goal arm posture in move movements */
     std::vector<double> move_target;/**< goal target pose of the end-effector in move movements */
     bool use_posture;/**< true to use the move_final_arm, false to use move_target in move movements */
-#if MOVEIT==1
-    moveit_plannerPtr m_planner; /**< MoveIt! Libraries planner */
-#endif
     h_plannerPtr h_planner; /**< Human-like Upper-limbs Motion Planner */
 };
 

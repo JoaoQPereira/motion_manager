@@ -27,12 +27,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     mvrepCommdlg = new VrepCommDialog(&qnode, this);
     mvrepCommdlg->setModal(true);
 
-    // create RViz Communication dialog
-#if MOVEIT==1
-    mrvizCommdlg = new RVizCommDialog(&qnode, this);
-    mrvizCommdlg->setModal(true);
-#endif
-
     //create HUMP Tuning dialog
     mTolHumpdlg = new TolDialogHUMP(this);
     mTolHumpdlg->setModal(true);
@@ -44,26 +38,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     //create Execute Movement Tunning dialog
     mTaskExecutedlg = new Task_ExecuteDialog(&qnode, this);
     mTaskExecutedlg->setModal(true);
-
-    //create RRT Tuning dialog
-    mRRTdlg = new RRTDialog(this);
-    mRRTdlg->setModal(true);
-
-    //create RRT Connect Tuning dialog
-    mRRTConnectdlg = new RRTConnectDialog(this);
-    mRRTConnectdlg->setModal(true);
-
-    //create RRT star Tuning dialog
-    mRRTstardlg = new RRTstarDialog(this);
-    mRRTstardlg->setModal(true);
-
-    //create PRM Tuning dialog
-    mPRMdlg = new PRMDialog(this);
-    mPRMdlg->setModal(true);
-
-    //create PRM star Tuning dialog
-    mPRMstardlg = new PRMstarDialog(this);
-    mPRMstardlg->setModal(true);
 
     //create the Results Joints dialog
     mResultsJointsdlg = new ResultsJointsDialog(this);
@@ -90,11 +64,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     // V-REP connected signal
     QObject::connect(mvrepCommdlg, SIGNAL(vrepConnected(bool)), this, SLOT(updateVrepStatus(bool)));
 
-    // RViz connected signal
-#if MOVEIT==1
-    QObject::connect(mrvizCommdlg, SIGNAL(rvizConnected(bool)), this, SLOT(updateRVizStatus(bool)));
-#endif
-
     // Plataform used to execute the planned movement
     QObject::connect(mMovExecutedlg, SIGNAL(addPlat_execMove(int, bool)), this, SLOT(execMove(int, bool)));
 
@@ -120,10 +89,9 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     **********************/
     ui.tabWidget_main->setCurrentIndex(0);
     ui.tabWidget_sol->setCurrentIndex(0);
-#if MOVEIT==0
     ui.comboBox_planner->clear();
     ui.comboBox_planner->addItem(QString("HUMP"));
-#endif
+
     // scenarios
     scenarios.clear();
 
@@ -176,14 +144,8 @@ void MainWindow::updateVrepStatus(bool c)
     if (c)
     {
         ui.labelVrepComm->setText(QString("on-line"));
-#if MOVEIT==1
-        ui.actionRViz_Communication->setEnabled(true);
-        ui.labelStatusRViz->setEnabled(true);
-        ui.labelRVizComm->setEnabled(true);
-#elif MOVEIT==0
         ui.tab_scenario->setEnabled(true);
         ui.groupBox_selectScenario->setEnabled(true);
-#endif
     }
     else
     {
@@ -221,18 +183,18 @@ void MainWindow::updateRVizStatus(bool c)
 void MainWindow::execMove(int c, bool a)
 {
     if(c == 0)  //Execute the planned movement in V-REP simulator
-        qnode.execMovement(this->jointsPosition_mov, this->jointsVelocity_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+        qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
     else if(c == 1) //Execute the planned movement in Robot
     {
 #if ROBOT == 1
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
-            qnode.execMovement_Sawyer(this->jointsPosition_mov, this->timesteps_mov);
+        {
+            std::vector<double> paramsTimeMapping;
+            mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
+            qnode.execMovementSawyer(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
+        }
 #endif
     }
-#if MOVEIT == 1
-    else if(c == 2 && this->moveit_mov) //Execute the planned movement in RViz
-        this->m_planner->execute(m_results);
-#endif
 
     execSettings_move = a;
     //The user chooses the "Don't ask again" option
@@ -244,17 +206,12 @@ void MainWindow::execMove(int c, bool a)
 void MainWindow::execTask(int c, bool a)
 {
     if(c == 0) //Execute the task in V-REP simulator
-    {
-        if(ui.checkBox_comp_exec->isChecked())
-            qnode.execTask_complete(this->jointsPosition_task, this->jointsVelocity_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
-        else
-            qnode.execTask(this->jointsPosition_task, this->jointsVelocity_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
-    }
+        qnode.execTask(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
     else if(c == 1) //Execute the task in Robot
     {
 #if ROBOT == 2
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
-            qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
+            qnode.execTaskSawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
 #endif
     }
 
@@ -319,14 +276,6 @@ void MainWindow::on_actionVrep_Communication_triggered()
 }
 
 
-#if MOVEIT==1
-void MainWindow::on_actionRViz_Communication_triggered()
-{
-    mrvizCommdlg->show();
-}
-#endif
-
-
 void MainWindow::on_pushButton_tuning_clicked()
 {
     problemPtr prob = curr_task->getProblem(ui.listWidget_movs->currentRow());
@@ -341,19 +290,14 @@ void MainWindow::on_pushButton_tuning_clicked()
         mTolHumpdlg->show();
         break;
     case 1: // RRT
-        mRRTdlg->show();
         break;
     case 2: //RRTConnect
-        mRRTConnectdlg->show();
         break;
     case 3: //RRTstar
-        mRRTstardlg->show();
         break;
     case 4: //PRM
-        mPRMdlg->show();
         break;
     case 5: // PRMstar
-        mPRMstardlg->show();
         break;
     }
 }
@@ -428,9 +372,6 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     string title = string("Assembly scenario: the Toy vehicle with ARoS");
                     init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
                     curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
-#if MOVEIT==1
-                    this->m_planner.reset(new moveit_planning::HumanoidPlanner(title));
-#endif
                 }
                 else
                 {
@@ -474,9 +415,6 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     string title = string("Human assistance scenario: Serving a drink with ARoS");
                     init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
                     curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
-#if MOVEIT == 1
-                    this->m_planner.reset(new moveit_planning::HumanoidPlanner(title));
-#endif
                 }
                 else
                 {
@@ -584,9 +522,6 @@ void MainWindow::on_pushButton_getElements_clicked()
             std::vector<objectPtr> objs;
             this->curr_scene->getObjects(objs);
             // load the objects into RViz
-#if MOVEIT==1
-            qnode.loadRVizScenario(objs);
-#endif
             qnode.log(QNode::Info,string("The elements of the scenario are now available"));
         }
         else
@@ -657,10 +592,7 @@ void MainWindow::on_pushButton_addMov_clicked()
 
                 if(planner_id==0)
                     curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                else
-                    curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                 success=true;
             }
             else
@@ -696,10 +628,7 @@ void MainWindow::on_pushButton_addMov_clicked()
 
                 if(planner_id==0)
                     curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,obj_eng,pose,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                else
-                    curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,obj_eng,pose,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                 success=true;
             }
             else
@@ -731,10 +660,7 @@ void MainWindow::on_pushButton_addMov_clicked()
 
                 if(planner_id==0)
                     curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                else
-                    curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                 success=true;
             }
             else
@@ -754,10 +680,7 @@ void MainWindow::on_pushButton_addMov_clicked()
 
                 if(planner_id==0)
                     curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,pose,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                else
-                    curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,pose,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                 success=true;
             }
             else
@@ -776,10 +699,7 @@ void MainWindow::on_pushButton_addMov_clicked()
 
             if(planner_id==0)
                 curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-            else
-                curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
             success=true;
         }
 
@@ -808,9 +728,6 @@ void MainWindow::on_pushButton_plan_clicked()
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
     bool use_final;
-#if MOVEIT==1
-    moveit_planning::moveit_params m_params;
-#endif
     bool moveit_plan = false;
     bool solved = false;
 
@@ -953,134 +870,14 @@ void MainWindow::on_pushButton_plan_clicked()
             }
             break;
         case 1: // RRT
-#if MOVEIT==1
-            moveit_plan = true;
-            mRRTdlg->setInfo(prob->getInfoLine());
-            // --- Configuration ---- //
-            m_params.config = mRRTdlg->getConfig();
-            // --- Pick and place settings ---- //
-            m_params.approach = mRRTdlg->getApproach();
-            m_params.retreat = mRRTdlg->getRetreat();
-            mRRTdlg->getPreGraspApproach(m_params.pre_grasp_approach); // pick approach
-            mRRTdlg->getPostGraspRetreat(m_params.post_grasp_retreat); // pick retreat
-            mRRTdlg->getPrePlaceApproach(m_params.pre_place_approach); // place approach
-            mRRTdlg->getPostPlaceRetreat(m_params.post_place_retreat); // place retreat
-            // --- Move settings ---- //
-            mRRTdlg->getTargetMove(move_target);
-            mRRTdlg->getFinalHand(move_final_hand);
-            mRRTdlg->getFinalArm(move_final_arm);
-            use_final = mRRTdlg->get_use_final_posture();
-            prob->setMoveSettings(move_target,move_final_hand,move_final_arm,use_final);
-            m_params.use_move_plane = mRRTdlg->get_add_plane();
-            mRRTdlg->getPlaneParameters(m_params.plane_params,m_params.plane_point1,m_params.plane_point2,m_params.plane_point3);
-
-            m_results = prob->solve(m_params); // plan the movement
-            ui.pushButton_plan->setCheckable(false);
-#endif
             break;
         case 2: // RRT Connect
-#if MOVEIT==1
-            moveit_plan = true;
-            mRRTConnectdlg->setInfo(prob->getInfoLine());
-            // --- Coonfiguration ---- //
-            m_params.config = mRRTConnectdlg->getConfig();
-            // --- Pick and place settings ---- //
-            m_params.approach = mRRTConnectdlg->getApproach();
-            m_params.retreat = mRRTConnectdlg->getRetreat();
-            mRRTConnectdlg->getPreGraspApproach(m_params.pre_grasp_approach); // pick approach
-            mRRTConnectdlg->getPostGraspRetreat(m_params.post_grasp_retreat); // pick retreat
-            mRRTConnectdlg->getPrePlaceApproach(m_params.pre_place_approach); // place approach
-            mRRTConnectdlg->getPostPlaceRetreat(m_params.post_place_retreat); // place retreat
-            // --- Move settings ---- //
-            mRRTConnectdlg->getTargetMove(move_target);
-            mRRTConnectdlg->getFinalHand(move_final_hand);
-            mRRTConnectdlg->getFinalArm(move_final_arm);
-            use_final = mRRTConnectdlg->get_use_final_posture();
-            prob->setMoveSettings(move_target,move_final_hand,move_final_arm,use_final);
-            m_params.use_move_plane = mRRTConnectdlg->get_add_plane();
-            mRRTConnectdlg->getPlaneParameters(m_params.plane_params,m_params.plane_point1,m_params.plane_point2,m_params.plane_point3);
-
-            m_results = prob->solve(m_params); // plan the movement
-            ui.pushButton_plan->setCheckable(false);
-#endif
             break;
         case 3: // RRT star
-#if MOVEIT==1
-            moveit_plan = true;
-            mRRTstardlg->setInfo(prob->getInfoLine());
-            // --- Configuration ---- //
-            m_params.config = mRRTstardlg->getConfig();
-            // --- Pick and place settings ---- //
-            m_params.approach = mRRTstardlg->getApproach();
-            m_params.retreat = mRRTstardlg->getRetreat();
-            mRRTstardlg->getPreGraspApproach(m_params.pre_grasp_approach); // pick approach
-            mRRTstardlg->getPostGraspRetreat(m_params.post_grasp_retreat); // pick retreat
-            mRRTstardlg->getPrePlaceApproach(m_params.pre_place_approach); // place approach
-            mRRTstardlg->getPostPlaceRetreat(m_params.post_place_retreat); // place retreat
-            // --- Move settings ---- //
-            mRRTstardlg->getTargetMove(move_target);
-            mRRTstardlg->getFinalHand(move_final_hand);
-            mRRTstardlg->getFinalArm(move_final_arm);
-            use_final = mRRTstardlg->get_use_final_posture();
-            prob->setMoveSettings(move_target,move_final_hand,move_final_arm,use_final);
-            m_params.use_move_plane = mRRTstardlg->get_add_plane();
-            mRRTstardlg->getPlaneParameters(m_params.plane_params,m_params.plane_point1,m_params.plane_point2,m_params.plane_point3);
-
-            m_results = prob->solve(m_params); // plan the movement
-            ui.pushButton_plan->setCheckable(false);
-#endif
             break;
         case 4: // PRM
-#if MOVEIT==1
-            moveit_plan = true;
-            mPRMdlg->setInfo(prob->getInfoLine());
-            // --- Configuration ---- //
-            m_params.config = mPRMdlg->getConfig();
-            // --- Pick and place settings ---- //
-            m_params.approach = mPRMdlg->getApproach();
-            m_params.retreat = mPRMdlg->getRetreat();
-            mPRMdlg->getPreGraspApproach(m_params.pre_grasp_approach); // pick approach
-            mPRMdlg->getPostGraspRetreat(m_params.post_grasp_retreat); // pick retreat
-            mPRMdlg->getPrePlaceApproach(m_params.pre_place_approach); // place approach
-            mPRMdlg->getPostPlaceRetreat(m_params.post_place_retreat); // place retreat
-            // --- Move settings ---- //
-            mPRMdlg->getTargetMove(move_target);
-            mPRMdlg->getFinalHand(move_final_hand);
-            mPRMdlg->getFinalArm(move_final_arm);
-            use_final = mPRMdlg->get_use_final_posture();
-            prob->setMoveSettings(move_target,move_final_hand,move_final_arm,use_final);
-            m_params.use_move_plane = mPRMdlg->get_add_plane();
-            mPRMdlg->getPlaneParameters(m_params.plane_params,m_params.plane_point1,m_params.plane_point2,m_params.plane_point3);
-
-            m_results = prob->solve(m_params); // plan the movement
-            ui.pushButton_plan->setCheckable(false);
-#endif
             break;
         case 5: // PRM star
-#if MOVEIT==1
-            moveit_plan = true;
-            mPRMstardlg->setInfo(prob->getInfoLine());
-            // --- Configuration ---- //
-            m_params.config = mPRMstardlg->getConfig();
-            // --- Pick and place settings ---- //
-            m_params.approach = mPRMstardlg->getApproach();
-            m_params.retreat = mPRMstardlg->getRetreat();
-            mPRMstardlg->getPreGraspApproach(m_params.pre_grasp_approach); // pick approach
-            mPRMstardlg->getPostGraspRetreat(m_params.post_grasp_retreat); // pick retreat
-            mPRMstardlg->getPrePlaceApproach(m_params.pre_place_approach); // place approach
-            mPRMstardlg->getPostPlaceRetreat(m_params.post_place_retreat); // place retreat
-            // --- Move settings ---- //
-            mPRMstardlg->getTargetMove(move_target);
-            mPRMstardlg->getFinalHand(move_final_hand);
-            mPRMstardlg->getFinalArm(move_final_arm);
-            use_final = mPRMstardlg->get_use_final_posture();
-            prob->setMoveSettings(move_target,move_final_hand,move_final_arm,use_final);
-            m_params.use_move_plane = mPRMstardlg->get_add_plane();
-            mPRMstardlg->getPlaneParameters(m_params.plane_params,m_params.plane_point1,m_params.plane_point2,m_params.plane_point3);
-
-            m_results = prob->solve(m_params); // plan the movement
-            ui.pushButton_plan->setCheckable(false);
-#endif
             break;
         }
     }
@@ -1093,431 +890,6 @@ void MainWindow::on_pushButton_plan_clicked()
         qnode.log(QNode::Error,std::string("Plan failure: ")+exc.what());
     }
 
-#if MOVEIT==1
-    if(moveit_plan)
-    {
-        if(m_results!=nullptr)
-        {
-            if(m_results->status==1)
-            {
-                qnode.log(QNode::Info,std::string("The movement has been planned successfully"));
-                this->curr_mov = prob->getMovement();
-                MatrixXd jointsPosition_stage_plan; MatrixXd jointsVelocity_stage_plan; MatrixXd jointsAcceleration_stage_plan;
-                MatrixXd jointsPosition_stage_approach; MatrixXd jointsVelocity_stage_approach; MatrixXd jointsAcceleration_stage_approach;
-                MatrixXd jointsPosition_stage_retreat; MatrixXd jointsVelocity_stage_retreat; MatrixXd jointsAcceleration_stage_retreat;
-                std::vector<double> timesteps_stage_plan; std::vector<double> timesteps_stage_approach; std::vector<double> timesteps_stage_retreat;
-
-                // get the initial posture of the fingers
-                std::vector<double> init_hand_pos = std::vector<double>(JOINTS_HAND,0);
-                std::vector<double> init_hand_vel = std::vector<double>(JOINTS_HAND,0);
-                std::vector<double> init_hand_acc = std::vector<double>(JOINTS_HAND,0);
-
-                int arm_code = this->curr_mov->getArm();
-                switch(arm_code)
-                {
-                case 0:// both arm
-                    break;
-                case 1:// right arm
-                    this->curr_scene->getRobot()->getRightHandPosture(init_hand_pos);
-                    break;
-                case 2: // left arm
-                    this->curr_scene->getRobot()->getLeftHandPosture(init_hand_pos);
-                    break;
-                }
-
-                // positions of the fingers in the Barrett Hand
-                int fing_base = 0; int fing_1 = 1; int fing_2 = 4; int fing_3 = 6;
-                bool move = false;
-                if(m_results->trajectory_stages.size()==1)
-                    move=true;
-
-                for(size_t i=0; i<m_results->trajectory_stages.size(); ++i)
-                {
-                    std::string traj_descr = m_results->trajectory_descriptions.at(i);
-                    moveit_msgs::RobotTrajectory rob_traj;
-                    vector<trajectory_msgs::JointTrajectoryPoint> points;
-                    std::vector<double> timesteps_stage_aux;
-                    MatrixXd jointsPosition_stage_aux; MatrixXd jointsVelocity_stage_aux; MatrixXd jointsAcceleration_stage_aux;
-
-                    if(strcmp(traj_descr.c_str(),"plan")==0)
-                    {
-                        timesteps_stage_plan.clear(); timesteps_stage_aux.clear();
-                        rob_traj = m_results->trajectory_stages.at(i);
-                        points = rob_traj.joint_trajectory.points;
-                        jointsPosition_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsVelocity_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsAcceleration_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-
-                        for(size_t j=0; j<points.size();++j)
-                        {
-                            if(j==points.size()-1)
-                                timesteps_stage_aux.push_back(0.0);
-                            else
-                                timesteps_stage_aux.push_back(points.at(j+1).time_from_start.toSec()-points.at(j).time_from_start.toSec());
-
-                            trajectory_msgs::JointTrajectoryPoint traj_pnt = points.at(j);
-                            for(size_t k=0; k<traj_pnt.positions.size()+JOINTS_HAND;++k)
-                            {
-                                if(k<traj_pnt.positions.size())
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(k);
-                                }
-                                else
-                                {
-                                    jointsPosition_stage_aux(j,k) = init_hand_pos.at(k-JOINTS_ARM);
-                                    jointsVelocity_stage_aux(j,k) = init_hand_vel.at(k-JOINTS_ARM);
-                                    jointsAcceleration_stage_aux(j,k) = init_hand_acc.at(k-JOINTS_ARM);
-                                }
-                            }
-                        }
-                        timesteps_stage_plan = timesteps_stage_aux;
-                        jointsPosition_stage_plan = jointsPosition_stage_aux;
-                        jointsVelocity_stage_plan = jointsVelocity_stage_aux;
-                        jointsAcceleration_stage_plan = jointsAcceleration_stage_aux;
-                    }
-                    else if(strcmp(traj_descr.c_str(),"pre_grasp")==0)
-                    {
-                        timesteps_stage_aux.clear();
-                        rob_traj = m_results->trajectory_stages.at(i);
-                        points = rob_traj.joint_trajectory.points;
-                        jointsPosition_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsVelocity_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsAcceleration_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-
-                        for(size_t j=0; j<points.size();++j)
-                        {
-                            if(j==points.size()-1)
-                                timesteps_stage_aux.push_back(0.0);
-                            else
-                                timesteps_stage_aux.push_back(points.at(j+1).time_from_start.toSec()-points.at(j).time_from_start.toSec());
-
-                            trajectory_msgs::JointTrajectoryPoint traj_pnt = points.at(j);
-                            for(size_t k=0; k<JOINTS_ARM+JOINTS_HAND;++k)
-                            {
-                                if(k<JOINTS_ARM)
-                                {
-                                    jointsPosition_stage_aux(j,k) = jointsPosition_stage_plan(jointsPosition_stage_plan.rows()-1,k);
-                                    jointsVelocity_stage_aux(j,k) = jointsVelocity_stage_plan(jointsVelocity_stage_plan.rows()-1,k);
-                                    jointsAcceleration_stage_aux(j,k) = jointsAcceleration_stage_plan(jointsAcceleration_stage_plan.rows()-1,k);
-                                }
-                                else if(k==JOINTS_ARM+fing_base)
-                                {
-                                    jointsPosition_stage_aux(j,k) = 0.0;
-                                    jointsVelocity_stage_aux(j,k) = 0.0;
-                                    jointsAcceleration_stage_aux(j,k) = 0.0;
-                                }
-                                else if(k==JOINTS_ARM+1)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(fing_1);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(fing_1);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(fing_1);
-                                }
-                                else if(k==JOINTS_ARM+2)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(fing_2);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(fing_2);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(fing_2);
-                                }
-                                else if(k==JOINTS_ARM+3)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(fing_3);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(fing_3);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(fing_3);
-                                }
-                            }
-                        }
-                        timesteps_stage_plan.insert(timesteps_stage_plan.end(), timesteps_stage_aux.begin(), timesteps_stage_aux.end());
-                        MatrixXd tmp_pos(jointsPosition_stage_plan.rows()+jointsPosition_stage_aux.rows(),JOINTS_ARM+JOINTS_HAND);
-                        tmp_pos << jointsPosition_stage_plan,
-                        jointsPosition_stage_aux;
-                        jointsPosition_stage_plan = tmp_pos;
-                        MatrixXd tmp_vel(jointsVelocity_stage_plan.rows()+jointsVelocity_stage_aux.rows(),JOINTS_ARM+JOINTS_HAND);
-                        tmp_vel << jointsVelocity_stage_plan,
-                        jointsVelocity_stage_aux;
-                        jointsVelocity_stage_plan = tmp_vel;
-                        MatrixXd tmp_acc(jointsAcceleration_stage_plan.rows()+jointsAcceleration_stage_aux.rows(),JOINTS_ARM+JOINTS_HAND);
-                        tmp_acc << jointsAcceleration_stage_plan,
-                        jointsAcceleration_stage_aux;
-                        jointsAcceleration_stage_plan = tmp_acc;
-                    }
-                    else if(strcmp(traj_descr.c_str(),"approach")==0)
-                    {
-                        timesteps_stage_approach.clear(); timesteps_stage_aux.clear();
-                        rob_traj = m_results->trajectory_stages.at(i);
-                        points = rob_traj.joint_trajectory.points;
-                        jointsPosition_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsVelocity_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsAcceleration_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-
-                        for(size_t j=0; j<points.size();++j)
-                        {
-                            if(j==points.size()-1)
-                                timesteps_stage_aux.push_back(0.0);
-                            else
-                                timesteps_stage_aux.push_back(points.at(j+1).time_from_start.toSec()-points.at(j).time_from_start.toSec());
-
-                            trajectory_msgs::JointTrajectoryPoint traj_pnt = points.at(j);
-                            for(size_t k=0; k<traj_pnt.positions.size()+JOINTS_HAND;++k)
-                            {
-                                if(k<traj_pnt.positions.size())
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(k);
-                                }
-                                else
-                                {
-                                    jointsPosition_stage_aux(j,k) = jointsPosition_stage_plan(jointsPosition_stage_plan.rows()-1,k);
-                                    jointsVelocity_stage_aux(j,k) = jointsVelocity_stage_plan(jointsVelocity_stage_plan.rows()-1,k);
-                                    jointsAcceleration_stage_aux(j,k) = jointsAcceleration_stage_plan(jointsAcceleration_stage_plan.rows()-1,k);
-                                }
-                            }
-                        }
-                        timesteps_stage_approach = timesteps_stage_aux;
-                        jointsPosition_stage_approach = jointsPosition_stage_aux;
-                        jointsVelocity_stage_approach = jointsVelocity_stage_aux;
-                        jointsAcceleration_stage_approach = jointsAcceleration_stage_aux;
-                    }
-                    else if(strcmp(traj_descr.c_str(),"grasp")==0)
-                    {
-                        timesteps_stage_aux.clear();
-                        rob_traj = m_results->trajectory_stages.at(i);
-                        points = rob_traj.joint_trajectory.points;
-                        jointsPosition_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsVelocity_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsAcceleration_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-
-                        for(size_t j=0; j<points.size();++j)
-                        {
-                            if(j==points.size()-1)
-                                timesteps_stage_aux.push_back(0.0);
-                            else
-                                timesteps_stage_aux.push_back(points.at(j+1).time_from_start.toSec()-points.at(j).time_from_start.toSec());
-
-                            trajectory_msgs::JointTrajectoryPoint traj_pnt = points.at(j);
-                            for(size_t k=0; k<JOINTS_ARM+JOINTS_HAND;++k)
-                            {
-                                if(k<JOINTS_ARM)
-                                {
-                                    jointsPosition_stage_aux(j,k) = jointsPosition_stage_approach(jointsPosition_stage_approach.rows()-1,k);
-                                    jointsVelocity_stage_aux(j,k) = jointsVelocity_stage_approach(jointsVelocity_stage_approach.rows()-1,k);
-                                    jointsAcceleration_stage_aux(j,k) = jointsAcceleration_stage_approach(jointsAcceleration_stage_approach.rows()-1,k);
-                                }
-                                else if(k==JOINTS_ARM+fing_base)
-                                {
-                                    jointsPosition_stage_aux(j,k) = 0.0;
-                                    jointsVelocity_stage_aux(j,k) = 0.0;
-                                    jointsAcceleration_stage_aux(j,k) = 0.0;
-                                }
-                                else if(k==JOINTS_ARM+1)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(fing_1);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(fing_1);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(fing_1);
-                                }
-                                else if(k==JOINTS_ARM+2)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(fing_2);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(fing_2);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(fing_2);
-                                }
-                                else if(k==JOINTS_ARM+3)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(fing_3);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(fing_3);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(fing_3);
-                                }
-                            }
-                        }
-                        timesteps_stage_approach.insert(timesteps_stage_approach.end(), timesteps_stage_aux.begin(), timesteps_stage_aux.end());
-                        MatrixXd tmp_pos(jointsPosition_stage_approach.rows()+jointsPosition_stage_aux.rows(),JOINTS_ARM+JOINTS_HAND);
-                        tmp_pos << jointsPosition_stage_approach,
-                        jointsPosition_stage_aux;
-                        jointsPosition_stage_approach = tmp_pos;
-                        MatrixXd tmp_vel(jointsVelocity_stage_approach.rows()+jointsVelocity_stage_aux.rows(),JOINTS_ARM+JOINTS_HAND);
-                        tmp_vel << jointsVelocity_stage_approach,
-                        jointsVelocity_stage_aux;
-                        jointsVelocity_stage_approach = tmp_vel;
-                        MatrixXd tmp_acc(jointsAcceleration_stage_approach.rows()+jointsAcceleration_stage_aux.rows(),JOINTS_ARM+JOINTS_HAND);
-                        tmp_acc << jointsAcceleration_stage_approach,
-                        jointsAcceleration_stage_aux;
-                        jointsAcceleration_stage_approach = tmp_acc;
-                    }
-                    else if(strcmp(traj_descr.c_str(),"retreat")==0)
-                    {
-                        timesteps_stage_aux.clear(); timesteps_stage_retreat.clear();
-                        rob_traj = m_results->trajectory_stages.at(i);
-                        points = rob_traj.joint_trajectory.points;
-                        jointsPosition_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsVelocity_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsAcceleration_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-
-                        for(size_t j=0; j<points.size();++j)
-                        {
-                            if(j==points.size()-1)
-                                timesteps_stage_aux.push_back(0.0);
-                            else
-                                timesteps_stage_aux.push_back(points.at(j+1).time_from_start.toSec()-points.at(j).time_from_start.toSec());
-
-                            trajectory_msgs::JointTrajectoryPoint traj_pnt = points.at(j);
-                            for(size_t k=0; k<traj_pnt.positions.size()+JOINTS_HAND;++k)
-                            {
-                                if(k<traj_pnt.positions.size())
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(k);
-                                }
-                                else
-                                {
-                                    jointsPosition_stage_aux(j,k) = jointsPosition_stage_approach(jointsPosition_stage_approach.rows()-1,k);
-                                    jointsVelocity_stage_aux(j,k) = jointsVelocity_stage_approach(jointsVelocity_stage_approach.rows()-1,k);
-                                    jointsAcceleration_stage_aux(j,k) = jointsAcceleration_stage_approach(jointsAcceleration_stage_approach.rows()-1,k);
-                                }
-                            }
-                        }
-                        timesteps_stage_retreat = timesteps_stage_aux;
-                        jointsPosition_stage_retreat = jointsPosition_stage_aux;
-                        jointsVelocity_stage_retreat = jointsVelocity_stage_aux;
-                        jointsAcceleration_stage_retreat = jointsAcceleration_stage_aux;
-                    }
-                    else if(strcmp(traj_descr.c_str(),"target")==0)
-                    {
-                        timesteps_stage_plan.clear(); timesteps_stage_aux.clear();
-                        rob_traj = m_results->trajectory_stages.at(i);
-                        points = rob_traj.joint_trajectory.points;
-                        jointsPosition_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsVelocity_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-                        jointsAcceleration_stage_aux = MatrixXd::Zero(points.size(),JOINTS_ARM+JOINTS_HAND);
-
-                        for(size_t j=0; j<points.size();++j)
-                        {
-                            if(j==points.size()-1)
-                                timesteps_stage_aux.push_back(0.0);
-                            else
-                                timesteps_stage_aux.push_back(points.at(j+1).time_from_start.toSec()-points.at(j).time_from_start.toSec());
-
-                            trajectory_msgs::JointTrajectoryPoint traj_pnt = points.at(j);
-                            for(size_t k=0; k<traj_pnt.positions.size();++k)
-                            {
-                                if(k<JOINTS_ARM)
-                                {
-                                    jointsPosition_stage_aux(j,k) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,k) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,k) = traj_pnt.accelerations.at(k);
-                                }
-                                else if(k==JOINTS_ARM+fing_base)
-                                {
-                                    jointsPosition_stage_aux(j,JOINTS_ARM+fing_base) = 0.0;
-                                    jointsVelocity_stage_aux(j,JOINTS_ARM+fing_base) = 0.0;
-                                    jointsAcceleration_stage_aux(j,JOINTS_ARM+fing_base) = 0.0;
-                                }
-                                else if(k==JOINTS_ARM+fing_1)
-                                {
-                                    jointsPosition_stage_aux(j,JOINTS_ARM+1) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,JOINTS_ARM+1) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,JOINTS_ARM+1) = traj_pnt.accelerations.at(k);
-                                }
-                                else if(k==JOINTS_ARM+fing_2)
-                                {
-                                    jointsPosition_stage_aux(j,JOINTS_ARM+2) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,JOINTS_ARM+2) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,JOINTS_ARM+2) = traj_pnt.accelerations.at(k);
-                                }
-                                else if(k==JOINTS_ARM+fing_3)
-                                {
-                                    jointsPosition_stage_aux(j,JOINTS_ARM+3) = traj_pnt.positions.at(k);
-                                    jointsVelocity_stage_aux(j,JOINTS_ARM+3) = traj_pnt.velocities.at(k);
-                                    jointsAcceleration_stage_aux(j,JOINTS_ARM+3) = traj_pnt.accelerations.at(k);
-                                }
-                            }
-                        }
-                        timesteps_stage_plan = timesteps_stage_aux;
-                        jointsPosition_stage_plan = jointsPosition_stage_aux;
-                        jointsVelocity_stage_plan = jointsVelocity_stage_aux;
-                        jointsAcceleration_stage_plan = jointsAcceleration_stage_aux;
-                    }
-                }
-
-                if(move)
-                {
-                    //positions
-                    this->jointsPosition_mov.clear();
-                    this->jointsPosition_mov.push_back(jointsPosition_stage_plan);
-                    //velocities
-                    this->jointsVelocity_mov.clear();
-                    this->jointsVelocity_mov.push_back(jointsVelocity_stage_plan);
-                    //accelerations
-                    this->jointsAcceleration_mov.clear();
-                    this->jointsAcceleration_mov.push_back(jointsAcceleration_stage_plan);
-                    //time steps
-                    this->timesteps_mov.clear();
-                    this->timesteps_mov.push_back(timesteps_stage_plan);
-                    // descriptions
-                    this->traj_descr_mov.clear();
-                    this->traj_descr_mov.push_back("plan");
-                }
-                else
-                {
-                    this->traj_descr_mov.clear();
-
-                    //positions
-                    this->jointsPosition_mov.clear();
-                    this->jointsPosition_mov.push_back(jointsPosition_stage_plan);
-                    this->traj_descr_mov.push_back("plan");
-                    if(jointsPosition_stage_approach.rows()!=0)
-                    {
-                        this->jointsPosition_mov.push_back(jointsPosition_stage_approach);
-                        this->traj_descr_mov.push_back("approach");
-                    }
-                    if(jointsPosition_stage_retreat.rows()!=0)
-                    {
-                        this->jointsPosition_mov.push_back(jointsPosition_stage_retreat);
-                        this->traj_descr_mov.push_back("retreat");
-                    }
-
-                    //velocities
-                    this->jointsVelocity_mov.clear();
-                    this->jointsVelocity_mov.push_back(jointsVelocity_stage_plan);
-                    if(jointsVelocity_stage_approach.rows()!=0)
-                        this->jointsVelocity_mov.push_back(jointsVelocity_stage_approach);
-                    if(jointsVelocity_stage_retreat.rows()!=0)
-                        this->jointsVelocity_mov.push_back(jointsVelocity_stage_retreat);
-
-                    //accelerations
-                    this->jointsAcceleration_mov.clear();
-                    this->jointsAcceleration_mov.push_back(jointsAcceleration_stage_plan);
-                    if(jointsAcceleration_stage_approach.rows()!=0)
-                        this->jointsAcceleration_mov.push_back(jointsAcceleration_stage_approach);
-                    if(jointsAcceleration_stage_retreat.rows()!=0)
-                        this->jointsAcceleration_mov.push_back(jointsAcceleration_stage_retreat);
-
-                    //time steps
-                    this->timesteps_mov.clear();
-                    this->timesteps_mov.push_back(timesteps_stage_plan);
-                    if(!timesteps_stage_approach.empty())
-                        this->timesteps_mov.push_back(timesteps_stage_approach);
-                    if(!timesteps_stage_retreat.empty())
-                        this->timesteps_mov.push_back(timesteps_stage_retreat);
-                }
-                this->moveit_mov = true;
-                solved=true;
-            }
-            else
-            {
-                ui.tableWidget_sol_mov->clear();
-                qnode.log(QNode::Error,std::string("The planning has failed: ")+m_results->status_msg);
-            }
-        }
-        else
-        {
-            ui.tableWidget_sol_mov->clear();
-            qnode.log(QNode::Error,std::string("The planning has failed: unknown status"));
-        }
-    }
-#endif
 
     // --- RESULTS --- //
     if(solved)
@@ -1537,7 +909,7 @@ void MainWindow::on_pushButton_plan_clicked()
         //the trajectory obtained doesn't include the joints offsets
         jointsPosition_mov_w_offset = this->jointsPosition_mov;
         //add the joints offsets
-        jointsPosition_mov_real = qnode.realJointsPosition(jointsPosition_mov_w_offset);
+        jointsPosition_mov_real = qnode.robotJointPositions(jointsPosition_mov_w_offset);
 
         for (size_t k=0; k< jointsPosition_mov_real.size();++k)
         {
@@ -1763,18 +1135,18 @@ void MainWindow::on_pushButton_execMov_clicked()
     else
     {
         if(usedPlat_move == 0) //Execute the planned movement in V-Rep simulator
-            qnode.execMovement(this->jointsPosition_mov,this->jointsVelocity_mov,this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+            qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
         else if(usedPlat_move == 1) //Execute the planned movement in Robot
         {
 #if ROBOT == 1
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
-                qnode.execMovement_Sawyer(this->jointsPosition_mov, this->timesteps_mov);
+            {
+                std::vector<double> paramsTimeMapping;
+                mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
+                qnode.Sawyer(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
+            }
 #endif
         }
-#if MOVEIT == 1
-        else if(usedPlat_move == 2 && this->moveit_mov) //Execute the planned movement in RViz MoveIt
-            this->m_planner->execute(m_results);
-#endif
     }
 }
 
@@ -1830,17 +1202,12 @@ void MainWindow::on_pushButton_execTask_clicked()
     else
     {
         if(usedPlat_task == 0) //Execute the task in Vrep simulator
-        {
-            if(ui.checkBox_comp_exec->isChecked())
-                qnode.execTask_complete(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
-            else
-                qnode.execTask(this->jointsPosition_task,this->jointsVelocity_task,this->timesteps_task, this->tols_stop_task, this->traj_descr_task,this->curr_task, this->curr_scene);
-        }
+            qnode.execTask(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
         else if(usedPlat_task == 1) //Execute the task in Robot
         {
 #if ROBOT == 2
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
-                qnode.execTask_Sawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
+                qnode.execTaskSawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
 #endif
         }
     }
@@ -2041,10 +1408,7 @@ void MainWindow::on_pushButton_load_task_clicked()
                     problemPtr prob;
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                    else
-                        prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                     prob->setSolved(true);
                     prob->setPartOfTask(true);
                     this->curr_task->addProblem(prob.get());
@@ -2056,10 +1420,7 @@ void MainWindow::on_pushButton_load_task_clicked()
 
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                    else
-                        prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                     prob->setSolved(true);
                     prob->setPartOfTask(true);
                     this->curr_task->addProblem(prob.get());
@@ -2075,10 +1436,7 @@ void MainWindow::on_pushButton_load_task_clicked()
 
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,pose,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                    else
-                        prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,pose,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                     prob->setSolved(true);
                     prob->setPartOfTask(true);
                     this->curr_task->addProblem(prob.get());
@@ -2108,10 +1466,7 @@ void MainWindow::on_pushButton_load_task_clicked()
                     problemPtr prob;
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                    else
-                        prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                     prob->setSolved(true);
                     prob->setPartOfTask(true);
                     this->curr_task->addProblem(prob.get());
@@ -2125,10 +1480,7 @@ void MainWindow::on_pushButton_load_task_clicked()
 
                     if(plan_id==0)
                         prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get()))));
-#if MOVEIT==1
-                    else
-                        prob = problemPtr(new Problem(plan_id,new Movement(mov_id, arm_code),new Scenario(*(this->curr_scene.get())),this->m_planner));
-#endif
+
                     prob->setSolved(true);
                     prob->setPartOfTask(true);
                     this->curr_task->addProblem(prob.get());
@@ -2201,14 +1553,30 @@ void MainWindow::on_pushButton_load_task_clicked()
                     if(QString::compare(fields1.at(0).simplified(),QString("time step"),Qt::CaseInsensitive)==0)
                         timesteps_stage.push_back(fields1.at(1).toDouble());
 
-                    for(int k=0; k < JOINTS_ARM+JOINTS_HAND; ++k)
+                    for(int k=0; k < JOINTS_ARM + JOINTS_HAND; ++k)
                     {
                         if(QString::compare(fields1.at(0).simplified(),QString("Joint ")+QString::number(k+1),Qt::CaseInsensitive)==0)
                         {
                             QStringList fields2 = fields1.at(1).split("|");
+
+#if HAND == 0
                             pos_stage(row,k) = ((double)fields2.at(0).toDouble()*M_PI)/180;
                             vel_stage(row,k) = ((double)fields2.at(1).toDouble()*M_PI)/180;
                             acc_stage(row,k) = ((double)fields2.at(2).toDouble()*M_PI)/180;
+#elif HAND == 1
+                            if (k < JOINTS_ARM)
+                            {
+                                pos_stage(row,k) = ((double)fields2.at(0).toDouble()*M_PI)/180;
+                                vel_stage(row,k) = ((double)fields2.at(1).toDouble()*M_PI)/180;
+                                acc_stage(row,k) = ((double)fields2.at(2).toDouble()*M_PI)/180;
+                            }
+                            else
+                            {
+                                pos_stage(row,k) = ((double)fields2.at(0).toDouble()/1000);
+                                vel_stage(row,k) = ((double)fields2.at(1).toDouble()/1000);
+                                acc_stage(row,k) = ((double)fields2.at(2).toDouble()/1000);
+                            }
+#endif
                         }
                         else if(QString::compare(fields1.at(0).simplified(),QString("step"),Qt::CaseInsensitive)==0)
                         {
@@ -2243,7 +1611,7 @@ void MainWindow::on_pushButton_load_task_clicked()
         for(size_t h=0; h< this->jointsPosition_task.size();++h)
         {
             pos_mov_w_offset = this->jointsPosition_task.at(h);
-            pos_mov = qnode.realJointsPosition(pos_mov_w_offset);
+            pos_mov = qnode.robotJointPositions(pos_mov_w_offset);
             vel_mov = this->jointsVelocity_task.at(h);
             acc_mov = this->jointsAcceleration_task.at(h);
             tstep_mov = this->timesteps_task.at(h);
@@ -2281,10 +1649,23 @@ void MainWindow::on_pushButton_load_task_clicked()
 
                     for (int j=0; j<jointPosition_stage.cols();++j)
                     {
+#if HAND == 0
                         stage_step.push_back(
                                     QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
                                     QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
                                     QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+#elif HAND == 1
+                        if( j < JOINTS_ARM)
+                            stage_step.push_back(
+                                        QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                        QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                        QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+                        else
+                            stage_step.push_back(
+                                        QString::number(jointPosition_stage(i,j)*1000,'g',3)+"|"+
+                                        QString::number(jointVelocity_stage(i,j)*1000,'g',3)+"|"+
+                                        QString::number(jointAcceleration_stage(i,j)*1000,'g',3));
+#endif
 
                         if(!h_head)
                             h_headers.push_back(QString("Joint ")+QString::number(j+1));
@@ -2441,11 +1822,23 @@ void MainWindow::on_pushButton_save_task_clicked()
                         stream << "time step="<< QString::number(timestep).toStdString().c_str()<< ", ";
                         for(int c=0; c < traj.cols(); ++c)
                         {
+#if HAND == 0
                             stream << "Joint "<<QString::number(c+1).toStdString().c_str()<<"="<<
                                       QString::number(((double)traj(r,c)*180)/M_PI,'f',6).toStdString().c_str()<<"|"<<
                                       QString::number(((double)vel(r,c)*180)/M_PI,'f',6).toStdString().c_str()<<"|"<<
                                       QString::number(((double)acc(r,c)*180)/M_PI,'f',6).toStdString().c_str();
-
+#elif HAND == 1
+                            if(c < JOINTS_ARM)
+                                stream << "Joint "<<QString::number(c+1).toStdString().c_str()<<"="<<
+                                          QString::number(((double)traj(r,c)*180)/M_PI,'f',6).toStdString().c_str()<<"|"<<
+                                          QString::number(((double)vel(r,c)*180)/M_PI,'f',6).toStdString().c_str()<<"|"<<
+                                          QString::number(((double)acc(r,c)*180)/M_PI,'f',6).toStdString().c_str();
+                            else
+                                stream << "Joint "<<QString::number(c+1).toStdString().c_str()<<"="<<
+                                          QString::number(((double)traj(r,c)) * 1000,'f',6).toStdString().c_str()<<"|"<<
+                                          QString::number(((double)vel(r,c)) * 1000,'f',6).toStdString().c_str()<<"|"<<
+                                          QString::number(((double)acc(r,c)) * 1000,'f',6).toStdString().c_str();
+#endif
                             if(c==traj.cols()-1)
                                 stream << endl;
                             else
@@ -2473,9 +1866,6 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     this->jointsPosition_mov.clear();
     this->timesteps_mov.clear();
     this->tols_stop_mov.clear();
-#if MOVEIT==1
-    this->m_planner.reset(new moveit_planning::HumanoidPlanner(this->init_scene->getName()));
-#endif
 
     this->curr_scene = scenarioPtr(new Scenario(*(this->init_scene.get())));
     qnode.resetSimTime();
@@ -2547,9 +1937,6 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         ui.groupBox_getElements->setEnabled(true);
         ui.groupBox_homePosture->setEnabled(true);
         std::vector<objectPtr> objs; this->curr_scene->getObjects(objs);
-#if MOVEIT==1
-        qnode.loadRVizScenario(objs);
-#endif
     }
     else
     {
@@ -2602,7 +1989,7 @@ void MainWindow::on_pushButton_append_mov_clicked()
             //the trajectory obtained doesn't include the joints offs
             pos_mov_w_offset = pos_mov;
             //add the joints offsets
-            pos_mov_real = qnode.realJointsPosition(pos_mov_w_offset);
+            pos_mov_real = qnode.robotJointPositions(pos_mov_w_offset);
             vel_mov = this->jointsVelocity_task.at(h);
             acc_mov = this->jointsAcceleration_task.at(h);
             tstep_mov = this->timesteps_task.at(h);
@@ -2640,10 +2027,23 @@ void MainWindow::on_pushButton_append_mov_clicked()
 
                     for (int j=0; j<jointPosition_stage.cols();++j)
                     {
+#if HAND == 0
                         stage_step.push_back(
                                     QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
                                     QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
                                     QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+#elif HAND == 1
+                        if (j < JOINTS_ARM)
+                            stage_step.push_back(
+                                        QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                        QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                        QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
+                        else
+                            stage_step.push_back(
+                                        QString::number(jointPosition_stage(i,j)*1000,'g',3)+"|"+
+                                        QString::number(jointVelocity_stage(i,j)*1000,'g',3)+"|"+
+                                        QString::number(jointAcceleration_stage(i,j)*1000,'g',3));
+#endif
                         if(!h_head)
                             h_headers.push_back(QString("Joint ")+QString::number(j+1));
                     }

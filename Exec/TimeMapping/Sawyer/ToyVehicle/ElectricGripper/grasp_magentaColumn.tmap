@@ -1,0 +1,5 @@
+### Parameters of the Time mapping  ###
+diff_weight_tau=0.035
+dec_rate_a=0.0085
+time_const_w=0.223125
+

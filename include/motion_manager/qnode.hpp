@@ -5,6 +5,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/JointState.h>
 #include <string>
+#include <numeric>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
@@ -57,16 +58,19 @@ typedef boost::shared_ptr<Scenario> scenarioPtr;/**< shared pointer to the curre
 typedef boost::shared_ptr<Task> taskPtr; /**< shared pointer to the current task */
 typedef boost::shared_ptr<Object> objectPtr;/**< shared pointer to an object in the scenario */
 
-typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> motionCommClient;
-typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> followJointTrajectoryClient;
+typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> motionCommClient; /**< */
+typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> followJointTrajectoryClient; /**< */
 
 const double MIN_EXEC_TIMESTEP_VALUE = 0.3; /**< minimum value of the timestep during the execution of the movement [sec]. It is used to join the stages of the movements when timestep is zero*/
+
+
 
 class QNode : public QThread
 {
     Q_OBJECT
 
-public:
+
+public: 
     /**
      * @brief QNode, a constructor
      * @param argc
@@ -93,11 +97,8 @@ public:
      */
     bool on_init_url(const string &master_url, const string &host_url);
 
-    /**
-     * @brief This method runs ending operations
-     */
-    void on_end();
 
+    //***************************** Functions related to the V-Rep simulator *****************************//
     /**
      * @brief This method checks if V-REP is online
      * @return
@@ -105,99 +106,14 @@ public:
     bool checkVrep();
 
     /**
-     * @brief This method checks if RViz is online
-     * @return
+     * @brief This is the run() method of the thread
      */
-    bool checkRViz();
+    void run();
 
     /**
-     * @brief This method loads the scenario with index id
-     * @param path
-     * @param id
-     * @return
+     * @brief This method stops the simulation in V-REP
      */
-    bool loadScenario(const string &path,int id);
-
-#if MOVEIT == 1
-    /**
-     * @brief loadRVizScenario
-     * @param objs
-     */
-    void loadRVizScenario(std::vector<objectPtr>& objs);
-#endif
-
-    /**
-     * @brief This method gets the elements of the scenario
-     * @param scene
-     * @return
-     */
-    bool getElements(scenarioPtr scene);
-
-    /**
-     * @brief getArmsHandles
-     * @param robot
-     * @return
-     */
-    bool getArmsHandles(int robot);
-
-    /**
-     * @brief execMovement
-     * @param traj_mov
-     * @param vel_mov
-     * @param timesteps
-     * @param tols_stop
-     * @param traj_descr
-     * @param mov
-     * @param scene
-     * @return
-     */
-    bool execMovement(std::vector<MatrixXd>& traj_mov, std::vector<MatrixXd>& vel_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string>& traj_descr, movementPtr mov, scenarioPtr scene);
-
-    /**
-     * @brief execMovement_Sawyer
-     * @return
-     */
-#if ROBOT == 1
-    bool execMovement_Sawyer(std::vector<MatrixXd>& traj_mov, std::vector<std::vector<double>> timesteps);
-#endif
-
-    /**
-     * @brief execTask
-     * @param traj_task
-     * @param vel_task
-     * @param timesteps_task
-     * @param tols_stop_task
-     * @param traj_descr_task
-     * @param task
-     * @param scene
-     * @return
-     */
-    bool execTask(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double>>>& timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task,taskPtr task, scenarioPtr scene);
-
-    /**
-     * @brief execTask_Sawyer
-     * @param traj_task
-     * @param vel_task
-     * @param acc_task
-     * @param timesteps_task
-     * @return
-     */
-#if ROBOT == 1
-    bool execTask_Sawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps);
-#endif
-
-    /**
-     * @brief execTask_complete
-     * @param traj_task
-     * @param vel_task
-     * @param timesteps_task
-     * @param tols_stop_task
-     * @param traj_descr_task
-     * @param task
-     * @param scene
-     * @return
-     */
-    bool execTask_complete(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<vector<double> > > &timesteps_task, vector<vector<double>>& tols_stop_task, vector<vector<string>>& traj_descr_task, taskPtr task, scenarioPtr scene);
+    void stopSim();
 
     /**
      * @brief This method sets to zero the time of simulation
@@ -210,24 +126,90 @@ public:
     void resetGlobals();
 
     /**
-     * @brief This method stops the simulation in V-REP
-     */
-    void stopSim();
-
-    /**
-     * @brief This is the run() method of the thread
-     */
-    void run();
-
-    /**
-     * @brief This method return the list of loggings
+     * @brief getArmsHandles
+     *
+     * @param robot
      * @return
      */
-    QStringListModel* loggingModel() { return &logging_model; }
+    bool getArmsHandles(int robot);
 
     /**
-     * @brief This enumerator is used for logging functionalities
+     * @brief This method loads the scenario with index id
+     * @param path
+     * @param id
+     * @return
      */
+    bool loadScenario(const string &path,int id);
+
+    /**
+     * @brief This method gets the elements of the scenario
+     * @param scene
+     * @return
+     */
+    bool getElements(scenarioPtr scene);
+
+    /**
+     * @brief execMovement
+     * @param traj_mov
+     * @param vel_mov
+     * @param timesteps
+     * @param tols_stop
+     * @param traj_descr
+     * @param mov
+     * @param scene
+     * @return
+     */
+    bool execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene);
+
+    /**
+     * @brief execTask
+     * @param traj_task
+     * @param vel_task
+     * @param timesteps_task
+     * @param tols_stop_task
+     * @param traj_descr_task
+     * @param task
+     * @param scene
+     * @return
+     */
+    bool execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<double>>> &timesteps_task, vector<vector<double>> &tols_stop_task, vector<vector<string>> &traj_descr_task, taskPtr task, scenarioPtr scene);
+
+    /**
+     * @brief This method subtracts the offset of the joints to their position
+     * @param traj_mov
+     * @return
+     */
+    vector<MatrixXd> robotJointPositions(std::vector<MatrixXd>& traj_mov);
+
+
+    //************************ Functions related to the collaborative robot Sawyer ***********************//
+#if ROBOT == 1
+    /**
+     * @brief execMovementSawyer
+     * @param traj_mov
+     * @param timesteps
+     * @param traj_descr
+     * @param mov
+     * @param paramsTimeMapping
+     * @return
+     */
+    bool execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std::vector<double>> timesteps_mov, std::vector<string>& traj_descr, movementPtr mov, vector<double> paramsTimeMapping);
+
+    /**
+     * @brief execTask_Sawyer
+     * @param traj_task
+     * @param vel_task
+     * @param acc_task
+     * @param timesteps
+     * @return
+     */
+    bool execTaskSawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps);
+
+#endif
+
+
+    //************************* Functions related to the logging functionalities *************************//
+    /** This enumerator is used for logging functionalities */
     enum LogLevel
     {
         Debug,
@@ -245,11 +227,13 @@ public:
     void log(const LogLevel &level, const string &msg);
 
     /**
-     * @brief This method subtracts the offset of the joints to their position
-     * @param traj_mov
+     * @brief This method return the list of loggings
      * @return
      */
-    vector<MatrixXd> realJointsPosition(std::vector<MatrixXd>& traj_mov);
+    QStringListModel* loggingModel();
+
+
+
 
 private:
     /**
@@ -259,11 +243,201 @@ private:
     const string currentDateTime();
 
     /**
+     * @brief This method initializate the logging
+     */
+    void init();
+
+    /**
+     * @brief This method update the information of a generic object in V-REP
+     * @param obj_id
+     * @param name
+     * @param data
+     */
+    void updateObjectInfo(int obj_id, std::string name, const geometry_msgs::PoseStamped &data);
+
+    /**
+     * @brief This method returns the linear interpolation
+     * @param ya
+     * @param yb
+     * @param m
+     * @return
+     */
+    double interpolate(double ya, double yb, double m);
+
+    /**
+     * @brief This method return the RPY values starting from the transformation matrix
+     * @param Trans
+     * @param rpy
+     * @return
+     */
+    bool getRPY(Matrix4d Trans, std::vector<double>& rpy);
+
+    /**
+     * @brief RPY_matrix
+     * @param rpy
+     * @param Rot
+     */
+    void RPY_matrix(std::vector<double>rpy, Matrix3d &Rot);
+
+#if HAND == 0
+    /**
+     * @brief preMovementOperation
+     * @param node
+     * @param movType
+     * @param retreat
+     * @param armCode
+     * @param attach
+     * @param hand_pos
+     * @param objName
+     */
+    void preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int arm, int attach, MatrixXd traj, string objName);
+#elif HAND == 1
+    /**
+     * @brief preMovementOperation
+     * @param node
+     * @param movType
+     * @param retreat
+     * @param attach
+     * @param objName
+     */
+    void preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int attach, string objName);
+#endif
+
+    /**
+     * @brief posMovementOperation
+     * @param node
+     * @param movType
+     * @param plan
+     * @param attach
+     */
+    void posMovementOperation(ros::NodeHandle node, int movType, bool plan, int attach);
+
+#if HAND == 0
+    /**
+     * @brief publishData
+     * @param node
+     * @param traj
+     * @param timesteps
+     * @param handles
+     * @param hand_handles
+     * @param sceneID
+     * @param timeTot
+     * @param tol
+     */
+    void publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, MatrixXi hand_handles, int sceneID, double timeTot, double tol);
+
+#elif HAND == 1
+    /**
+     * @brief publishData
+     * @param node
+     * @param traj
+     * @param timesteps
+     * @param handles
+     * @param sceneID
+     * @param timeTot
+     * @param tol
+     */
+    void publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol);
+#endif
+
+    /**
+     * @brief joinStages
+     * @param traj_mov
+     * @param timesteps_mov
+     */
+    void joinStages(std::vector<MatrixXd> &traj, std::vector<std::vector<double>> &timesteps, std::vector<string> &traj_descr);
+
+    /**
+     * @brief joinMovements
+     * @param traj
+     * @param timesteps
+     * @param traj_descr
+     */
+    void joinMovements(vector<vector<MatrixXd>> &traj, vector<vector<vector<double>>> &timesteps, vector<string> &task_descr);
+
+
+    //******************************* Functions related to the Barrett Hand ******************************//
+#if HAND == 0
+    /**
+     * @brief closeBarrettHand_to_pos
+     * @param hand
+     * @param hand_posture
+     * @return
+     */
+    bool closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture);
+#endif
+
+
+    //************************ Functions related to the Collaborative Robot Sawyer ***********************//
+#if ROBOT == 1
+    /**
+     * @brief moveRobotToStartPos
+     * @param simStartPos
+     * @param tols
+     */
+    bool moveRobotToStartPos(VectorXd &goal, double tol);
+
+#if HAND == 1
+    /**
+     * @brief setGripperPosition
+     * @param newPos
+     */
+    void setGripperPosition(double newPos);
+
+    /**
+     * @brief moveGripperToStartPos
+     * @param simStartPos
+     * @param tols
+     */
+    void moveGripperToStartPos(double simStartPos, double tol);
+
+    /**
+     * @brief feedbackCb
+     * @param feedback
+     * @param tarArmPos
+     * @param posGripper
+     * @param params
+     * @param initStepStage
+     * @param movType
+     * @param movStages
+     */
+    void feedbackCb(const control_msgs::FollowJointTrajectoryFeedback::ConstPtr &feedback, std::vector<vector<double>> &trajToExecute, vector<double> &params, bool isClosed);
+#endif
+
+    /**
+     * @brief divideMovement
+     * @param nMicroSteps
+     * @param traj
+     * @param timesteps
+     */
+    void jointInterpolation(int nMicroSteps, MatrixXd &traj_stage, std::vector<double> &timesteps_stage, std::vector<vector<double>> &jointsPos, std::vector<double> &timeFromStart);
+
+    /**
+     * @brief QNode::jointTrajectoryAction
+     * @param trajToExecute
+     * @param timeFromStart
+     * @return
+     */
+    bool jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, std::vector<double> &timeFromStart, std::vector<double> params, bool closeGripper, bool isGripperClosed);
+#endif
+
+
+    //********************************* Callbacks of the V-REP scenarios *********************************//
+    /**
      * @brief This is the callback to retrieve information about the simulation in V-REP
      * @param info
      */
     void infoCallback(const vrep_common::VrepInfoConstPtr& info);
 
+    /**
+     * @brief This is the callback to retrieve the state of the joints
+     * @param state
+     * @param robot
+     */
+    void JointsCallback(const sensor_msgs::JointState& state);
+
+
+    //***************************************** Sensors callbacks ****************************************//
     /**
      * @brief This is the callback to retrieve the state of the proximity sensor on the right end-effector
      * @param data
@@ -276,6 +450,8 @@ private:
      */
     void leftProxCallback(const vrep_common::ProximitySensorData& data);
 
+
+    //******************************* Callbacks of the Toy Vehicle scenario ******************************//
     /**
      * @brief This is the callback to retrieve the state of the blue column (toy vehicle scenario)
      * @param data
@@ -330,6 +506,8 @@ private:
      */
     void BaseCallback(const geometry_msgs::PoseStamped& data);
 
+
+    //**************************** Callbacks of the Human Assistance scenario ****************************//
     /**
      * @brief This is the callback to retrieve the state of the bottle tea (human assistance scenario)
      * @param data
@@ -360,80 +538,9 @@ private:
      */
     void Cup1Callback(const geometry_msgs::PoseStamped& data);
 
-    /**
-     * @brief This is the callback to retrieve the state of the cup (challenging scenario)
-     * @param data
-     */
-    void Cup_shelfCallback(const geometry_msgs::PoseStamped& data);
 
-    /**
-     * @brief This is the callback to retrieve the state of the shelf (challenging scenario)
-     * @param data
-     */
-    void ShelfCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_1_b (challenging scenario)
-     * @param data
-     */
-    void Shelf_1_bCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_2_a (challenging scenario)
-     * @param data
-     */
-    void Shelf_2_aCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_2_b (challenging scenario)
-     * @param data
-     */
-    void Shelf_2_bCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_3 (challenging scenario)
-     * @param data
-     */
-    void Shelf_3Callback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_4_a (challenging scenario)
-     * @param data
-     */
-    void Shelf_4_aCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_4_b (challenging scenario)
-     * @param data
-     */
-    void Shelf_4_bCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_4_c (challenging scenario)
-     * @param data
-     */
-    void Shelf_4_cCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the shelf_4_d (challenging scenario)
-     * @param data
-     */
-    void Shelf_4_dCallback(const geometry_msgs::PoseStamped& data);
-
-    /**
-     * @brief This is the callback to retrieve the state of the joints
-     * @param state
-     * @param robot
-     */
-    void JointsCallback(const sensor_msgs::JointState& state);
-
- #if ROBOT == 1
-    /**
-     * @brief
-     * @param state
-     */
-    void SawyerStateCallback(const intera_core_msgs::RobotAssemblyState &state);
-
+    //**************************** Callacks of the collaborative robot Sawyer ****************************//
+#if ROBOT == 1
     /**
      * @brief This is the callback to retrieve the state of the joints (Robot Sawyer)
      * @param state
@@ -447,84 +554,57 @@ private:
     void SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state);
 #endif
 
-    /**
-     * @brief This method returns the linear interpolation
-     * @param ya
-     * @param yb
-     * @param m
-     * @return
-     */
-    double interpolate(double ya, double yb, double m);
-
-    /**
-     * @brief This method initializate the logging
-     */
-    void init();
-
-#if HAND == 0
-    /**
-     * @brief This method closes the Barrett hand
-     * @param hand
-     * @return
-     */
-    bool closeBarrettHand(int hand);
-
-    /**
-     * @brief This method opens the Barrett hand
-     * @param hand
-     * @return
-     */
-    bool openBarrettHand(int hand);
-
-    /**
-     * @brief openBarrettHand_to_pos
-     * @param hand
-     * @param hand_posture
-     * @return
-     */
-    bool openBarrettHand_to_pos(int hand, std::vector<double>& hand_posture);
-
-    /**
-     * @brief closeBarrettHand_to_pos
-     * @param hand
-     * @param hand_posture
-     * @return
-     */
-    bool closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture);
-#endif
-    /**
-     * @brief This method return the RPY values starting from the transformation matrix
-     * @param Trans
-     * @param rpy
-     * @return
-     */
-    bool getRPY(Matrix4d Trans, std::vector<double>& rpy);
-
-    /**
-     * @brief RPY_matrix
-     * @param rpy
-     * @param Rot
-     */
-    void RPY_matrix(std::vector<double>rpy, Matrix3d &Rot);
-
-    /**
-     * @brief This method update the information of a generic object in V-REP
-     * @param obj_id
-     * @param name
-     * @param data
-     */
-    void updateObjectInfo(int obj_id,std::string name, const geometry_msgs::PoseStamped &data);
-
 
     int init_argc; /**< initial argc */
     char** init_argv; /**< initial argv */
-    //*********************************** VRep simulator
+    QStringListModel logging_model; /**< list of loggings */
+    string nodeName; /**< name of the ROS node */
+    double TotalTime; /**< total time of the movements */
+    scenarioPtr curr_scene; /**< current scenario */
+    movementPtr curr_mov; /**< current movement that is being executed */
+    src::severity_logger< severity_level > lg; /**< logger */
+    //***************************************** V-Rep simulator ******************************************//
+    bool simulationRunning; /**< true if the simulation in V-REP is running */
+    double simulationTime;/**< current time of the simulation */
+    double simulationTimeStep;/**< current time step of the simulation */
+    bool got_scene; /**< true if we got all the elements of the scenario */
+    bool obj_in_hand; /**< true if the object is in the hand */
+    // **** Handles **** //
+    int right_sensor; /**< handle of the right hand proximity sensor */
+    int left_sensor; /**< handle of the left hand proximity sensor */
+    int h_detobj; /**< handle of the object that is currently detected by the proximity sensor of the end effector */
+    std::vector<int> right_handles; /**< right arm and right hand joints handles */
+    std::vector<int> left_handles; /**< left arm and left hand joints handles */
+    int right_attach; /**< right hand attach point */
+    int left_attach; /**< left hand attach point */
+#if HAND == 0
+    // **** BarrettHand ****//
+    std::vector<bool> firstPartLocked;
+    std::vector<int> needFullOpening;
+    std::vector<bool> closed;
+    // Handles
+    MatrixXi right_hand_handles; /**< matrix of the handles of the right hand joints */
+    MatrixXi left_hand_handles; /**< matrix of the handles of the left hand joints */
+    // Fingers Position, velocity and forces
+    std::vector<double> right_2hand_pos; /**< position of the right hand 2 phalanx */
+    std::vector<double> right_2hand_vel; /**< velocity of the right hand 2 phalanx */
+    std::vector<double> right_2hand_force; /**< forces of the right hand 2 phalanx */
+    std::vector<double> left_2hand_pos; /**< position of the left hand 2 phalanx */
+    std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
+    std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
+#elif HAND == 1
+    // **** Electric Gripper **** //
+    bool closed;
+#endif
+    // **** ROS communication **** //
+    std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
     ros::ServiceClient add_client;/**<  ROS client */
+    // Subscribers of the information, joint states and sensors
     ros::Subscriber subInfo; /**< ROS subscriber for information about the simulation */
     ros::Subscriber subJoints_state; /**< ROS subscriber to the topic /vrep/joint_state */
     ros::Subscriber subRightProxSensor;/**< ROS subscriber to the topic /vrep/right_prox_sensor */
     ros::Subscriber subLeftProxSensor; /**< ROS subscriber to the topic /vrep/left_prox_sensor */
-    //*********************************** Toy vehicle scenario
+    // Subscribers of the Toy vehicle scenario
     ros::Subscriber subBlueColumn; /**< ROS sunscriber to the topic /vrep/BlueColumn_pose (obj_id=0 in the toy vehicle scenario) */
     ros::Subscriber subGreenColumn; /**< ROS sunscriber to the topic /vrep/GreenColumn_pose (obj_id=1 in the toy vehicle scenario) */
     ros::Subscriber subRedColumn; /**< ROS sunscriber to the topic /vrep/RedColumn_pose (obj_id=2 in the toy vehicle scenario) */
@@ -534,78 +614,32 @@ private:
     ros::Subscriber subWheel1; /**< ROS sunscriber to the topic /vrep/Wheel1_pose (obj_id=6 in the toy vehicle scenario) */
     ros::Subscriber subWheel2; /**< ROS sunscriber to the topic /vrep/Wheel2_pose (obj_id=7 in the toy vehicle scenario) */
     ros::Subscriber subBase; /**< ROS sunscriber to the topic /vrep/Base_pose (obj_id=8 in the toy vehicle scenario) */
-    //*********************************** Human Assistance scenario
+    // Subscribers of the Human Assistance scenario
     ros::Subscriber subBottleTea; /**< ROS sunscriber to the topic /vrep/BottleTea_pose (obj_id=0 in the Human Assistance scenario) */
     ros::Subscriber subBottleCoffee; /**< ROS sunscriber to the topic /vrep/BottleCoffee_pose (obj_id=1 in the Human Assistance scenario) */
     ros::Subscriber subBottleJuice; /**< ROS sunscriber to the topic /vrep/BottleJuice_pose (obj_id=2 in the Human Assistance scenario) */
     ros::Subscriber subCup; /**< ROS sunscriber to the topic /vrep/Cup_pose (obj_id=3 in the Human Assistance scenario) */
     ros::Subscriber subCup1; /**< ROS sunscriber to the topic /vrep/Cup1_pose (obj_id=4 in the Human Assistance scenario) */
-    //*********************************** Challenging scenario
-    ros::Subscriber subCup_shelf; /**< ROS sunscriber to the topic /vrep/Cup_pose (obj_id=0 in the Human Challenging scenario) */
-    ros::Subscriber subShelf; /**< ROS sunscriber to the topic /vrep/Shelf_pose (obj_id=1 in the Challenging scenario) */
-    ros::Subscriber subShelf_1_b; /**< ROS sunscriber to the topic /vrep/Shelf_1_b_pose (obj_id=2 in the Challenging scenario) */
-    ros::Subscriber subShelf_2_a; /**< ROS sunscriber to the topic /vrep/Shelf_2_a_pose (obj_id=3 in the Challenging scenario) */
-    ros::Subscriber subShelf_2_b; /**< ROS sunscriber to the topic /vrep/Shelf_2_b_pose (obj_id=4 in the Challenging scenario) */
-    ros::Subscriber subShelf_3; /**< ROS sunscriber to the topic /vrep/Shelf_3_pose (obj_id=5 in the Challenging scenario) */
-    ros::Subscriber subShelf_4_a; /**< ROS sunscriber to the topic /vrep/Shelf_4_a_pose (obj_id=6 in the Challenging scenario) */
-    ros::Subscriber subShelf_4_b; /**< ROS sunscriber to the topic /vrep/Shelf_4_b_pose (obj_id=7 in the Challenging scenario) */
-    ros::Subscriber subShelf_4_c; /**< ROS sunscriber to the topic /vrep/Shelf_4_c_pose (obj_id=8 in the Challenging scenario) */
-    ros::Subscriber subShelf_4_d; /**< ROS sunscriber to the topic /vrep/Shelf_4_d_pose (obj_id=9 in the Challenging scenario) */
 #if ROBOT == 1
-    //*********************************** Real Robot
-    ros::Subscriber subJoints_state_robot; /**< ROS subscriber to the topic /robot/joint_states*/
-    ros::Subscriber subGripper_state_robot; /**< ROS subscriber to the topic */
-    ros::Subscriber subState_robot; /**< ROS subscriber to the topic */
-    motionCommClient* motionComm; /**< */
-    followJointTrajectoryClient* folJointTraj; /**< */
-#endif
-#if MOVEIT == 1
-    boost::shared_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_interface_ptr;/**< scene interface */
-#endif
-    QStringListModel logging_model; /**< list of loggings */
-    bool simulationRunning; /**< true if the simulation in V-REP is running */
-    double simulationTime;/**< current time of the simulation */
-    double simulationTimeStep;/**< current time step of the simulation */
-    string nodeName; /**< name of the ROS node */
-    double TotalTime; /**< total time of the movements */
-    scenarioPtr curr_scene; /**< current scenario */
-    movementPtr curr_mov; /**< current movement that is being executed */
-    src::severity_logger< severity_level > lg; /**< logger */
-    int right_sensor; /**< handle of the right hand proximity sensor */
-    int left_sensor; /**< handle of the left hand proximity sensor */
-    int h_detobj; /**< handle of the object that is currently detected by the proximity sensor of the end effector */
-    int right_attach; /**< right hand attach point */
-    int left_attach; /**< left hand attach point */
-    bool got_scene; /**< true if we got all the elements of the scenario */
-    bool obj_in_hand; /**< true if the object is in the hand */
-    std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
-    //*********************************** Arm handles
-    std::vector<int> right_handles; /**< right arm and right hand joints handles */
-    std::vector<int> left_handles; /**< left arm and left hand joints handles */
-    //*********************************** Hand
-#if HAND == 0
-    MatrixXi right_hand_handles; /**< matrix of the handles of the right hand joints */
-    MatrixXi left_hand_handles; /**< matrix of the handles of the left hand joints */
-    std::vector<double> right_2hand_pos; /**< position of the right hand 2 phalanx */
-    std::vector<double> right_2hand_vel; /**< velocity of the right hand 2 phalanx */
-    std::vector<double> right_2hand_force; /**< forces of the right hand 2 phalanx */
-    std::vector<double> left_2hand_pos; /**< position of the left hand 2 phalanx */
-    std::vector<double> left_2hand_vel; /**< velocity of the left hand 2 phalanx */
-    std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
-    std::vector<bool> firstPartLocked;
-    std::vector<int> needFullOpening;
-    std::vector<bool> closed;
-#elif HAND == 1
-    bool closed;
-#endif
-#if ROBOT == 1
-    //*********************************** Real Robot
+    //************************************ Collaborative robot Sawyer ************************************//
     std::vector<double> robotPosture; /**< position of the right arm*/
     std::vector<double> robotVel; /**< velocity of the right arm*/
-    std::vector<double> robotForce; /**< forces of the right arm*/
+    // **** ROS communication **** //
+    // Actionlibs clients
+    motionCommClient* motionComm; /**< */
+    followJointTrajectoryClient* folJointTraj; /**< */
+    // Subscribers of the joints and robot states
+    ros::Subscriber subJointsStateRobot; /**< ROS subscriber to the topic /robot/joint_states*/
+#if HAND == 1
+    // **** Electric Gripper **** //
+    ros::Subscriber subGripperStateRobot; /**< ROS subscriber to the topic */
+    ros::Publisher pubCommGripper; /**< */
     bool gripperCalibrated;
-    bool robotEnabled;
 #endif
+#endif
+
+
+
 
 Q_SIGNALS:
     /**

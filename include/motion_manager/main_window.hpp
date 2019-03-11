@@ -13,16 +13,10 @@
 #include "qnode.hpp"
 #include "roscommdialog.hpp"
 #include "vrepcommdialog.hpp"
-#include "rvizcommdialog.hpp"
 #include "toldialoghump.hpp"
 #include "mov_executedialog.hpp"
 #include "task_executedialog.hpp"
 #include "config.hpp"
-#include "rrtdialog.hpp"
-#include "rrtconnectdialog.hpp"
-#include "rrtstardialog.hpp"
-#include "prmdialog.hpp"
-#include "prmstardialog.hpp"
 #include "results_plan_joints_dialog.hpp"
 #include "comp_velocity_dialog.hpp"
 #include "handposplot.hpp"
@@ -141,13 +135,6 @@ public Q_SLOTS:
      * @brief This method shows the V-REP communication dialog
      */
     void on_actionVrep_Communication_triggered();
-
-#if MOVEIT==1
-    /**
-     * @brief This method shows the RViz communication dialog
-     */
-    void on_actionRViz_Communication_triggered();
-#endif
 
     /**
      * @brief This method loads the selected scenario
@@ -384,17 +371,9 @@ private:
     QNode qnode; /**< ROS node handle */
     RosCommDialog *mrosCommdlg; /**< handle of the ROS communication dialog */
     VrepCommDialog *mvrepCommdlg; /**< handle of the V-REP communication dialog */
-#if MOVEIT==1
-    RVizCommDialog *mrvizCommdlg; /**< handle of the RViz communication dialog */
-#endif
     TolDialogHUMP *mTolHumpdlg; /**< handle of the HUMP tuning dialog */
     Mov_ExecuteDialog *mMovExecutedlg; /**< handle of the Execute Settings dialog in movements*/
     Task_ExecuteDialog *mTaskExecutedlg; /**< handle of the Execute Settings dialog in tasks */
-    RRTDialog *mRRTdlg; /**< handle of the RRT tuning dialog */
-    RRTConnectDialog *mRRTConnectdlg; /**< handle of the RRT Connect tuning dialog */
-    RRTstarDialog *mRRTstardlg; /**< handle of the RRT star tuning dialog */
-    PRMDialog *mPRMdlg; /**< handle of the PRM tuning dialog */
-    PRMstarDialog *mPRMstardlg; /**< handle of the PRM star tuning dlg */
     ResultsJointsDialog *mResultsJointsdlg;/**< handle of the results joints dlg*/
     CompVelocityDialog *mCompVeldlg; /**< handle of the velocity components dlg */
     int scenario_id; /**< id of the current scenario */
@@ -454,10 +433,6 @@ private:
     bool moveit_mov; /**< true if the movement has been planned by the moveit planner, false otherwise */
     bool moveit_task; /**< true if at least one movement in the task has been planned by the moveit planner, false otherwise */
     HUMotion::planning_result_ptr h_results; /**< results of the HUMP planner */
-#if MOVEIT==1
-    moveit_plannerPtr m_planner; /**< MoveIt! Libraries planner */
-    moveit_planning::PlanningResultPtr m_results; /**< results of the moveit planner */
-#endif
     movementPtr curr_mov; /**< current movement */
     taskPtr curr_task;/**< current task */
     scenarioPtr init_scene; /**< initial scenario */

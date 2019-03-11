@@ -85,23 +85,10 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 ##############################################################################
 # Settings
 ##############################################################################
-
-## MoveIt! configuration
-# MOVEIT=0. do not use the moveit planner
-# MOVEIT=1, use the moveit planner
-set (MOVEIT 0)
-
-if(MOVEIT)
-    find_package(aros_moveit_planner REQUIRED COMPONENTS
-      humanoid_planner
-    )
-    include_directories(${aros_moveit_planner_INCLUDE_DIRS})
-endif()
-
 ##Real Robot configuration
 # ROBOT=0, don't communicate with robot
 # ROBOT=1, communicate with robot
-set (ROBOT 1)
+set (ROBOT 0)
 
 ## Robot parts configuration
 # 1 means that the part is present and it is taken into account for the generation of the trajectories,
@@ -123,15 +110,6 @@ set (HEAD 1)
 # HAND=0. Barrett hand
 # HAND=1. Electric Parallel Gripper
 set (HAND 1)
-# OPEN_CLOSE_HAND=0. do not use the open and close hand functions
-# OPEN_CLOSE_HAND=1. use the open and close hand functions
-set (OPEN_CLOSE_HAND 0)
-
-
-## Execution of the trajectory
-# VEL=0. Execution with position
-# VEL=1. Execution with velocity
-set (VEL 0)
 
 set(MAIN_PATH ${PROJECT_SOURCE_DIR}) ## Path of the main directory
 set(PATH_SCENARIOS /home/$ENV{USER}/scenarios) ## Path of the scenarios

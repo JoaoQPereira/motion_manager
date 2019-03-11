@@ -1,6 +1,9 @@
 #ifndef MOV_EXECUTEDIALOG_H
 #define MOV_EXECUTEDIALOG_H
 
+#include<QFileDialog>
+#include <QFile>
+#include <QTextStream>
 #include <QDialog>
 #include <ui_mov_executedialog.h>
 #include "config.hpp"
@@ -27,6 +30,14 @@ public:
      */
     ~Mov_ExecuteDialog();
 
+    /**
+    * @brief getTimeMappingParams
+    *
+    * @param params ()
+    */
+    void getTimeMappingParams(vector<double> &params);
+
+
 public Q_SLOTS:
     /**
      * @brief on_pushButtonOK_clicked
@@ -40,9 +51,35 @@ public Q_SLOTS:
      */
     void on_pushButtonOK_pressed();
 
+    /**
+     * @brief on_radioButton_execMov_Robot_clicked
+     *
+     */
+    void on_radioButton_execMov_Robot_clicked(bool check);
+
+    /**
+     * @brief on_radioButton_execMov_VRep_clicked
+     *
+     */
+    void on_radioButton_execMov_VRep_clicked();
+
+    /**
+     * @brief on_pushButtonLoad_clicked
+     *
+     */
+    void on_pushButtonLoad_clicked();
+
+    /**
+     * @brief on_pushButtonSave_clicked
+     *
+     */
+    void on_pushButtonSave_clicked();
+
+
 private:
     Ui::Mov_ExecuteDialogDesign *ui; /**< handle of the user interface */
     QNode *qnode; /**< pointer of the ROS node */
+
 
 Q_SIGNALS:
     /**

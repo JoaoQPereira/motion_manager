@@ -217,7 +217,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab_scenario">
      <property name="enabled">
@@ -905,7 +905,7 @@ p, li { white-space: pre-wrap; }
        </rect>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_mov">
        <attribute name="title">
@@ -1077,19 +1077,6 @@ p, li { white-space: pre-wrap; }
            <width>639</width>
            <height>181</height>
           </rect>
-         </property>
-        </widget>
-        <widget class="QCheckBox" name="checkBox_comp_exec">
-         <property name="geometry">
-          <rect>
-           <x>485</x>
-           <y>214</y>
-           <width>161</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>complete execution</string>
          </property>
         </widget>
         <widget class="QWidget" name="layoutWidget">
