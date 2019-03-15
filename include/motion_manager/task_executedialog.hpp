@@ -1,6 +1,9 @@
 #ifndef TASK_EXECUTEDIALOG_H
 #define TASK_EXECUTEDIALOG_H
 
+#include<QFileDialog>
+#include <QFile>
+#include <QTextStream>
 #include <QDialog>
 #include <ui_task_executedialog.h>
 #include "qnode.hpp"
@@ -26,6 +29,14 @@ public:
      */
     ~Task_ExecuteDialog();
 
+    /**
+    * @brief getTimeMappingParams
+    *
+    * @param params ()
+    */
+    void getTimeMappingParams(vector<vector<double>> &params);
+
+
 public Q_SLOTS:
     /**
      * @brief on_pushButtonOK_clicked
@@ -39,9 +50,31 @@ public Q_SLOTS:
      */
     void on_pushButtonOK_pressed();
 
+    /**
+     * @brief on_radioButton_execTask_Robot_clicked
+     */
+    void on_radioButton_execTask_Robot_clicked();
+
+    /**
+     * @brief on_radioButton_execTask_VRep_clicked
+     */
+    void on_radioButton_execTask_VRep_clicked();
+
+    /**
+     * @brief on_pushButtonLoad_clicked
+     */
+    void on_pushButtonLoad_clicked();
+
+    /**
+     * @brief on_pushButtonSave_clicked
+     */
+    void on_pushButtonSave_clicked();
+
+
 private:
     Ui::Task_ExecuteDialogDesign *ui; /**< handle of the user interface */
     QNode *qnode; /**< pointer of the ROS node */
+
 
 Q_SIGNALS:
     /**

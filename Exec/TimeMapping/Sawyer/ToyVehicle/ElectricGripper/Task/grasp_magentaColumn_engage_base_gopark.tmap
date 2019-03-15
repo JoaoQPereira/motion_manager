@@ -1,0 +1,13 @@
+### Parameters of the Time mapping ###
+### Plan Stage ###
+diff_weight_tau_plan=0
+dec_rate_a_plan=0
+time_const_w_plan=0
+### Approach Stage ###
+diff_weight_tau_app=0
+dec_rate_a_app=0
+time_const_w_app=0
+### Retreat Stage ###
+diff_weight_tau_ret=0
+dec_rate_a_ret=0
+time_const_w_ret=0

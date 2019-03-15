@@ -6,7 +6,6 @@
 #include <QTextStream>
 #include <QDialog>
 #include <ui_mov_executedialog.h>
-#include "config.hpp"
 #include "qnode.hpp"
 
 
@@ -55,7 +54,7 @@ public Q_SLOTS:
      * @brief on_radioButton_execMov_Robot_clicked
      *
      */
-    void on_radioButton_execMov_Robot_clicked(bool check);
+    void on_radioButton_execMov_Robot_clicked();
 
     /**
      * @brief on_radioButton_execMov_VRep_clicked

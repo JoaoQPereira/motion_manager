@@ -15,9 +15,9 @@ Sphere11_radius=0
 Sphere12_radius=60
 Sphere13_radius=80
 Sphere14_radius=70
-Hand_1_1=5
+Hand_1_1=15
 
-Hand_1_2=5
+Hand_1_2=15
 
 Hand_1_3=5
 
@@ -33,16 +33,16 @@ Hand_3_2=5
 
 Hand_3_3=5
 
-Hand_tip_1=0
+Hand_tip_1=10
 
-Hand_tip_2=0
+Hand_tip_2=10
 
 Hand_tip_3=0
 
 # Joint Expanse factors
-lambda_1=0.99
+lambda_1=1.0
 
-lambda_2=1
+lambda_2=1.0
 
 lambda_3=1.0
 
@@ -63,17 +63,20 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=-0.0123936
-init_vel_2=-0.034617
-init_vel_3=-0.00797838
-init_vel_4=0.0761494
-init_vel_5=-0.0151319
-init_vel_6=-0.0713831
-init_vel_7=-0.0327156
+init_vel_1=-0.0065605
+init_vel_2=-0.0341889
+init_vel_3=-0.00514435
+init_vel_4=0.076008
+init_vel_5=-0.00886933
+init_vel_6=-0.0716295
+init_vel_7=-0.033925
 init_vel_8=0
 init_vel_9=0
+
 init_vel_10=0
+
 init_vel_11=0
+
 # Final Velocity 
 final_vel_1=0
 
@@ -98,17 +101,20 @@ final_vel_10=0.0
 final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=-0.0132213
-init_acc_2=-0.0369288
-init_acc_3=-0.00851121
-init_acc_4=0.0812349
-init_acc_5=-0.0161424
-init_acc_6=-0.0761503
-init_acc_7=-0.0349005
+init_acc_1=-0.00590577
+init_acc_2=-0.0307768
+init_acc_3=-0.00463094
+init_acc_4=0.0684225
+init_acc_5=-0.00798417
+init_acc_6=-0.0644809
+init_acc_7=-0.0305393
 init_acc_8=0
 init_acc_9=0
+
 init_acc_10=0
+
 init_acc_11=0
+
 # Final Acceleration 
 final_acc_1=0
 
@@ -237,18 +243,17 @@ pre_place_z=0
 
 pre_place_dist=50
 
-post_place_x=0.707106781
+post_place_x=0
 
 post_place_y=0
 
-post_place_z=-0.707106781
+post_place_z=-1
 
-post_place_dist=45
+post_place_dist=75
 
-w_red_app=5
+w_red_app=7
 
-w_red_ret=15
-
+w_red_ret=7
 # Move settings
 target_x=-400
 
@@ -308,6 +313,10 @@ add_plane=false
 max_velocity=20.0
 
 max_alpha=10.0
+
+max_velocity_gripper=250.0
+
+max_alpha_gripper=10.0
 
 tar_av=true
 ob_av=true

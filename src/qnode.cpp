@@ -2030,7 +2030,7 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
         string obj_name = mov->getObject()->getName();
 #if HAND == 0
         MatrixXd tt = traj_mov_robot.at(k);
-        this->preMovementOperation(node, movType, retreat, arm_code, h_attach, tt, obj_name);
+        this->preMovementOperation(node, movType, retreat, armCode, h_attach, tt, obj_name);
 #elif HAND == 1
         this->preMovementOperation(node, movType, retreat, h_attach, obj_name);
 #endif
@@ -2254,8 +2254,8 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
         // **** Check if the object is in the robot's hand and if it has been grasped correctly
         string obj_name = this->curr_mov->getObject()->getName();
 #if HAND == 0
-        MatrixXd tt = traj_mov_robot.at(k);
-        this->preMovementOperation(node, movType, retreat, arm_code, h_attach, tt, obj_name);
+        MatrixXd tt = traj.at(k).at(0);
+        this->preMovementOperation(node, movType, retreat, armCode, h_attach, tt, obj_name);
 #elif HAND == 1
         this->preMovementOperation(node, movType, retreat, h_attach, obj_name);
 #endif

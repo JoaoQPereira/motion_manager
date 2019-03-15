@@ -47,13 +47,13 @@ void Mov_ExecuteDialog::on_pushButtonOK_clicked()
 void Mov_ExecuteDialog::on_pushButtonOK_pressed()
 {
     if(ui->radioButton_execMov_VRep->isChecked())
-        qnode->log(QNode::Info,std::string("executing the movement in V-REP . . ."));
+        qnode->log(QNode::Info, std::string("executing the movement in V-REP . . ."));
     else if(ui->radioButton_execMov_Robot->isChecked())
-        qnode->log(QNode::Info,std::string("executing the movement in Robot . . ."));
+        qnode->log(QNode::Info, std::string("executing the movement in Robot . . ."));
 }
 
 
-void Mov_ExecuteDialog::on_radioButton_execMov_Robot_clicked(bool check)
+void Mov_ExecuteDialog::on_radioButton_execMov_Robot_clicked()
 {
     ui->groupBox_gripperControl->setEnabled(true);
 }
@@ -103,18 +103,19 @@ void Mov_ExecuteDialog::on_pushButtonSave_clicked()
 {
     QString filename = QFileDialog::getSaveFileName(this,
                                                     tr("Save the file of tolerances"),
-                                                    QString(MAIN_PATH)+"/Exec",
+                                                    QString(MAIN_PATH)+"/Exec/TimeMapping/Sawyer",
                                                     "All Files (*.*);; tmap Files (*.tmap)");
 
     QFile f(filename);
     if(f.open(QIODevice::WriteOnly))
     {
         QTextStream stream(&f);
-        stream << "### Parameters of the Time mapping  ###" << endl;
+        stream << "### Parameters of the Time mapping ###" << endl;
         stream << "diff_weight_tau="<< ui->lineEdit_tau->text().toStdString().c_str() << endl;
         stream << "dec_rate_a="<< ui->lineEdit_a->text().toStdString().c_str() << endl;
         stream << "time_const_w="<< ui->lineEdit_w->text().toStdString().c_str() << endl;
     }
+
     f.close();
 }
 

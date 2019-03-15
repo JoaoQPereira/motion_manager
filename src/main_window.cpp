@@ -1143,7 +1143,7 @@ void MainWindow::on_pushButton_execMov_clicked()
             {
                 std::vector<double> paramsTimeMapping;
                 mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
-                qnode.Sawyer(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
+                qnode.execMovementSawyer(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
             }
 #endif
         }
