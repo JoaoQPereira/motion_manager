@@ -209,9 +209,13 @@ void MainWindow::execTask(int c, bool a)
         qnode.execTask(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
     else if(c == 1) //Execute the task in Robot
     {
-#if ROBOT == 2
+#if ROBOT == 1
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
-            qnode.execTaskSawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
+        {
+            std::vector<vector<double>> paramsTimeMapping;
+            mTaskExecutedlg->getTimeMappingParams(paramsTimeMapping);
+            qnode.execTaskSawyer(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, paramsTimeMapping);
+        }
 #endif
     }
 
@@ -728,7 +732,6 @@ void MainWindow::on_pushButton_plan_clicked()
     std::vector<double> move_final_hand;
     std::vector<double> move_final_arm;
     bool use_final;
-    bool moveit_plan = false;
     bool solved = false;
 
     try
@@ -736,7 +739,6 @@ void MainWindow::on_pushButton_plan_clicked()
         switch(planner_id)
         {
         case 0: // HUMP
-            moveit_plan = false;
             mTolHumpdlg->setInfo(prob->getInfoLine());
             // --- Tolerances for the final posture selection ---- //
             tols.tolTarPos = mTolHumpdlg->getTolTarPos(); // target position tolerances
@@ -854,7 +856,6 @@ void MainWindow::on_pushButton_plan_clicked()
                         }
                         this->timesteps_mov.push_back(timesteps_stage_aux);
                     }
-                    this->moveit_mov = false;
                     solved=true;
                 }
                 else
@@ -1205,9 +1206,13 @@ void MainWindow::on_pushButton_execTask_clicked()
             qnode.execTask(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, this->curr_scene);
         else if(usedPlat_task == 1) //Execute the task in Robot
         {
-#if ROBOT == 2
+#if ROBOT == 1
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
-                qnode.execTaskSawyer(this->jointsPosition_task, this->jointsVelocity_task, this->jointsAcceleration_task, this->timesteps_task);
+            {
+                std::vector<vector<double>> paramsTimeMapping;
+                mTaskExecutedlg->getTimeMappingParams(paramsTimeMapping);
+                qnode.execTaskSawyer(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, paramsTimeMapping);
+            }
 #endif
         }
     }
@@ -1341,34 +1346,8 @@ void MainWindow::on_pushButton_load_task_clicked()
                 }
 
                 //Planner ID
-                this->moveit_task = false;
                 if(QString::compare(plan_type,QString("HUMP"),Qt::CaseInsensitive)==0)
                     plan_id=0;
-                else if(QString::compare(plan_type,QString("RRT"),Qt::CaseInsensitive)==0)
-                {
-                    plan_id=1;
-                    this->moveit_task = true;
-                }
-                else if(QString::compare(plan_type,QString("RRTConnect"),Qt::CaseInsensitive)==0)
-                {
-                    plan_id=2;
-                    this->moveit_task = true;
-                }
-                else if(QString::compare(plan_type,QString("RRTstar"),Qt::CaseInsensitive)==0)
-                {
-                    plan_id=3;
-                    this->moveit_task = true;
-                }
-                else if(QString::compare(plan_type,QString("PRM"),Qt::CaseInsensitive)==0)
-                {
-                    plan_id=4;
-                    this->moveit_task = true;
-                }
-                else if(QString::compare(plan_type,QString("PRMstar"),Qt::CaseInsensitive)==0)
-                {
-                    plan_id=5;
-                    this->moveit_task = true;
-                }
 
                 // Grip type
                 if(QString::compare(grip_type,QString("Precision"),Qt::CaseInsensitive)==0)
@@ -1952,11 +1931,9 @@ void MainWindow::on_pushButton_append_mov_clicked()
 {
     ui.tableWidget_sol_task->clear();
     ui.pushButton_save_task->setEnabled(true);
-    this->moveit_task = false;
 
     if(curr_task->getProblem(ui.listWidget_movs->currentRow())->getSolved())
     {
-        if(curr_task->getProblem(ui.listWidget_movs->currentRow())->getPlannerID()!=0){this->moveit_task = true;}
         this->jointsPosition_task.push_back(this->jointsPosition_mov);
         this->jointsVelocity_task.push_back(this->jointsVelocity_mov);
         this->jointsAcceleration_task.push_back(this->jointsAcceleration_mov);

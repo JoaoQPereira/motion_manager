@@ -70,7 +70,7 @@ class QNode : public QThread
     Q_OBJECT
 
 
-public: 
+public:
     /**
      * @brief QNode, a constructor
      * @param argc
@@ -203,7 +203,7 @@ public:
      * @param timesteps
      * @return
      */
-    bool execTaskSawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps);
+    bool execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<double>>> &timesteps_task, vector<vector<double>> &tols_stop_task, vector<vector<string>> &traj_descr_task, taskPtr task, vector<vector<double>> &paramsTimeMapping);
 
 #endif
 

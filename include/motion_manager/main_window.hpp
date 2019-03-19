@@ -267,7 +267,7 @@ public Q_SLOTS:
 
     /**
      * @brief This method executes the planned movement in the selected plataform
-     * @param c , c = 0 => "V-Rep simulator", c = 1 => "robot", c = 2 => "RViz MoveIt"
+     * @param c , c = 0 => "V-Rep simulator", c = 1 => "robot"
      * @param a , a = true => "Don't ask again", a = false => "ask again"
      */
     void execMove(int c, bool a);
@@ -430,8 +430,6 @@ private:
     vector<double> njs_task;/**< normalized jerk scores of the movements in the task */
     vector<int> nmu_task;/**< number of the movement units in the task */
 
-    bool moveit_mov; /**< true if the movement has been planned by the moveit planner, false otherwise */
-    bool moveit_task; /**< true if at least one movement in the task has been planned by the moveit planner, false otherwise */
     HUMotion::planning_result_ptr h_results; /**< results of the HUMP planner */
     movementPtr curr_mov; /**< current movement */
     taskPtr curr_task;/**< current task */

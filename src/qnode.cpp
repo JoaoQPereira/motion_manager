@@ -2523,10 +2523,9 @@ bool QNode::moveRobotToStartPos(VectorXd &goal, double tol)
             log(QNode::Error, string("Error in reaching the initial posture of the robotic arm."));
             return false;
         }
-
-        sleep(2);
     }
 
+    sleep(2);
     ros::spinOnce();;
 
     return true;
@@ -2614,10 +2613,10 @@ void QNode::feedbackCb(const control_msgs::FollowJointTrajectoryFeedback::ConstP
         // **** Move the electric gripper to the current position **** //
         setGripperPosition(trajToExecute.at(step).at(7));
 
-        //        std::cout << "**********************" << std::endl;
-        //        std::cout << "Step : " << step << std::endl;
-        //        std::cout << "Total steps : " << trajToExecute.size() - 1 << std::endl;
-        //        std::cout << "Gripper pos: " << trajToExecute.at(step).at(7) << std::endl;
+        std::cout << "**********************" << std::endl;
+        std::cout << "Step : " << step << std::endl;
+        std::cout << "Total steps : " << trajToExecute.size() - 1 << std::endl;
+        std::cout << "Gripper pos: " << trajToExecute.at(step).at(7) << std::endl;
     }
 }
 #endif
@@ -2711,7 +2710,8 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
         {
             setGripperPosition(0.0);
             log(QNode::Info, string("The object was correctly grasped."));
-            sleep(2);
+            // TIRARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
+            sleep(3);
         }
 
         return true;
@@ -2831,9 +2831,163 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
 }
 
 
-bool QNode::execTaskSawyer(vector<vector<MatrixXd>>& traj_task, vector<vector<MatrixXd>>& vel_task, vector<vector<MatrixXd>>& acc_task, vector<vector<vector<double>>>& timesteps_task)
+bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<double>>> &timesteps_task, vector<vector<double>> &tols_stop_task, vector<vector<string>> &traj_descr_task, taskPtr task, vector<vector<double>> &paramsTimeMapping)
 {
+    ros::NodeHandle node;
+    // **** Movements Settings **** //
+    int nMicroSteps = 3;
+    bool plan;
+    vector<vector<MatrixXd>> traj;
+    vector<vector<vector<double>>> timesteps;
+    vector<string> task_descr;
+    vector<movementPtr> movTask;
+    vector<int> nProb;
+    // **** Tolerances **** //
+    double tolArm = 0.01;
+#if HAND == 1
+    // **** Electric Gripper **** //
+    double tolGrip = 0.003;
+    bool isGripperClosed;
+#endif
 
+
+    // ******************************* //
+    //            Publishers           //
+    // ******************************* //
+#if HAND == 1
+    // **** Publisher to the topic "io/end_effector/right_gripper/command" **** //
+    pubCommGripper = node.advertise<intera_core_msgs::IOComponentCommand>("/io/end_effector/right_gripper/command", 1, true);
+#endif
+
+
+    // ******************************* //
+    //          Join Movements         //
+    // ******************************* //
+    // Problems that don't belong to this task
+    int nUnsolProb = 0;
+
+    for(int k = 0; k < task->getProblemNumber(); ++k)
+    {
+        if(task->getProblem(k)->getPartOfTask() && task->getProblem(k)->getSolved())
+        {
+            // Number of the problem in the task to be performed
+            int kk = k - nUnsolProb;
+            nProb.push_back(k);
+
+            movementPtr mov = task->getProblem(kk)->getMovement();
+            movTask.push_back(mov);
+
+            vector<MatrixXd> traj_mov_planned = traj_task.at(kk);
+            vector<MatrixXd> traj_mov_robot = this->robotJointPositions(traj_mov_planned);
+            vector<vector<double>> timesteps_mov = timesteps_task.at(kk);
+            vector<string> traj_descr_mov = traj_descr_task.at(kk);
+
+            // **** Join plan and approach stage **** //
+            this->joinStages(traj_mov_robot, timesteps_mov, traj_descr_mov);
+
+            traj.push_back(traj_mov_robot);
+            timesteps.push_back(timesteps_mov);
+        }
+        else
+            ++nUnsolProb;
+    }
+
+    // **** Join movements to be performed **** //
+    this->joinMovements(traj, timesteps, task_descr);
+
+
+    // ******************************* //
+    //         Initial Postures        //
+    // ******************************* //
+    // Move the robotic arm to its initial posture
+    VectorXd initPos = traj.at(0).at(0).row(0);
+    this->moveRobotToStartPos(initPos, tolArm);
+
+#if HAND == 1
+    // Move the electric gripper to its initial posture
+    this->moveGripperToStartPos(initPos[7], tolGrip);
+#endif
+
+
+    // ******************************* //
+    //           Execute Task          //
+    // ******************************* //
+    for(size_t k = 0; k < traj.size(); ++k)
+    {
+        int prob;
+        std::vector<vector<double>> trajToExecute;
+        std::vector<double> timeFromStart;
+        std::vector<double> params;
+
+        string mov_descr = task_descr.at(k);
+
+        // **** Movement: Current stage **** //
+        if(strcmp(mov_descr.c_str(), "plan") == 0)
+        {
+            // Plan or plan + approach stage
+            plan = true;
+            this->curr_mov = movTask.at(k);
+            prob = nProb.at(k);
+        }
+        else if((strcmp(mov_descr.c_str(), "retreat_plan") == 0) || (strcmp(mov_descr.c_str(), "retreat") == 0))
+        {
+            // Retreat or Retreat + plan or retreat + plan + approach stage
+            plan = false;
+            this->curr_mov = movTask.at(k - 1);
+            prob = nProb.at(k - 1);
+        }
+
+
+        // **** Hand state: close or opened **** //
+        int movType = this->curr_mov->getType();
+
+        switch (movType)
+        {
+        case 0: case 4: // Reach-to-grasp, Disengage
+            if(plan)
+            {
+                isGripperClosed = false;
+                std::copy(paramsTimeMapping.at(1).begin(), paramsTimeMapping.at(1).end(), back_inserter(params));
+            }
+            else
+                isGripperClosed = true;
+            break;
+        case 2: case 3: // Transport, Engage
+            if(plan)
+                isGripperClosed = true;
+            else
+            {
+                isGripperClosed = false;
+                std::copy(paramsTimeMapping.at(2).begin(), paramsTimeMapping.at(2).end(), back_inserter(params));
+            }
+            break;
+        case 1: case 5: // Reaching, Go-Park
+            isGripperClosed = false;
+            std::copy(paramsTimeMapping.at(0).begin(), paramsTimeMapping.at(0).end(), back_inserter(params));
+            break;
+        }
+
+        // **** Joints linear interpolation **** //
+        MatrixXd traj_stage = traj.at(k).at(0);
+        std::vector<double> timesteps_stage = timesteps.at(k).at(0);
+        this->jointInterpolation(nMicroSteps, traj_stage, timesteps_stage, trajToExecute, timeFromStart);
+
+        // **** Joint Trajectory Action Server **** //
+        bool closeGripper = (plan && (movType == 0 || movType == 4));
+        this->jointTrajectoryAction(trajToExecute, timeFromStart, params, closeGripper, isGripperClosed);
+
+        log(QNode::Info,string("Movement completed."));
+        ros::spinOnce();
+
+        trajToExecute.clear();
+        timeFromStart.clear();
+        params.clear();
+    }
+
+    log(QNode::Info, string("Task completed"));
+    ros::spinOnce();
+
+    return true;
 }
 #endif
 
