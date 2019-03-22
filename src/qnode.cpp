@@ -2773,8 +2773,11 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
 
 #if HAND == 1
     if(!isGripperClosed)
+    {
         // **** Move the electric gripper to its initial posture **** //
         this->moveGripperToStartPos(initPos[7], tolGrip);
+        sleep(5);
+    }
 #endif
 
 
@@ -2906,6 +2909,7 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
 #if HAND == 1
     // Move the electric gripper to its initial posture
     this->moveGripperToStartPos(initPos[7], tolGrip);
+    sleep(5);
 #endif
 
 

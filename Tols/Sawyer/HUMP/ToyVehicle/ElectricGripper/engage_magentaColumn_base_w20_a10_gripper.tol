@@ -241,7 +241,7 @@ pre_place_y=0
 
 pre_place_z=0
 
-pre_place_dist=50
+pre_place_dist=60
 
 post_place_x=0
 
@@ -254,6 +254,7 @@ post_place_dist=75
 w_red_app=7
 
 w_red_ret=7
+
 # Move settings
 target_x=-400
 
