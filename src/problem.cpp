@@ -364,9 +364,9 @@ bool Problem::finalPostureHand()
 #elif HAND == 1
 
     if(prec)
-        d_obj = obj->getRadius() * 2.0 + TOL_GRIP;
+        d_obj = double(1.015) * obj->getRadius() * 2.0 + TOL_GRIP;
     else
-        d_obj = double(1.035) * obj->getRadius() * 2.0 + TOL_GRIP;
+        d_obj = double(1.025) * obj->getRadius() * 2.0 + TOL_GRIP;
 
     if(d_obj > hh->getElectricGripper().maxAperture)
     {
@@ -609,9 +609,34 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
         pose = this->mov->getPose();
 
         // engaging info
-        obj_eng = this->mov->getObjectEng();
         eng = obj->getEngagePoint();
-        eng1 = obj_eng->getEngagePoint();
+        obj_eng = this->mov->getObjectEng();
+
+        if(sceneID == 6 && mov_type == 3 && obj_eng->getName() == "Base")
+        {
+            vector<posePtr> posesColumns;
+            unsigned int pos_id;
+
+            this->scene->getPoses(posesColumns);
+            string obj_name = obj->getName();
+
+            if(obj_name == "BlueColumn")
+                pos_id = 0;
+            else if(obj_name == "GreenColumn")
+                pos_id = 1;
+            else if(obj_name == "RedColumn")
+                pos_id = 2;
+            else if(obj_name == "MagentaColumn")
+                pos_id = 3;
+
+            string eng_name = posesColumns.at(pos_id)->getName();
+            pos eng_pos = posesColumns.at(pos_id)->getPos();
+            orient eng_or = posesColumns.at(pos_id)->getOr();
+
+            eng1 = engagePtr(new EngagePoint(eng_name, eng_pos, eng_or));
+        }
+        else
+            eng1 = obj_eng->getEngagePoint();
     }
 
 
@@ -659,7 +684,7 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
 
 
     if(mov_type != 1 && mov_type != 5)
-    {
+    {       
         // compute the position of the target when the object will be engaged
         pos eng1_pos = eng1->getPos(); // position related to the world of the engage point of the other object
         orient eng1_or = eng1->getOr(); // orientation of the engage point of the other object

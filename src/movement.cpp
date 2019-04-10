@@ -222,7 +222,8 @@ Movement::Movement(int type, int arm,objectPtr obj, objectPtr obj_eng, posePtr p
     this->obj_eng = obj_eng;
     this->pose = pose;
 
-    this->prec=prec;
+    this->prec = prec;
+
     if(prec)
         this->grip_str=string("Precision");
     else

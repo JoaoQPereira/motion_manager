@@ -603,6 +603,7 @@ bool QNode::loadScenario(const std::string& path,int id)
     if(id >= 2)
     {
         subJointsStateRobot = n.subscribe("/robot/joint_states", 1, &QNode::SawyerJointsCallback, this);
+        subHeadState = n.subscribe("/robot/head/head_state", 1, &QNode::SawyerHeadCallback, this);
 #if HAND == 1
         subGripperStateRobot = n.subscribe("/io/end_effector/right_gripper/state", 1, &QNode::SawyerGripperCallback, this);
 #endif
@@ -642,12 +643,12 @@ bool QNode::loadScenario(const std::string& path,int id)
         subJoints_state = n.subscribe("/vrep/joints_state", 1, &QNode::JointsCallback, this);
         subRightProxSensor = n.subscribe("/vrep/right_prox_sensor", 1, &QNode::rightProxCallback, this);
 
-        if(id != 4 && id != 5)
+        if(id == 0 || id == 1)
             subLeftProxSensor = n.subscribe("/vrep/left_prox_sensor", 1, &QNode::leftProxCallback, this);
 
         switch(id)
         {
-        case 0: case 2: case 4:
+        case 0: case 2: case 4: case 5:
             // **** Assembly scenario: the Toy vehicle with ARoS **** //
             // **** Assembly scenario: the Toy vehicle with Jarde **** //
             // **** Assembly scenario: the Toy vehicle with Sawyer **** //
@@ -836,12 +837,12 @@ bool QNode::getElements(scenarioPtr scene)
         throw string("Communication error");
     }
 
-    if(scenarioID == 2 || scenarioID == 4)
+    if(scenarioID == 2 || scenarioID == 4 || scenarioID == 6)
     {
         srvi.request.signalName = NPOSES;
         add_client.call(srvi);
         if(srvi.response.result == 1)
-            n_poses= srvi.response.signalValue;
+            n_poses = srvi.response.signalValue;
         else
         {
             succ = false;
@@ -850,7 +851,7 @@ bool QNode::getElements(scenarioPtr scene)
     }
 
     client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
-    if(scenarioID == 1 || scenarioID ==  3 || scenarioID == 5) // Toy Vehicle scenarios (ARoS, Sawyer)
+    if(scenarioID == 1 || scenarioID ==  3 || scenarioID == 5 || scenarioID == 6) // Toy Vehicle scenarios (ARoS, Sawyer)
     {
         objs_prefix.push_back("BlueColumn");     // obj_id = 0
         objs_prefix.push_back("GreenColumn");    // obj_id = 1
@@ -971,20 +972,54 @@ bool QNode::getElements(scenarioPtr scene)
     // ******************************* //
     //      Poses in the scenario      //
     // ******************************* //
-    if(scenarioID == 2 || scenarioID == 4) // Drinking Service scenarios (ARoS, Sawyer)
+    if(scenarioID == 2 || scenarioID == 4 || scenarioID == 6) // Drinking Service scenarios (ARoS, Sawyer) and Toy Vehicle scenario (Sawyer with electric gripper)
     {
-        // pose_id = 0
-        poses_prefix.push_back("BottleJuice_pose1");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-        // pose_id = 1
-        poses_prefix.push_back("BottleJuice_pose2");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
-        // pose_id = 2
-        poses_prefix.push_back("BottleJuice_pose3");
-        poses_rel.push_back(true);
-        poses_obj_id.push_back(2);
+        if(scenarioID == 2 || scenarioID == 4)
+        {
+            // pose_id = 0
+            poses_prefix.push_back("BottleJuice_pose1");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(2);
+            // pose_id = 1
+            poses_prefix.push_back("BottleJuice_pose2");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(2);
+            // pose_id = 2
+            poses_prefix.push_back("BottleJuice_pose3");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(2);
+        }
+        else if(scenarioID == 6)
+        {
+            // pose_id = 0
+            poses_prefix.push_back("BlueColumn_EngPose");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(0);
+            // pose_id = 1
+            poses_prefix.push_back("GreenColumn_EngPose");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(1);
+            // pose_id = 2
+            poses_prefix.push_back("RedColumn_EngPose");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(2);
+            // pose_id = 3
+            poses_prefix.push_back("MagentaColumn_EngPose");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(3);
+            // pose_id = 4
+            poses_prefix.push_back("GreenColumn_Pose1");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(1);
+            // pose_id = 5
+            poses_prefix.push_back("GreenColumn_Pose2");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(1);
+            // pose_id = 6
+            poses_prefix.push_back("MagentaColumn_Pose1");
+            poses_rel.push_back(true);
+            poses_obj_id.push_back(3);
+        }
 
         while(cnt_pose < n_poses)
         {
@@ -2525,17 +2560,34 @@ bool QNode::moveRobotToStartPos(VectorXd &goal, double tol)
         }
     }
 
-    sleep(2);
     ros::spinOnce();;
 
     return true;
 }
 
 
+void QNode::moveHeadToStartPos(double tol)
+{
+    while(abs(static_cast<double>(this->pan) - 0.0) > tol)
+    {
+        ros::Rate contRate(100); // 100 Hz = 0.01 seconds
+
+        intera_core_msgs::HeadPanCommand setHeadPos;
+        setHeadPos.target = 0.0;
+        setHeadPos.speed_ratio = 0.2f;
+        setHeadPos.pan_mode = intera_core_msgs::HeadPanCommand::SET_ACTIVE_MODE;
+        pubHeadState.publish(setHeadPos);
+
+        contRate.sleep();
+        ros::spinOnce();
+    }
+}
+
+
 #if HAND == 1
 void QNode::setGripperPosition(double newPos)
 {
-    ros::Rate rate(10); // 7 Hz = 0.14 seconds
+    ros::Rate rate(10); // 10 Hz = 0.1 seconds
 
     intera_core_msgs::IOComponentCommand setPosGrip;
     setPosGrip.time = ros::Time::now();
@@ -2584,7 +2636,6 @@ void QNode::moveGripperToStartPos(double goal, double tol)
         while(robotVel.at(7) != maxVel)
             ros::spinOnce();
 
-
         // Set the position of gripper
         setGripperPosition(goal);
     }
@@ -2613,10 +2664,10 @@ void QNode::feedbackCb(const control_msgs::FollowJointTrajectoryFeedback::ConstP
         // **** Move the electric gripper to the current position **** //
         setGripperPosition(trajToExecute.at(step).at(7));
 
-        std::cout << "**********************" << std::endl;
-        std::cout << "Step : " << step << std::endl;
-        std::cout << "Total steps : " << trajToExecute.size() - 1 << std::endl;
-        std::cout << "Gripper pos: " << trajToExecute.at(step).at(7) << std::endl;
+//        std::cout << "**********************" << std::endl;
+//        std::cout << "Step : " << step << std::endl;
+//        std::cout << "Total steps : " << trajToExecute.size() - 1 << std::endl;
+//        std::cout << "Gripper pos: " << trajToExecute.at(step).at(7) << std::endl;
     }
 }
 #endif
@@ -2710,9 +2761,9 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
         {
             setGripperPosition(0.0);
             log(QNode::Info, string("The object was correctly grasped."));
-            // TIRARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-            sleep(3);
         }
+
+        sleep(1);
 
         return true;
     }
@@ -2732,18 +2783,21 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
 {
     ros::NodeHandle node;
     int movType = mov->getType();
-    double tolArm = 0.01; // radians
+    double tolArm = 0.04; // radians = 2.29 degrees
+    double tolHead = 0.01; // radians = 0.57 degress
     int nMicroSteps = 3;
 #if HAND == 1
     // **** Electric Gripper **** //
-    double tolGrip = 0.003; // meters
+    double tolGrip = 0.035; // radians = 2.01 degrees
     bool isGripperClosed;
 #endif
 
 
     // ************************************************** //
-    //                Gripper configuration               //
+    //        Publishers and Gripper configuration        //
     // ************************************************** //
+    pubHeadState = node.advertise<intera_core_msgs::HeadPanCommand>("/robot/head/command_head_pan", 1, true);
+
 #if HAND == 1
     // **** Publisher to the topic "io/end_effector/right_gripper/command" **** //
     pubCommGripper = node.advertise<intera_core_msgs::IOComponentCommand>("/io/end_effector/right_gripper/command", 1, true);
@@ -2770,13 +2824,14 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
 
     // **** Move the robotic arm to its initial posture **** //
     this->moveRobotToStartPos(initPos, tolArm);
+    // **** Move the head to its initial posture **** //
+    this->moveHeadToStartPos(tolHead);
 
 #if HAND == 1
     if(!isGripperClosed)
     {
         // **** Move the electric gripper to its initial posture **** //
         this->moveGripperToStartPos(initPos[7], tolGrip);
-        sleep(5);
     }
 #endif
 
@@ -2790,6 +2845,8 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
     // ************************************************** //
     //           Perform the planned trajectory           //
     // ************************************************** //
+    sleep(5);
+
     for(size_t k = 0; k < traj_mov_robot.size(); ++k)
     {
         std::vector<vector<double>> trajToExecute;
@@ -2825,6 +2882,8 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
         // **** Joint Trajectory Action Server **** //
         bool closeGripper = (((strcmp(mov_descr.c_str(), "plan") == 0) && (movType == 0 || movType == 4)));
         this->jointTrajectoryAction(trajToExecute, timeFromStart, paramsTimeMapping, closeGripper, isGripperClosed);
+
+        ros::spinOnce();
     }
 
     log(QNode::Info,string("Movement completed."));
@@ -2846,10 +2905,11 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
     vector<movementPtr> movTask;
     vector<int> nProb;
     // **** Tolerances **** //
-    double tolArm = 0.01;
+    double tolArm =  0.035; // radians = 2.01 degrees
+    double tolHead = 0.01; // radians = 0.57 degress
 #if HAND == 1
     // **** Electric Gripper **** //
-    double tolGrip = 0.003;
+    double tolGrip = 0.003; // meters
     bool isGripperClosed;
 #endif
 
@@ -2857,6 +2917,7 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
     // ******************************* //
     //            Publishers           //
     // ******************************* //
+    pubHeadState = node.advertise<intera_core_msgs::HeadPanCommand>("/robot/head/command_head_pan", 1, true);
 #if HAND == 1
     // **** Publisher to the topic "io/end_effector/right_gripper/command" **** //
     pubCommGripper = node.advertise<intera_core_msgs::IOComponentCommand>("/io/end_effector/right_gripper/command", 1, true);
@@ -2906,16 +2967,20 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
     VectorXd initPos = traj.at(0).at(0).row(0);
     this->moveRobotToStartPos(initPos, tolArm);
 
+    // Move the head to its initial posture
+    this->moveHeadToStartPos(tolHead);
+
 #if HAND == 1
     // Move the electric gripper to its initial posture
     this->moveGripperToStartPos(initPos[7], tolGrip);
-    sleep(5);
 #endif
 
 
     // ******************************* //
     //           Execute Task          //
     // ******************************* //
+    sleep(10);
+
     for(size_t k = 0; k < traj.size(); ++k)
     {
         int prob;
@@ -2980,9 +3045,7 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
         bool closeGripper = (plan && (movType == 0 || movType == 4));
         this->jointTrajectoryAction(trajToExecute, timeFromStart, params, closeGripper, isGripperClosed);
 
-        log(QNode::Info,string("Movement completed."));
         ros::spinOnce();
-
         trajToExecute.clear();
         timeFromStart.clear();
         params.clear();
@@ -3526,6 +3589,13 @@ void QNode::SawyerJointsCallback(const sensor_msgs::JointState &state)
 }
 
 
+void QNode::SawyerHeadCallback(const intera_core_msgs::HeadState &state)
+{
+    this->pan = state.pan;
+}
+
+
+#if HAND == 1
 void QNode::SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state)
 {
     std::vector<intera_core_msgs::IODataStatus> signals = state.signals;
@@ -3542,6 +3612,7 @@ void QNode::SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state)
             robotVel.at(7) = atof(data.c_str());
     }
 }
+#endif
 #endif
 
 }  // namespace motion_manager

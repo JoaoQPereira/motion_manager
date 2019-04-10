@@ -102,6 +102,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with Sawyer"));
 #elif HAND == 1
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
+    scenarios.push_back(QString("Assembly scenario: Interaction to build the base of the Toy Vehicle"));
 #endif
 
     for (size_t i=0; i< scenarios.size();++i)
@@ -250,7 +251,8 @@ void MainWindow::addObject(string value)
 
 void MainWindow::addPose(string value)
 {
-    ui.comboBox_poses->addItem(QString(value.c_str()));
+    if(this->scenario_id != 5 || value == "MagentaColumn_Pose1" || value == "GreenColumn_Pose1" || value == "GreenColumn_Pose2")
+        ui.comboBox_poses->addItem(QString(value.c_str()));
 }
 
 
@@ -348,17 +350,19 @@ void MainWindow::on_pushButton_loadScenario_clicked()
         if(equal==0)
         {
             // Toy vehicle scenario with ARoS
-            string path_vrep_toyscene_aros = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_aros_bill.ttt");
+            string path_vrep_toyscene_aros = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_aros_bill.ttt");
             // Drinking Service task with ARoS
-            string path_vrep_drinking_aros = PATH_SCENARIOS+string("/vrep/DrinkingServiceTask_aros_bill.ttt");
+            string path_vrep_drinking_aros = PATH_SCENARIOS + string("/vrep/DrinkingServiceTask_aros_bill.ttt");
             // Toy vehicle scenario with Jarde
-            string path_vrep_toyscene_jarde = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_jarde.ttt");
+            string path_vrep_toyscene_jarde = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_jarde.ttt");
             // Toy vehicle scenario with Sawyer
-            string path_vrep_toyscene_sawyer = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_bill.ttt");
+            string path_vrep_toyscene_sawyer = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_bill.ttt");
             // Drinking Service task with Sawyer
-            string path_vrep_drinking_sawyer = PATH_SCENARIOS+string("/vrep/DrinkingServiceTask_sawyer_bill.ttt");
+            string path_vrep_drinking_sawyer = PATH_SCENARIOS + string("/vrep/DrinkingServiceTask_sawyer_bill.ttt");
             // Toy vehicle scenario with Sawyer with Eletric Parallel Gripper
-            string path_vrep_toyscene_sawyer_gripper = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_gripper_bill.ttt");
+            string path_vrep_toyscene_sawyer_gripper = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_gripper_bill.ttt");
+            // Toy vehicle scenario with Sawyer with Eletric Parallel Gripper
+            string path_vrep_toyscene_sawyer_gripper_interaction = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_gripper_bill_interaction.ttt");
 
             switch(i)
             {
@@ -427,6 +431,27 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     ui.groupBox_homePosture->setEnabled(false);
                     ui.pushButton_loadScenario->setEnabled(true);
                 }
+#elif HAND == 1
+                this->scenario_id = 5;
+
+                if (qnode.loadScenario(path_vrep_toyscene_sawyer_gripper_interaction, this->scenario_id))
+                {
+                    qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED"));
+                    ui.pushButton_getElements->setEnabled(true);
+                    ui.groupBox_getElements->setEnabled(true);
+                    ui.groupBox_homePosture->setEnabled(true);
+                    string title = string("Assembly scenario: the Toy vehicle with Sawyer");
+                    init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                    curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                }
+                else
+                {
+                    qnode.log(QNode::Error,std::string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
+                    ui.groupBox_getElements->setEnabled(false);
+                    ui.groupBox_homePosture->setEnabled(false);
+                    ui.pushButton_loadScenario->setEnabled(true);
+                }
+                break;
 #endif
                 break;
             case 2: // Assembly scenario: the Toy vehicle with Sawyer
@@ -515,7 +540,7 @@ void MainWindow::on_pushButton_getElements_clicked()
             ui.groupBox_task->setEnabled(false);
             ui.tabWidget_sol->setEnabled(false);
 
-            if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4)
+            if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4 || scenario_id == 5)
             {
                 ui.radioButton_right->setEnabled(false);
                 ui.radioButton_left->setEnabled(false);
@@ -572,7 +597,7 @@ void MainWindow::on_pushButton_addMov_clicked()
         {
             // ----------------------- Engage Movements -------------------------------//
             string obj_name = ui.comboBox_objects->currentText().toStdString();
-            string obj_eng_name = ui.comboBox_objects_eng->currentText().toStdString();
+            string obj_eng_name = ui.comboBox_objects_eng->currentText().toStdString(); 
             objectPtr obj = curr_scene->getObject(obj_name);
             objectPtr obj_eng = curr_scene->getObject(obj_eng_name);
 
@@ -595,7 +620,7 @@ void MainWindow::on_pushButton_addMov_clicked()
                 }
 
                 if(planner_id==0)
-                    curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj,obj_eng,prec),new Scenario(*(this->curr_scene.get()))));
+                    curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel, obj, obj_eng, prec),new Scenario(*(this->curr_scene.get()))));
 
                 success=true;
             }
@@ -1869,6 +1894,8 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     string path_vrep_drinking_sawyer = PATH_SCENARIOS+string("/vrep/DrinkingServiceTask_sawyer_bill.ttt");
     // Toy vehicle scenario with Sawyer
     string path_vrep_toyscene_sawyer_gripper = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_gripper_bill.ttt");
+    // Toy vehicle scenario with Sawyer
+    string path_vrep_toyscene_sawyer_gripper_interaction = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_gripper_bill_interaction.ttt");
 
 
     switch(scene_id)
@@ -1904,6 +1931,13 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     case 4:
         // Assembly scenario: the Toy vehicle with Sawyer (with Gripper)
         path = path_vrep_toyscene_sawyer_gripper;
+        title = string("Assembly scenario: the Toy vehicle with Sawyer");
+        success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
+        failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
+        break;
+    case 5:
+        // Assembly scenario: the Toy vehicle with Sawyer (with Gripper)
+        path = path_vrep_toyscene_sawyer_gripper_interaction;
         title = string("Assembly scenario: the Toy vehicle with Sawyer");
         success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
         failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
@@ -2167,7 +2201,7 @@ void MainWindow::on_comboBox_Task_currentIndexChanged(int i)
         ui.radioButton_right->setEnabled(true);
         ui.radioButton_left->setEnabled(true);
 
-        if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4)
+        if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4 || scenario_id == 5)
         {
             ui.radioButton_right->setEnabled(false);
             ui.radioButton_left->setEnabled(false);

@@ -25,6 +25,8 @@
 #include <intera_core_msgs/IOComponentCommand.h>
 #include <intera_core_msgs/IODataStatus.h>
 #include <intera_core_msgs/RobotAssemblyState.h>
+#include <intera_core_msgs/HeadState.h>
+#include <intera_core_msgs/HeadPanCommand.h>
 #include <actionlib/client/simple_action_client.h>
 #include <unistd.h>
 
@@ -377,6 +379,12 @@ private:
      */
     bool moveRobotToStartPos(VectorXd &goal, double tol);
 
+    /**
+     * @brief moveHeadToStartPos
+     * @param tol
+     */
+    void moveHeadToStartPos(double tol);
+
 #if HAND == 1
     /**
      * @brief setGripperPosition
@@ -548,10 +556,18 @@ private:
     void SawyerJointsCallback(const sensor_msgs::JointState &state);
 
     /**
+     * @brief SawyerHeadCallback
+     * @param state
+     */
+    void SawyerHeadCallback(const intera_core_msgs::HeadState &state);
+
+#if HAND == 1
+    /**
      * @brief
      * @param state
      */
     void SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state);
+#endif
 #endif
 
 
@@ -624,12 +640,16 @@ private:
     //************************************ Collaborative robot Sawyer ************************************//
     std::vector<double> robotPosture; /**< position of the right arm*/
     std::vector<double> robotVel; /**< velocity of the right arm*/
+    // Head
+    float pan;
     // **** ROS communication **** //
     // Actionlibs clients
     motionCommClient* motionComm; /**< */
     followJointTrajectoryClient* folJointTraj; /**< */
     // Subscribers of the joints and robot states
     ros::Subscriber subJointsStateRobot; /**< ROS subscriber to the topic /robot/joint_states*/
+    ros::Subscriber subHeadState;
+    ros::Publisher pubHeadState;
 #if HAND == 1
     // **** Electric Gripper **** //
     ros::Subscriber subGripperStateRobot; /**< ROS subscriber to the topic */
