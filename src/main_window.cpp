@@ -251,7 +251,7 @@ void MainWindow::addObject(string value)
 
 void MainWindow::addPose(string value)
 {
-    if(this->scenario_id != 5 || value == "MagentaColumn_Pose1" || value == "GreenColumn_Pose1" || value == "GreenColumn_Pose2")
+    if(this->scenario_id != 5 || value == "GreenColumn_Pose1")
         ui.comboBox_poses->addItem(QString(value.c_str()));
 }
 

@@ -1,5 +1,5 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: GreenColumn, Object Engaged: , Pose: , Grip Type: Precision
+# Planner: HUMP ,Movement: Engage, Arm: right, Object: RedColumn, Object Engaged: Base, Pose: , Grip Type: Precision
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
 Sphere2_radius=60
@@ -37,7 +37,7 @@ Hand_tip_1=10
 
 Hand_tip_2=10
 
-Hand_tip_3=5
+Hand_tip_3=0
 
 # Joint Expanse factors
 lambda_1=1.0
@@ -63,21 +63,21 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=0
+init_vel_1=-2.2843e-17
 
-init_vel_2=0
+init_vel_2=1.09e-16
 
-init_vel_3=0
+init_vel_3=5.00958e-17
 
-init_vel_4=0
+init_vel_4=-3.92649e-17
 
-init_vel_5=0
+init_vel_5=1.76592e-17
 
-init_vel_6=0
+init_vel_6=8.07256e-17
 
-init_vel_7=0
+init_vel_7=-2.20769e-17
 
-init_vel_8=0
+init_vel_8=-8.70383e-48
 
 init_vel_9=0
 
@@ -100,30 +100,30 @@ final_vel_6=0
 
 final_vel_7=0
 
-final_vel_8=0
+final_vel_8=0.0
 
-final_vel_9=0
+final_vel_9=0.0
 
-final_vel_10=0
+final_vel_10=0.0
 
-final_vel_11=0
+final_vel_11=0.0
 
 # Initial Acceleration 
-init_acc_1=0
+init_acc_1=-3.63755e-16
 
-init_acc_2=0
+init_acc_2=-1.7891e-16
 
-init_acc_3=0
+init_acc_3=5.02678e-16
 
-init_acc_4=0
+init_acc_4=7.71842e-17
 
-init_acc_5=0
+init_acc_5=4.03142e-16
 
-init_acc_6=0
+init_acc_6=-5.43178e-16
 
-init_acc_7=0
+init_acc_7=-2.3541e-16
 
-init_acc_8=0
+init_acc_8=-2.4482e-17
 
 init_acc_9=0
 
@@ -146,50 +146,50 @@ final_acc_6=0
 
 final_acc_7=0
 
-final_acc_8=0
+final_acc_8=0.0
 
-final_acc_9=0
+final_acc_9=0.0
 
-final_acc_10=0
+final_acc_10=0.0
 
-final_acc_11=0
+final_acc_11=0.0
 
 # Tolerances with the target [mm]
-tar_xx_1=5
+tar_xx_1=0
 
-tar_xx_2=5
+tar_xx_2=0
 
-tar_xx_3=5
+tar_xx_3=0
 
-tar_yy_1=5
+tar_yy_1=0
 
-tar_yy_2=5
+tar_yy_2=0
 
-tar_yy_3=5
+tar_yy_3=0
 
-tar_zz_1=5
+tar_zz_1=0
 
-tar_zz_2=5
+tar_zz_2=0
 
-tar_zz_3=5
+tar_zz_3=0
 
-tar_xy_1=5
+tar_xy_1=0
 
-tar_xy_2=5
+tar_xy_2=0
 
-tar_xy_3=5
+tar_xy_3=0
 
-tar_xz_1=5
+tar_xz_1=0
 
-tar_xz_2=5
+tar_xz_2=0
 
-tar_xz_3=5
+tar_xz_3=0
 
-tar_yz_1=5
+tar_yz_1=0
 
-tar_yz_2=5
+tar_yz_2=0
 
-tar_yz_3=5
+tar_yz_3=0
 
 # Tolerances with the obstacles [mm]
 obs_xx_1=0
@@ -238,38 +238,36 @@ pre_grasp_x=0
 
 pre_grasp_y=0
 
-pre_grasp_z=-1
+pre_grasp_z=0
 
-pre_grasp_dist=120
+pre_grasp_dist=0
 
 post_grasp_x=0
 
 post_grasp_y=0
 
-post_grasp_z=-1
+post_grasp_z=0
 
-post_grasp_dist=20
+post_grasp_dist=0
 
 # Place settings
-pre_place_x=0
+pre_place_x=1
 
 pre_place_y=0
 
 pre_place_z=0
 
-pre_place_dist=0
-
+pre_place_dist=50
 post_place_x=0
 
 post_place_y=0
 
-post_place_z=0
+post_place_z=-1
 
-post_place_dist=0
+post_place_dist=55
 
-w_red_app=2
-
-w_red_ret=28
+w_red_app=5
+w_red_ret=5
 # Move settings
 target_x=-400
 
@@ -277,9 +275,9 @@ target_y=0
 
 target_z=1000
 
-target_roll=90
+target_roll=90.0
 
-target_pitch=-180
+target_pitch=-180.0
 
 target_yaw=0.0
 
@@ -299,11 +297,11 @@ final_arm_7=0.0
 
 final_hand_1=0.0
 
-final_hand_2=69.95
+final_hand_2=1.22
 
-final_hand_3=69.95
+final_hand_3=1.22
 
-final_hand_4=69.95
+final_hand_4=1.22
 
 sel_final=false
 plane_point1_x=0.0

@@ -1011,14 +1011,6 @@ bool QNode::getElements(scenarioPtr scene)
             poses_prefix.push_back("GreenColumn_Pose1");
             poses_rel.push_back(true);
             poses_obj_id.push_back(1);
-            // pose_id = 5
-            poses_prefix.push_back("GreenColumn_Pose2");
-            poses_rel.push_back(true);
-            poses_obj_id.push_back(1);
-            // pose_id = 6
-            poses_prefix.push_back("MagentaColumn_Pose1");
-            poses_rel.push_back(true);
-            poses_obj_id.push_back(3);
         }
 
         while(cnt_pose < n_poses)
@@ -2445,7 +2437,7 @@ void QNode::joinMovements(vector<vector<MatrixXd>> &traj, vector<vector<vector<d
             MatrixXd traj_stage = traj_mov.at(kk);
             vector<double> timesteps_stage = timesteps_mov.at(kk);
 
-            if((k == 0 || !joinStages) &&  kk == 0)
+            if(((k == 0 || !joinStages) &&  kk == 0))
             {
                 // First movement: Plan or Plan + Approach
                 // Other movement: Plan or Plan + Approach without previous execution of the retreat stage
@@ -2454,6 +2446,12 @@ void QNode::joinMovements(vector<vector<MatrixXd>> &traj, vector<vector<vector<d
                 new_traj_mov.push_back(traj_stage);
                 new_timesteps_mov.push_back(timesteps_stage);
                 task_descr.push_back("plan");
+            }
+            else if((kk == 0 && kk + 1 >= traj_mov.size()) && joinStages)
+            {
+                // If the movement doesn't have retreat stage and it has joined to the previous movement
+                // Example: Reach to grasp + (Go Park) + Reach to grasp
+                joinStages = false;
             }
             else if(kk == 1)
             {

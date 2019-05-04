@@ -1,5 +1,5 @@
 ### Parameters of the Human-like Upper-limbs Motion Library ###
-# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: GreenColumn, Object Engaged: , Pose: , Grip Type: Precision
+# Planner: HUMP ,Movement: Reach-to-grasp, Arm: right, Object: MagentaColumn, Object Engaged: , Pose: , Grip Type: Full
 # Geometric Dimensions of the arms and of the fingers
 Sphere1_radius=0
 Sphere2_radius=60
@@ -63,21 +63,21 @@ lambda_10=1.0
 lambda_11=1.0
 
 # Initial Velocity 
-init_vel_1=0
+init_vel_1=1.0203e-16
 
-init_vel_2=0
+init_vel_2=1.08513e-17
 
-init_vel_3=0
+init_vel_3=1.42443e-17
 
-init_vel_4=0
+init_vel_4=1.22459e-16
 
-init_vel_5=0
+init_vel_5=3.77938e-18
 
-init_vel_6=0
+init_vel_6=6.92017e-18
 
-init_vel_7=0
+init_vel_7=4.7108e-18
 
-init_vel_8=0
+init_vel_8=1.19866e-14
 
 init_vel_9=0
 
@@ -109,21 +109,21 @@ final_vel_10=0
 final_vel_11=0
 
 # Initial Acceleration 
-init_acc_1=0
+init_acc_1=3.50262e-16
 
-init_acc_2=0
+init_acc_2=3.96162e-16
 
-init_acc_3=0
+init_acc_3=1.11938e-17
 
-init_acc_4=0
+init_acc_4=2.81599e-17
 
-init_acc_5=0
+init_acc_5=1.49536e-16
 
-init_acc_6=0
+init_acc_6=3.9127e-16
 
-init_acc_7=0
+init_acc_7=2.39625e-16
 
-init_acc_8=0
+init_acc_8=2.19747e-14
 
 init_acc_9=0
 
@@ -234,13 +234,13 @@ tar_pos=1.0
 tar_or=0.001
 
 # Pick settings
-pre_grasp_x=0
+pre_grasp_x=0.707106781
 
 pre_grasp_y=0
 
-pre_grasp_z=-1
+pre_grasp_z=-0.707106781
 
-pre_grasp_dist=120
+pre_grasp_dist=100
 
 post_grasp_x=0
 
@@ -269,7 +269,8 @@ post_place_dist=0
 
 w_red_app=2
 
-w_red_ret=28
+w_red_ret=10
+
 # Move settings
 target_x=-400
 
