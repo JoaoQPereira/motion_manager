@@ -36,6 +36,12 @@ TolDialogHUMP::TolDialogHUMP(QWidget *parent) :
     ui->lineEdit_w_max_gripper->setEnabled(false);
     ui->lineEdit_alpha_max_gripper->setText(QString::number(0));
     ui->lineEdit_alpha_max_gripper->setEnabled(false);
+#elif HAND == 2
+    adaptationElectricGripper();
+    ui->lineEdit_w_max_gripper->setText(QString::number(0));
+    ui->lineEdit_w_max_gripper->setEnabled(false);
+    ui->lineEdit_alpha_max_gripper->setText(QString::number(0));
+    ui->lineEdit_alpha_max_gripper->setEnabled(false);
 #endif
 }
 
@@ -208,6 +214,16 @@ double TolDialogHUMP::getAlphaMax()
     return ui->lineEdit_alpha_max->text().toDouble();
 }
 
+double TolDialogHUMP::getWMaxUR()
+{
+    return ui->lineEdit_w_max_ur->text().toDouble();
+}
+
+
+double TolDialogHUMP::getAlphaMaxUR()
+{
+    return ui->lineEdit_alpha_max_ur->text().toDouble();
+}
 
 void TolDialogHUMP::setWMax(double w)
 {
@@ -510,6 +526,8 @@ void TolDialogHUMP::setPointsOfArm(DHparams m_DH_rightArm, string name)
     int npoints_finger = 9;
 #elif HAND == 1
     int npoints_finger = 4;
+#elif HAND == 2
+    int npoints_finger = 0;
 #endif
 
     ui->lineEdit_sphere1_r->setText(QString::number(0));
@@ -693,6 +711,8 @@ void TolDialogHUMP::getPlaneParameters(std::vector<double> &params)
 
     det = D.determinant();
 
+    //what does here?
+    //what does de matrix ABC?
     if(det!=0)
     {
         d=1000;
@@ -968,7 +988,8 @@ void TolDialogHUMP::on_pushButton_load_clicked()
                                                     QString(MAIN_PATH)+"/Tols",
                                                     "All Files (*.*);; Tol Files (*.tol)");
     QFile f(filename);
-    if(f.open( QIODevice::ReadOnly ))
+    //if(f.open( QIODevice::ReadOnly )) //with this line i get the error: QIODevice::write: ReadOnly device
+    if(f.open( QIODevice::ReadOnly))
     {
         QTextStream stream( &f );
         QString line;
@@ -977,7 +998,7 @@ void TolDialogHUMP::on_pushButton_load_clicked()
         {
             line = f.readLine();
             if(line.at(0)!=QChar('#'))
-            {
+            {   //get the error  QIODevice::write: ReadOnly device when enter here
                 QStringList fields = line.split("=");
                 stream << "Sphere1_radius=" << ui->lineEdit_sphere1_r->text().toStdString().c_str() << endl;
                 stream << "Sphere2_radius=" << ui->lineEdit_sphere2_r->text().toStdString().c_str() << endl;

@@ -16,6 +16,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 {
     // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
     ui.setupUi(this);
+
     // qApp is a global variable for the application
     QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt()));
 
@@ -50,6 +51,10 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     ReadSettings();
     setWindowIcon(QIcon(":/images/motion_managerIcon.png"));
 
+    ///   QObject::connect- connect a signal to a slot- when an event happens ( signal) some code will run ( slot)
+    ///   SIGNAL(rosShutdown()) -> rosShutdown() is the event
+    ///   SLOT(close()) -> close() is the function that is executed when that event happens
+
     QObject::connect(&qnode, SIGNAL(rosShutdown()), this, SLOT(close()));
 
     /*********************
@@ -74,6 +79,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     QObject::connect(&qnode, SIGNAL(newElement(string)),this,SLOT(addElement(string)));
     QObject::connect(&qnode, SIGNAL(newObject(string)),this,SLOT(addObject(string)));
     QObject::connect(&qnode, SIGNAL(newPose(string)),this,SLOT(addPose(string)));
+    QObject::connect(&qnode, SIGNAL(newWaypoint(string)),this,SLOT(addWaypoint(string)));
 
     // update an element in the scenario signal
     QObject::connect(&qnode, SIGNAL(updateElement(int,string)),this,SLOT(updateElement(int,string)));
@@ -83,6 +89,9 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
     //description of the selected scenario
     QObject::connect(ui.listWidget_scenario, SIGNAL(itemClicked(QListWidgetItem*)),this, SLOT(onListScenarioItemClicked(QListWidgetItem*)));
+
+    //new waypoint selected signal
+    //QObject::connect(&qnode, SIGNAL(newWaypoint(string)),this,SLOT(addWaypoint(string)));
 
     /*********************
     ** Start settings
@@ -100,9 +109,15 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with ARoS"));
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
     scenarios.push_back(QString("Human assistance scenario: Serving a drink with Sawyer"));
+
 #elif HAND == 1
     scenarios.push_back(QString("Assembly scenario: Toy vehicle with Sawyer and Bill"));
-    scenarios.push_back(QString("Assembly scenario: Interaction to build the base of the Toy Vehicle"));
+    scenarios.push_back(QString("Assembly scenario: Interaction to build the base of the Toy Vehicle : 1"));
+    scenarios.push_back(QString("Assembly scenario: Interaction to build the base of the Toy Vehicle : 2"));
+    scenarios.push_back(QString("waypoints scenario with sawyer"));
+#elif HAND == 2
+    scenarios.push_back(QString("waypoints scenario: Human-Robot Collaboration (UR10)"));
+
 #endif
 
     for (size_t i=0; i< scenarios.size();++i)
@@ -178,6 +193,7 @@ void MainWindow::updateRVizStatus(bool c)
     }
     ui.pushButton_loadScenario->setEnabled(false);
     ui.groupBox_getElements->setEnabled(false);
+
 }
 
 
@@ -242,6 +258,12 @@ void MainWindow::updateElement(int id, string value)
 }
 
 
+void MainWindow::addWaypoint(string value)
+{
+    ui.comboBox_waypoints->addItem(QString(value.c_str()));
+}
+
+
 void MainWindow::addObject(string value)
 {
     ui.comboBox_objects->addItem(QString(value.c_str()));
@@ -254,7 +276,6 @@ void MainWindow::addPose(string value)
     if(this->scenario_id != 5 || value == "GreenColumn_Pose1")
         ui.comboBox_poses->addItem(QString(value.c_str()));
 }
-
 
 void MainWindow::updateHomePosture(string value)
 {
@@ -308,7 +329,7 @@ void MainWindow::on_pushButton_tuning_clicked()
     }
 }
 
-
+// when clicked on button Load Scenario
 void MainWindow::on_pushButton_loadScenario_clicked()
 {
     ui.listWidget_elements->clear();
@@ -336,19 +357,26 @@ void MainWindow::on_pushButton_loadScenario_clicked()
     ui.label_solving_time->clear();
     ui.label_solving_time_task->clear();
 
+    //Deletes all the items in the range
     qDeleteAll(ui.plot_hand_pos_mov->children());
     qDeleteAll(ui.plot_hand_pos_task->children());
 
+    //saved to scenario_text - the clicked scenario in the listwidget_scenario
     QString scenario_text = ui.listWidget_scenario->currentItem()->text();
 
     int equal;
 
     for(int i=0; i<scenarios.size();++i)
     {
+        //scenarios.at(i) - Returns the string of the given index
         equal = scenario_text.compare(scenarios.at(i));
+        // compares scenario_text with the string at scenarios.at
+        // =0 equal
 
         if(equal==0)
         {
+            //get the scenarios path
+
             // Toy vehicle scenario with ARoS
             string path_vrep_toyscene_aros = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_aros_bill.ttt");
             // Drinking Service task with ARoS
@@ -362,8 +390,14 @@ void MainWindow::on_pushButton_loadScenario_clicked()
             // Toy vehicle scenario with Sawyer with Eletric Parallel Gripper
             string path_vrep_toyscene_sawyer_gripper = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_gripper_bill.ttt");
             // Toy vehicle scenario with Sawyer with Eletric Parallel Gripper
-            string path_vrep_toyscene_sawyer_gripper_interaction = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_gripper_bill_interaction.ttt");
+            string path_vrep_toyscene_sawyer_gripper_interaction_1 = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_gripper_bill_interaction_1.ttt");
+            // 29.12.2019
+            //  purple and blue collum engaged
+            string path_vrep_toyscene_sawyer_gripper_interaction_2 = PATH_SCENARIOS + string("/vrep/ToyVehicleTask_sawyer_gripper_bill_interaction_2.ttt");
 
+            string path_vrep_HRColab_UR = PATH_SCENARIOS + string("/vrep/UR_HRColab.ttt");
+
+            string path_vrep_wp_sawyer = PATH_SCENARIOS + string("/vrep/sawyer_waypoints.ttt");
             switch(i)
             {
             case 0: // Assembly scenario
@@ -410,6 +444,28 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     ui.pushButton_loadScenario->setEnabled(true);
                 }
                 break;
+#elif HAND == 2
+                this->scenario_id = 6;
+                //load scnenario to vrep and all topics36
+
+                if (qnode.loadScenario(path_vrep_HRColab_UR, this->scenario_id))
+                {
+                    qnode.log(QNode::Info,string("waypoints scenario: Human-Robot Collaboration (UR10)- HAS BEEN LOADED"));
+                    ui.pushButton_getElements->setEnabled(true);
+                    ui.groupBox_getElements->setEnabled(true);
+                    ui.groupBox_homePosture->setEnabled(true);
+                    string title = string("waypoints scenario with UR10 robot");
+                    init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                    curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                 }
+                 else
+                 {
+                    qnode.log(QNode::Error,std::string("waypoints scenario: Human-Robot Collaboration (UR10)- HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
+                    ui.groupBox_getElements->setEnabled(false);
+                    ui.groupBox_homePosture->setEnabled(false);
+                    ui.pushButton_loadScenario->setEnabled(true);
+                 }
+
 #endif
             case 1:// Human assistance with ARoS
 #if HAND == 0
@@ -432,9 +488,14 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     ui.pushButton_loadScenario->setEnabled(true);
                 }
 #elif HAND == 1
-                this->scenario_id = 5;
+                // Assembly scenario: the Toy vehicle with Sawyer
+                //29.12.2019
 
-                if (qnode.loadScenario(path_vrep_toyscene_sawyer_gripper_interaction, this->scenario_id))
+                this->scenario_id = 5;
+                //load scnenario to vrep and all topics36
+
+                // scnerario - no column mounted
+                if (qnode.loadScenario(path_vrep_toyscene_sawyer_gripper_interaction_1, this->scenario_id))
                 {
                     qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED"));
                     ui.pushButton_getElements->setEnabled(true);
@@ -453,12 +514,12 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 }
                 break;
 #endif
-                break;
-            case 2: // Assembly scenario: the Toy vehicle with Sawyer
-#if HAND == 0
-                this->scenario_id = 2;
-
-                if (qnode.loadScenario(path_vrep_toyscene_sawyer,this->scenario_id))
+            case 2: // 29.12.2019
+                    //Assembly scenario: the Toy vehicle with Sawyer
+                    // scneario - purple and blue collumn mounted
+                this->scenario_id = 5;
+#if HAND == 1
+                if (qnode.loadScenario(path_vrep_toyscene_sawyer_gripper_interaction_2, this->scenario_id))
                 {
                     qnode.log(QNode::Info,string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED"));
                     ui.pushButton_getElements->setEnabled(true);
@@ -476,9 +537,10 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     ui.pushButton_loadScenario->setEnabled(true);
                 }
                 break;
-#endif                
-            case 3:// Human assistance with Sawyer
-#if HAND == 0
+#endif
+
+            case 3:
+#if HAND == 0  // Human assistance with Sawyer
                 this->scenario_id = 3;
 
                 if (qnode.loadScenario(path_vrep_drinking_sawyer,this->scenario_id))
@@ -499,11 +561,66 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                     ui.pushButton_loadScenario->setEnabled(true);
                 }
 #endif
-                break;
+#if HAND == 1
+                this->scenario_id = 6;
+                //load scnenario to vrep and all topics36
+
+                if (qnode.loadScenario(path_vrep_wp_sawyer, this->scenario_id))
+                {
+                    qnode.log(QNode::Info,string("waypoints scenario with Sawyer - HAS BEEN LOADED"));
+                    ui.pushButton_getElements->setEnabled(true);
+                    ui.groupBox_getElements->setEnabled(true);
+                    ui.groupBox_homePosture->setEnabled(true);
+                    string title = string("waypoints scenario with Sawyer robot");
+                    init_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                    curr_scene = scenarioPtr(new Scenario(title,this->scenario_id+1));
+                 }
+                 else
+                 {
+                    qnode.log(QNode::Error,std::string("waypoints scenario with Sawyer Robot - HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
+                    ui.groupBox_getElements->setEnabled(false);
+                    ui.groupBox_homePosture->setEnabled(false);
+                    ui.pushButton_loadScenario->setEnabled(true);
+                 }
+#endif
+                 break;
+
             }
         }
     }
 }
+
+void MainWindow::on_pushButton_setWaypoint_clicked()
+{
+    vector <double> wp;
+    if(qnode.setWaypoint(wp))
+    {
+        string info_wp = string("Waypoint:{");
+        for (int i = 0; i < wp.size(); i++){
+            info_wp.append(to_string(wp[i]*180/M_PI));
+            info_wp.append(string(", "));
+        }
+        ui.listWidget_waypoints->addItem(QString(info_wp.c_str()));
+    }
+    robot_waypoints.push_back(wp);
+}
+void MainWindow::on_pushButton_deleteWaypoint_clicked()
+{
+    robot_waypoints.pop_back();
+    ui.listWidget_waypoints->clear();
+    vector<double> wp;
+    for(int k=0; k<robot_waypoints.size();k++){
+        wp = robot_waypoints.at(k);
+        string info_wp = string("Waypoint:{");
+        for (int i = 0; i < wp.size(); i++){
+            info_wp.append(to_string(wp[i]*180/M_PI));
+            info_wp.append(string(", "));
+        }
+        ui.listWidget_waypoints->addItem(QString(info_wp.c_str()));
+    }
+    qnode.updateWaypoints(robot_waypoints);
+}
+
 
 
 void MainWindow::on_pushButton_getElements_pressed()
@@ -511,6 +628,8 @@ void MainWindow::on_pushButton_getElements_pressed()
     qnode.log(QNode::Info,string("getting the elements of the scenario . . ."));
     ui.pushButton_getElements->setCheckable(true);
     ui.pushButton_loadScenario->setEnabled(false);
+    ui.pushButton_setWaypoint->setEnabled(false);
+    ui.pushButton_deleteWaypoint->setEnabled(false);
 }
 
 
@@ -522,11 +641,11 @@ void MainWindow::on_pushButton_plan_pressed()
     ui.label_totalTime_value_mov->clear();
 }
 
-
+// enter here when button Get elements is clicked
 void MainWindow::on_pushButton_getElements_clicked()
 {
     ui.listWidget_elements->clear();
-
+    //qnode.setWaypoint();
     try
     {
         if (qnode.getElements(this->curr_scene))
@@ -540,7 +659,7 @@ void MainWindow::on_pushButton_getElements_clicked()
             ui.groupBox_task->setEnabled(false);
             ui.tabWidget_sol->setEnabled(false);
 
-            if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4 || scenario_id == 5)
+            if(scenario_id == 2 || scenario_id == 3 || scenario_id == 4 || scenario_id == 5 || scenario_id == 6)
             {
                 ui.radioButton_right->setEnabled(false);
                 ui.radioButton_left->setEnabled(false);
@@ -666,6 +785,7 @@ void MainWindow::on_pushButton_addMov_clicked()
         else if(ui.comboBox_objects->isEnabled() && ui.groupBox_grip->isEnabled() && !ui.comboBox_poses->isEnabled())
         {
             // ----------------------- Reach-to-grasp Movements -------------------------------//
+
             string obj_name = ui.comboBox_objects->currentText().toStdString();
             objectPtr obj = curr_scene->getObject(obj_name);
 
@@ -694,6 +814,8 @@ void MainWindow::on_pushButton_addMov_clicked()
             }
             else
                 qnode.log(QNode::Error,std::string("The movement requires an object"));
+
+
         }
         else if(ui.comboBox_objects->isEnabled() && ui.groupBox_grip->isEnabled() && ui.comboBox_poses->isEnabled())
         {
@@ -715,8 +837,28 @@ void MainWindow::on_pushButton_addMov_clicked()
             else
                 qnode.log(QNode::Error,std::string("The movement requires an object and a pose"));
         }
-        else
+        else if(ui.comboBox_waypoints->isEnabled())
         {
+            // ----------------------- waypoints Movements -------------------------------//
+            std::vector<objectPtr> objects; this->curr_scene->getObjects(objects);
+            string wp_name = ui.comboBox_waypoints->currentText().toStdString();
+            waypointPtr wp = this->curr_scene->getWaypoint_traj(wp_name);
+            //std::vector<waypointPtr> wps; this->curr_scene->getWaypoints(wps); //get all waypoints
+            for(size_t i=0;i<objects.size();++i)
+            {
+                this->curr_scene->getObject(i)->setTargetRightEnabled(false);
+                this->curr_scene->getObject(i)->setTargetLeftEnabled(false);
+            }
+
+            if(planner_id==0){
+                Waypoint *wppp = new Waypoint(*(wp.get()));
+                //curr_task->addProblem(new Problem(planner_id, new Waypoint(*(wp.get())),new Movement(mov_id, arm_sel),new Scenario(*(this->curr_scene.get()))));
+                curr_task->addProblem(new Problem(planner_id, wppp,new Movement(mov_id, arm_sel),new Scenario(*(this->curr_scene.get()))));
+             }
+            success=true;
+
+        }
+        else{
             // ----------------------- Go-Park and Reaching Movements -------------------------------//
             std::vector<objectPtr> objects; this->curr_scene->getObjects(objects);
 
@@ -725,9 +867,8 @@ void MainWindow::on_pushButton_addMov_clicked()
                 this->curr_scene->getObject(i)->setTargetRightEnabled(false);
                 this->curr_scene->getObject(i)->setTargetLeftEnabled(false);
             }
-
             if(planner_id==0)
-                curr_task->addProblem(new Problem(planner_id,new Movement(mov_id, arm_sel),new Scenario(*(this->curr_scene.get()))));
+                curr_task->addProblem(new Problem(planner_id, new Movement(mov_id, arm_sel),new Scenario(*(this->curr_scene.get()))));
 
             success=true;
         }
@@ -764,6 +905,7 @@ void MainWindow::on_pushButton_plan_clicked()
         switch(planner_id)
         {
         case 0: // HUMP
+            //handle of the HUMP tuning dialog
             mTolHumpdlg->setInfo(prob->getInfoLine());
             // --- Tolerances for the final posture selection ---- //
             tols.tolTarPos = mTolHumpdlg->getTolTarPos(); // target position tolerances
@@ -774,6 +916,8 @@ void MainWindow::on_pushButton_plan_clicked()
             tols.obstacle_avoidance = mTolHumpdlg->getObstacleAvoidance(); //obstacle avoidance
             mTolHumpdlg->getLambda(tols.lambda_final); // joint expense factors
             mTolHumpdlg->getLambda(tols.lambda_bounce); // joint expense factors
+            mTolHumpdlg->getLambda(tols.lambda_wp); // joint expense factors
+
             // --- Tolerances for the bounce posture selection ---- //
 #if HAND == 0
             tols.w_max = std::vector<double>(JOINTS_ARM+JOINTS_HAND,(mTolHumpdlg->getWMax()*M_PI/180)); // max joint velocity
@@ -785,6 +929,10 @@ void MainWindow::on_pushButton_plan_clicked()
             tols.alpha_max = std::vector<double>(JOINTS_ARM,(mTolHumpdlg->getAlphaMax()*M_PI/180)); // max joint acceleration (arm)
             for(int i = 0; i < JOINTS_HAND; ++ i)
                     tols.alpha_max.push_back(mTolHumpdlg->getAlphaMaxGripper());
+#elif HAND == 2
+            tols.w_max = std::vector<double>(JOINTS_ARM,(mTolHumpdlg->getWMaxUR()*M_PI/180)); // max joint velocity (arm)
+            tols.alpha_max = std::vector<double>(JOINTS_ARM,(mTolHumpdlg->getAlphaMaxUR()*M_PI/180)); // max joint acceleration (arm)
+
 #endif
             mTolHumpdlg->getInitVel(tols.bounds.vel_0); // initial velocity
             mTolHumpdlg->getFinalVel(tols.bounds.vel_f); // final velocity
@@ -864,6 +1012,7 @@ void MainWindow::on_pushButton_plan_clicked()
                     this->traj_descr_mov.clear();
                     this->traj_descr_mov = h_results->trajectory_descriptions;
 
+
                     std::vector<double> timesteps_stage_aux;
 
                     for(size_t i=0; i< h_results->trajectory_stages.size();++i)
@@ -881,6 +1030,8 @@ void MainWindow::on_pushButton_plan_clicked()
                         }
                         this->timesteps_mov.push_back(timesteps_stage_aux);
                     }
+
+
                     solved=true;
                 }
                 else
@@ -916,7 +1067,6 @@ void MainWindow::on_pushButton_plan_clicked()
         qnode.log(QNode::Error,std::string("Plan failure: ")+exc.what());
     }
 
-
     // --- RESULTS --- //
     if(solved)
     {
@@ -932,11 +1082,16 @@ void MainWindow::on_pushButton_plan_clicked()
         std::vector<MatrixXd> jointsPosition_mov_real;
         std::vector<MatrixXd> jointsPosition_mov_w_offset;
 
+        //UR doesnt have offsets
         //the trajectory obtained doesn't include the joints offsets
         jointsPosition_mov_w_offset = this->jointsPosition_mov;
         //add the joints offsets
+#if UR == 0
         jointsPosition_mov_real = qnode.robotJointPositions(jointsPosition_mov_w_offset);
-
+#else
+       // jointsPosition_mov_real = qnode.robotJointPositions(jointsPosition_mov_w_offset);
+        jointsPosition_mov_real = this->jointsPosition_mov;
+#endif
         for (size_t k=0; k< jointsPosition_mov_real.size();++k)
         {
             MatrixXd jointPosition_stage = jointsPosition_mov_real.at(k);
@@ -986,6 +1141,11 @@ void MainWindow::on_pushButton_plan_clicked()
                                     QString::number(jointPosition_stage(i,j)*1000,'g',3)+"|"+
                                     QString::number(jointVelocity_stage(i,j)*1000,'g',3)+"|"+
                                     QString::number(jointAcceleration_stage(i,j)*1000,'g',3));
+#elif HAND == 2
+                    stage_step.push_back(
+                                QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
 #endif
                     if(!h_head){h_headers.push_back(QString("Joint ")+QString::number(j+1));}
                 }
@@ -1028,6 +1188,17 @@ void MainWindow::on_pushButton_plan_clicked()
         // wrist
         this->wristVelocityNorm_mov.resize(tot_steps);
         this->wristLinearVelocity_mov.resize(tot_steps); this->wristAngularVelocity_mov.resize(tot_steps);
+#if UR == 1
+        // wrist1
+        this->wrist1VelocityNorm_mov.resize(tot_steps);
+        this->wrist1LinearVelocity_mov.resize(tot_steps); this->wrist1AngularVelocity_mov.resize(tot_steps);
+        // wrist2
+        this->wrist2VelocityNorm_mov.resize(tot_steps);
+        this->wrist2LinearVelocity_mov.resize(tot_steps); this->wrist2AngularVelocity_mov.resize(tot_steps);
+        // wrist3
+        this->wrist3VelocityNorm_mov.resize(tot_steps);
+        this->wrist3LinearVelocity_mov.resize(tot_steps); this->wrist3AngularVelocity_mov.resize(tot_steps);
+#endif
         // elbow
         this->elbowVelocityNorm_mov.resize(tot_steps);
         this->elbowLinearVelocity_mov.resize(tot_steps); this->elbowAngularVelocity_mov.resize(tot_steps);
@@ -1045,11 +1216,15 @@ void MainWindow::on_pushButton_plan_clicked()
 
             for(int i=0;i<pos_stage.rows();++i)
             {
+
                 // position
                 VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
                 vector<double> posture;
                 posture.resize(pos_row.size());
                 VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
+#if UR == 1
+                this->curr_scene->getRobot()->getDHposture_UR(posture);
+#endif
                 this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_mov.at(step),posture);
 
                 // velocities
@@ -1062,13 +1237,32 @@ void MainWindow::on_pushButton_plan_clicked()
                 vector<double> hand_vel; this->curr_scene->getRobot()->getHandVel(arm_code,hand_vel,posture,velocities);
                 this->handLinearVelocity_mov.at(step) = {hand_vel.at(0),hand_vel.at(1),hand_vel.at(2)};
                 this->handAngularVelocity_mov.at(step) = {hand_vel.at(3),hand_vel.at(4),hand_vel.at(5)};
-
+#if UR == 0
                 // wrist velocity
                 this->wristVelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getWristVelNorm(arm_code,posture,velocities);
                 vector<double> wrist_vel; this->curr_scene->getRobot()->getWristVel(arm_code,wrist_vel,posture,velocities);
                 this->wristLinearVelocity_mov.at(step) = {wrist_vel.at(0),wrist_vel.at(1),wrist_vel.at(2)};
                 this->wristAngularVelocity_mov.at(step) = {wrist_vel.at(3),wrist_vel.at(4),wrist_vel.at(5)};
+#elif UR == 1
+                // wrist1 velocity
+                this->wrist1VelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getWristURVelNorm(arm_code,posture,velocities,1);
+                vector<double> wrist_vel; this->curr_scene->getRobot()->getWristURVel(arm_code,wrist_vel,posture,velocities,1);
+                this->wrist1LinearVelocity_mov.at(step) = {wrist_vel.at(0),wrist_vel.at(1),wrist_vel.at(2)};
+                this->wrist1AngularVelocity_mov.at(step) = {wrist_vel.at(3),wrist_vel.at(4),wrist_vel.at(5)};
 
+                // wrist2 velocity
+                this->wrist2VelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getWristURVelNorm(arm_code,posture,velocities,2);
+                vector<double> wrist2_vel; this->curr_scene->getRobot()->getWristURVel(arm_code,wrist2_vel,posture,velocities,2);
+                this->wrist2LinearVelocity_mov.at(step) = {wrist2_vel.at(0),wrist2_vel.at(1),wrist2_vel.at(2)};
+                this->wrist2AngularVelocity_mov.at(step) = {wrist2_vel.at(3),wrist2_vel.at(4),wrist2_vel.at(5)};
+
+                // wrist3 velocity
+                this->wrist3VelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getWristURVelNorm(arm_code,posture,velocities,3);
+                vector<double> wrist3_vel; this->curr_scene->getRobot()->getWristURVel(arm_code,wrist3_vel,posture,velocities,3);
+                this->wrist3LinearVelocity_mov.at(step) = {wrist3_vel.at(0),wrist3_vel.at(1),wrist3_vel.at(2)};
+                this->wrist3AngularVelocity_mov.at(step) = {wrist3_vel.at(3),wrist3_vel.at(4),wrist3_vel.at(5)};
+
+#endif
                 // elbow velocity
                 this->elbowVelocityNorm_mov.at(step) = this->curr_scene->getRobot()->getElbowVelNorm(arm_code,posture,velocities);
                 vector<double> elbow_vel; this->curr_scene->getRobot()->getElbowVel(arm_code,elbow_vel,posture,velocities);
@@ -1130,7 +1324,9 @@ void MainWindow::on_pushButton_plan_clicked()
         // -- compute the number of movement units -- //
         this->nmu_mov = this->getNumberMovementUnits(this->handVelocityNorm_mov,this->qtime_mov);
         ui.label_nmu->setText(QString::number(this->nmu_mov));
+
     }
+
 }
 
 
@@ -1896,6 +2092,8 @@ void MainWindow::on_pushButton_scene_reset_clicked()
     string path_vrep_toyscene_sawyer_gripper = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_gripper_bill.ttt");
     // Toy vehicle scenario with Sawyer
     string path_vrep_toyscene_sawyer_gripper_interaction = PATH_SCENARIOS+string("/vrep/ToyVehicleTask_sawyer_gripper_bill_interaction.ttt");
+    // Pick and Place scenario with Universal Robot
+    string path_vrep_HRColab_UR = PATH_SCENARIOS + string("/vrep/HRColab_IKEA.ttt");
 
 
     switch(scene_id)
@@ -1942,7 +2140,15 @@ void MainWindow::on_pushButton_scene_reset_clicked()
         success = string("Assembly scenario: the Toy vehicle with Sawyer HAS BEEN LOADED");
         failure = string("Assembly scenario: the Toy vehicle with Sawyer HAS NOT BEEN LOADED");
         break;
+    case 6:
+        // Pick and Place scenario with Universal Robot
+        path = path_vrep_HRColab_UR;
+        title = string("Pick and Place scenario with Universal Robot");
+        success = string("Pick and Place scenario with Universal Robot HAS BEEN LOADED");
+        failure = string("Pick and Place scenario with Universal Robot HAS NOT BEEN LOADED");
+        break;
     }
+
 
     if (qnode.loadScenario(path,1))
     {
@@ -1999,8 +2205,12 @@ void MainWindow::on_pushButton_append_mov_clicked()
             pos_mov = this->jointsPosition_task.at(h);
             //the trajectory obtained doesn't include the joints offs
             pos_mov_w_offset = pos_mov;
+#if UR==0
             //add the joints offsets
             pos_mov_real = qnode.robotJointPositions(pos_mov_w_offset);
+#elif UR == 1
+            pos_mov_real = pos_mov;
+#endif
             vel_mov = this->jointsVelocity_task.at(h);
             acc_mov = this->jointsAcceleration_task.at(h);
             tstep_mov = this->timesteps_task.at(h);
@@ -2054,6 +2264,11 @@ void MainWindow::on_pushButton_append_mov_clicked()
                                         QString::number(jointPosition_stage(i,j)*1000,'g',3)+"|"+
                                         QString::number(jointVelocity_stage(i,j)*1000,'g',3)+"|"+
                                         QString::number(jointAcceleration_stage(i,j)*1000,'g',3));
+#elif HAND == 2
+                    stage_step.push_back(
+                                QString::number(jointPosition_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                QString::number(jointVelocity_stage(i,j)*180/M_PI,'g',3)+"|"+
+                                QString::number(jointAcceleration_stage(i,j)*180/M_PI,'g',3));
 #endif
                         if(!h_head)
                             h_headers.push_back(QString("Joint ")+QString::number(j+1));
@@ -2109,6 +2324,9 @@ void MainWindow::on_pushButton_append_mov_clicked()
                     VectorXd pos_row = pos_stage.block<1,JOINTS_ARM>(i,0);
                     vector<double> posture; posture.resize(pos_row.size());
                     VectorXd::Map(&posture[0], pos_row.size()) = pos_row;
+#if UR == 1
+                    this->curr_scene->getRobot()->getDHposture_UR(posture);
+#endif
                     this->curr_scene->getRobot()->getHandPos(arm_code,this->handPosition_task.at(step),posture);
                     // velocity norm
                     VectorXd vel_row = vel_stage.block<1,JOINTS_ARM>(i,0);
@@ -2274,12 +2492,25 @@ void MainWindow::on_comboBox_mov_currentIndexChanged(int i)
         ui.comboBox_poses->setEnabled(false);
         ui.label_poses->setEnabled(false);
         break;
+    case 6:
+        // waypoints
+        ui.comboBox_objects->setEnabled(false);
+        ui.label_objects_eng->setEnabled(false);
+        ui.comboBox_objects_eng->setEnabled(false);
+        ui.label_objects->setEnabled(false);
+        ui.groupBox_grip->setEnabled(false);
+        ui.comboBox_poses->setEnabled(false);
+        ui.label_poses->setEnabled(false);
+        ui.comboBox_waypoints->setEnabled(true);
+        ui.label_waypoints->setEnabled(true);
+        break;
     }
 }
 
-
+// enter here when clicked on ListScenario
 void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
 {
+    //enable LoadScenario button
     ui.pushButton_loadScenario->setEnabled(true);
 
 #if HAND == 0
@@ -2313,6 +2544,7 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
         }
     }
 #elif HAND == 1
+
     for(int i=0; i<ui.listWidget_scenario->size().height(); ++i)
     {
         if (ui.listWidget_scenario->item(i)== item)
@@ -2327,6 +2559,22 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
             }
         }
     }
+#elif HAND == 2
+
+    for(int i=0; i<ui.listWidget_scenario->size().height(); ++i)
+    {
+        if (ui.listWidget_scenario->item(i)== item)
+        {
+            switch(i)
+            {
+            case 0:
+                // waypoints scenario with UR10
+                ui.textBrowser_scenario->setText(QString("Description of the selected scenario:\n"
+                                                         "The user has to define waypoints and then the robot must interpolate them in a Human-like manner"));
+                break;
+            }
+        }
+    }
 #endif
 }
 
@@ -2334,11 +2582,11 @@ void MainWindow::onListScenarioItemClicked(QListWidgetItem *item)
 void MainWindow::on_pushButton_plot_mov_clicked()
 {
     // plot the 3D hand position
+    //handPosPlot_mov_ptr- pointer to the hand position plot of the movement
     this->handPosPlot_mov_ptr.reset(new HandPosPlot(this->handPosition_mov));
     this->handPosPlot_mov_ptr->setParent(this->ui.plot_hand_pos_mov);
     this->handPosPlot_mov_ptr->resize(522,329);
     this->handPosPlot_mov_ptr->show();
-
     // plot the hand velocity norm
     if(!this->handVelocityNorm_mov.empty())
     {
@@ -2388,7 +2636,7 @@ void MainWindow::on_pushButton_plot_mov_clicked()
 void MainWindow::on_pushButton_plot_task_clicked()
 {
     // plot the 3D hand position
-    this->handPosPlot_task_ptr.reset(new HandPosPlot(this->handPosition_task));
+    this->handPosPlot_task_ptr.reset( new HandPosPlot(this->handPosition_task));
     this->handPosPlot_task_ptr->setParent(this->ui.plot_hand_pos_task);
     this->handPosPlot_task_ptr->resize(522,329);
     this->handPosPlot_task_ptr->show();
@@ -2461,10 +2709,22 @@ void MainWindow::on_pushButton_comp_vel_mov_clicked()
         this->mCompVeldlg->setupPlots(this->shoulderLinearVelocity_mov,this->shoulderAngularVelocity_mov,this->qtime_mov,0);
     if(!this->elbowLinearVelocity_mov.empty())
         this->mCompVeldlg->setupPlots(this->elbowLinearVelocity_mov,this->elbowAngularVelocity_mov,this->qtime_mov,1);
+#if UR == 0
     if(!this->wristLinearVelocity_mov.empty())
         this->mCompVeldlg->setupPlots(this->wristLinearVelocity_mov,this->wristAngularVelocity_mov,this->qtime_mov,2);
     if(!this->handLinearVelocity_mov.empty())
         this->mCompVeldlg->setupPlots(this->handLinearVelocity_mov,this->handAngularVelocity_mov,this->qtime_mov,3);
+#elif UR == 1
+    if(!this->wrist1LinearVelocity_mov.empty())
+        this->mCompVeldlg->setupPlots(this->wrist1LinearVelocity_mov,this->wrist1AngularVelocity_mov,this->qtime_mov,2);
+    if(!this->wrist2LinearVelocity_mov.empty())
+        this->mCompVeldlg->setupPlots(this->wrist2LinearVelocity_mov,this->wrist2AngularVelocity_mov,this->qtime_mov,3);
+    if(!this->wrist3LinearVelocity_mov.empty())
+        this->mCompVeldlg->setupPlots(this->wrist3LinearVelocity_mov,this->wrist3AngularVelocity_mov,this->qtime_mov,4);
+
+    if(!this->handLinearVelocity_mov.empty())
+        this->mCompVeldlg->setupPlots(this->handLinearVelocity_mov,this->handAngularVelocity_mov,this->qtime_mov,5);
+#endif
     this->mCompVeldlg->show();
 }
 
@@ -2487,7 +2747,8 @@ void MainWindow::on_pushButton_save_res_mov_clicked()
     handler->setTextMode(VectorWriter::NATIVE);
     handler->setFormat("PDF");
     string hand_pos_file = path.toStdString()+string("hand_pos_mov.pdf");
-    IO::save(this->handPosPlot_mov_ptr.get(), hand_pos_file.c_str(),  "PDF" );
+    if(this->handPosPlot_mov_ptr!=nullptr)
+        IO::save(this->handPosPlot_mov_ptr.get(), hand_pos_file.c_str(),  "PDF" );
 
     // --------------------------------------- RESULTS -------------------------------------- //
     string filename("results_mov.txt");
@@ -2830,12 +3091,21 @@ void MainWindow::ReadSettings()
     QSettings settings("Qt-Ros Package", "motion_manager");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
-
+#if ROBOT == 1
+    QString master_url = ("http://021604CP00018.local:11311/");
+    QString host_url = ("192.168.197.115");
+    //something is wrong with 2 lines, the variables does not keep the following values.
+    //QString master_url = settings.value("master_url",QString("http://021604CP00018.local:11311/")).toString();
+    //QString host_url = settings.value("host_url", QString("192.168.197.115")).toString();
+    mrosCommdlg->setMasterUrl(master_url);
+    mrosCommdlg->setHostUrl(host_url);
+#endif
+#if ROBOT == 0
     QString master_url = settings.value("master_url",QString("http://192.168.1.2:11311/")).toString();
     QString host_url = settings.value("host_url", QString("192.168.1.3")).toString();
     mrosCommdlg->setMasterUrl(master_url);
     mrosCommdlg->setHostUrl(host_url);
-
+#endif
     bool remember = settings.value("remember_settings", false).toBool();
     mrosCommdlg->setRememberCheckbox(remember);
 
@@ -3065,5 +3335,8 @@ double MainWindow::getThirdQuartile(vector<int> v)
 
     return third_quartile;
 }
+
+
+
 
 }  // namespace motion_manager

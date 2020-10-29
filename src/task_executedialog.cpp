@@ -148,17 +148,17 @@ void Task_ExecuteDialog::on_pushButtonSave_clicked()
 
 void Task_ExecuteDialog::getTimeMappingParams(vector<vector<double>> &params)
 {
-    std::vector<double> pplan;
+    std::vector<double> pplan;//PLAN
     pplan.push_back(ui->lineEdit_a_plan->text().toDouble());
     pplan.push_back(ui->lineEdit_tau_plan->text().toDouble());
     pplan.push_back(ui->lineEdit_w_plan->text().toDouble());
 
-    std::vector<double> papp;
+    std::vector<double> papp;//APPROACH
     papp.push_back(ui->lineEdit_a_app->text().toDouble());
     papp.push_back(ui->lineEdit_tau_app->text().toDouble());
     papp.push_back(ui->lineEdit_w_app->text().toDouble());
 
-    std::vector<double> pret;
+    std::vector<double> pret;//RETREAT
     pret.push_back(ui->lineEdit_a_ret->text().toDouble());
     pret.push_back(ui->lineEdit_tau_ret->text().toDouble());
     pret.push_back(ui->lineEdit_w_ret->text().toDouble());

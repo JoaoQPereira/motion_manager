@@ -1,6 +1,6 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
-
+//#include <math.h>
 #include <string>
 #include <cstring>
 #include <cstdlib>
@@ -18,7 +18,7 @@
 #include <boost/format.hpp>
 #include <fstream>
 #include <eigen3/Eigen/Dense>
-
+//#include <Eigen/Geometry>
 /** configuration */
 #include "config.hpp"
 
@@ -26,6 +26,8 @@
 #define SEP ", "
 #define METERS " [m]"
 #define MILLIMETERS " [mm]"
+#define VELOCITY " [mm/s]"
+#define ACCELERATION " [mm/s²]"
 #define DEG " [deg]"
 #define RAD " [rad]"
 #define COLUMN ":"
@@ -39,7 +41,8 @@
 #define XsizeSTR "Xsize = "
 #define YsizeSTR "Ysize = "
 #define ZsizeSTR "Zsize = "
-
+#define VelocitySTR "Velocity = "
+#define AccelerationSTR "Acceleration = "
 //definition of the macro ASSERT
 #ifndef DEBUG
 #define ASSERT(x)
@@ -58,9 +61,11 @@ using namespace Eigen;
 
 namespace motion_manager
 {
-
+#if UR == 0
   const int JOINTS_ARM = 7; /**< number of joints per arm */
-
+#elif UR == 1
+  const int JOINTS_ARM = 6; /**< number of joints per arm */
+#endif
 #if HAND == 0
 //*************************************************************************************************
 //                                 BARRETT HAND
@@ -81,9 +86,18 @@ namespace motion_manager
   //                                 ELECTRIC PARALLEL GRIPPER
     const double TOL_GRIP = 0; /**< tolerance on the grip in [mm] */
     const double TOL_TOOL_GRIP = - 0.315; /**< tolerance on the grip tool in [mm] */
-    const int HAND_FINGERS = 2; /**< number of fingers per hand */
     const int JOINTS_HAND = 1; /**< number of joints per hand */
+    const int HAND_FINGERS = 2; /**< number of fingers per hand */
+
     const int N_PHALANGE = 0; /**< number of phalanges per finger */
+#elif HAND == 2
+    const double TOL_GRIP = 0; /**< tolerance on the grip in [mm] */
+    const double TOL_TOOL_GRIP = - 0.315; /**< tolerance on the grip tool in [mm] */
+
+    const int JOINTS_HAND = 0; /**< number of joints per hand */
+    const int HAND_FINGERS = 0; /**< number of fingers per hand */
+    const int N_PHALANGE = 0; /**< number of phalanges per finger */
+
 #endif
 
     /** this struct defines the position in the Cartesian space*/
@@ -147,6 +161,12 @@ namespace motion_manager
         double D3; /**< depth of the fingertip in [mm] */
     } electric_gripper;
 
+    /** this struct defines the vacuum gripper */
+    typedef struct
+    {
+        double D7; /**< length of the vaccum gripper [mm] */
+    } vacuum_gripper;
+
     /** this struct defines a generic part of a robot body */
     typedef struct
     {
@@ -160,6 +180,56 @@ namespace motion_manager
         double Ysize; /**< size of the part along the y axis in [mm] */
         double Zsize; /**< size of the part along the z axis in [mm] */
     } robot_part;
+
+    /** this struct defines a generic part of a robot body with orientation in quaternions*/
+    typedef struct
+    {
+        double Xpos; /**< position of the part along the x axis in [mm] */
+        double Ypos; /**< position of the part along the y axis in [mm] */
+        double Zpos; /**< position of the part along the z axis in [mm] */
+        float q_X;  /** The X value of the vector component of the quaternion. */
+        float q_Y;  /** The Y value of the vector component of the quaternion. */
+        float q_Z;  /** The Z value of the vector component of the quaternion. */
+        float q_W; /** The rotation component of the quaternion. */
+        double Xsize; /**< size of the part along the x axis in [mm] */
+        double Ysize; /**< size of the part along the y axis in [mm] */
+        double Zsize; /**< size of the part along the z axis in [mm] */
+    } robot_part_q;
+
+
+    /** this struct defines the orientation in quaternions
+     quaternion \f$ w+xi+yj+zk - four scalar coefficients  w, x, y and z. */
+    typedef struct{
+        float X;  /** The X value of the vector component of the quaternion. */
+        float Y;  /** The Y value of the vector component of the quaternion. */
+        float Z;  /** The Z value of the vector component of the quaternion. */
+        float W; /** The rotation component of the quaternion. */
+    } orient_q;
+
+
+    /** this struct defines the  waypoint in Operational Space */
+    typedef struct{
+        pos position;         /** Position X,Y,Z */
+        orient_q or_quat;  /** Orientation in Quaternions  */
+        orient or_rpy;
+        vector <double> velocity; /**< vector of angular velocity of the end effector in the waypoint   */
+        vector <double> accelaration; /**< vector of angular accelaration of the end effector in the waypoint */
+                                       /** velocity  and acceleration in x,y,z and wx,wy,wz   linear and angular velocity??*/
+    } WpOperatSpace;
+
+    /** this struct defines the  waypoint in Joint Space */
+    typedef struct{
+        vector <double> PosJoints; /** vector of Joints Positions in Joint Space*/
+        vector <double> velocity; /**< vector of angular velocity of each joint in the waypoint   */
+        vector <double> accelaration; /**< vector of angular accelaration of each joint in the waypoint */
+    } WpJointSpace;
+
+    /** this struct defines the waypoint in Joint Space and Operational Space*/
+    typedef struct
+    {   string name;
+        WpJointSpace JointSpace;
+        WpOperatSpace OperatSpace;
+    } waypoint;
 
 }// namespace motion_manager
 

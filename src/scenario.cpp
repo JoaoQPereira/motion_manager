@@ -112,6 +112,17 @@ bool Scenario::getPoses(vector<posePtr> &pts)
         return false;
 }
 
+bool Scenario::getWaypoints(vector<waypointPtr> &wps)
+{
+    if(!this->wps_list.empty())
+    {
+        wps = std::vector<waypointPtr>(this->wps_list.size());
+        std::copy(this->wps_list.begin(),this->wps_list.end(),wps.begin());
+        return true;
+    }
+    else
+        return false;
+}
 
 void Scenario::addObject(objectPtr obj_ptr)
 {
@@ -124,6 +135,10 @@ void Scenario::addPose(posePtr pose_ptr)
     this->poses_list.push_back(posePtr(new Pose(*pose_ptr.get())));
 }
 
+void Scenario::addWaypoint(waypointPtr wp_ptr)
+{
+    this->wps_list.push_back(waypointPtr(new Waypoint(*wp_ptr.get())));
+}
 
 objectPtr Scenario::getObject(int pos)
 {
@@ -161,6 +176,7 @@ objectPtr Scenario::getObject(string obj_name)
 }
 
 
+
 posePtr Scenario::getPose(string pose_name)
 {
     posePtr pose = NULL;
@@ -176,6 +192,22 @@ posePtr Scenario::getPose(string pose_name)
     }
 
     return pose;
+}
+
+waypointPtr Scenario::getWaypoint_traj(string traj_name)
+{
+    waypointPtr wp = NULL;
+    for(std::size_t i=0; i<this->wps_list.size();++i)
+    {
+        string name = this->wps_list.at(i)->getName();
+        if(boost::iequals(name,traj_name))
+        {
+            wp=this->wps_list.at(i);
+            break;
+        }
+    }
+
+    return wp;
 }
 
 

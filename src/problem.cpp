@@ -21,6 +21,230 @@ Problem::Problem():
     this->err_log=0;
 }
 
+Problem::Problem(int planner_id,Waypoint* wp,Movement* mov,Scenario* scene)
+{
+    this->rightFinalPosture = std::vector<double>(JOINTS_ARM+JOINTS_HAND);
+    //this->rightInitPosture = std::vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+
+    this->targetAxis = 0;
+    this->solved=false;
+    this->part_of_task=false;
+    this->err_log=0;
+
+    this->mov=movementPtr(mov);
+    this->scene=scenarioPtr(scene);
+    this->planner_id=planner_id;
+    this->wp=waypointPtr(wp);
+
+    bool hump = false;
+
+    if (planner_id == 0)
+    {
+        hump = true;
+        this->planner_name="HUMP";
+    }
+    string scene_name = this->scene->getName();
+
+    if(hump)
+    {
+
+        // --- Human-like movement planner settings --- //
+        HUMotion::HUMPlanner::hand_fingers = HAND_FINGERS;
+        HUMotion::HUMPlanner::joints_arm = JOINTS_ARM;
+        HUMotion::HUMPlanner::joints_hand = JOINTS_HAND;
+        HUMotion::HUMPlanner::n_phalange = N_PHALANGE;
+
+        this->h_planner.reset(new HUMotion::HUMPlanner(scene_name));
+        // set the current obstacles and targets of the scenario
+        vector<objectPtr> scene_objects;
+        if(this->scene->getObjects(scene_objects))
+        {
+            HUMotion::objectPtr hump_obj; // object of the planner
+            objectPtr obj;
+            for(size_t i=0; i < scene_objects.size(); ++i)
+            {
+                obj = scene_objects.at(i);
+                std::vector<double> position = {obj->getPos().Xpos,obj->getPos().Ypos,obj->getPos().Zpos};
+                std::vector<double> orientation = {obj->getOr().roll,obj->getOr().pitch,obj->getOr().yaw};
+                std::vector<double> dimension = {obj->getSize().Xsize,obj->getSize().Ysize,obj->getSize().Zsize};
+                hump_obj.reset(new HUMotion::Object(obj->getName()));
+                hump_obj->setParams(position,orientation,dimension);
+                if(!obj->isTargetRightEnabled() && !obj->isTargetLeftEnabled())
+                    this->h_planner->addObstacle(hump_obj); // the object is an obstacle for the planner
+            }
+        }
+
+        // set the robot
+        Matrix4d mat_right_arm;
+        Matrix4d mat_right_hand;
+        vector<double> min_rlimits;
+        vector<double> max_rlimits;
+
+        Matrix4d mat_left_arm;
+        Matrix4d mat_left_hand;
+        vector<double> min_llimits;
+        vector<double> max_llimits;
+
+        this->scene->getRobot()->getMatRight(mat_right_arm);
+        this->scene->getRobot()->getMatRightHand(mat_right_hand);
+        this->scene->getRobot()->getMatLeft(mat_left_arm);
+        this->scene->getRobot()->getMatLeftHand(mat_left_hand);
+        this->scene->getRobot()->getRightMinLimits(min_rlimits);
+        this->scene->getRobot()->getRightMaxLimits(max_rlimits);
+        this->scene->getRobot()->getLeftMinLimits(min_llimits);
+        this->scene->getRobot()->getLeftMaxLimits(max_llimits);
+
+        h_planner->setMatRightArm(mat_right_arm);
+        h_planner->setMatRightHand(mat_right_hand);
+        h_planner->setRightMaxLimits(max_rlimits);
+        h_planner->setRightMinLimits(min_rlimits);
+        h_planner->setMatLeftArm(mat_left_arm);
+        h_planner->setMatLeftHand(mat_left_hand);
+        h_planner->setLeftMaxLimits(max_llimits);
+        h_planner->setLeftMinLimits(min_llimits);
+
+        robot_part torso = this->scene->getRobot()->getTorso();
+        HUMotion::RobotPart hump_torso;
+
+        hump_torso.Xpos = torso.Xpos;
+        hump_torso.Ypos = torso.Ypos;
+        hump_torso.Zpos = torso.Zpos;
+        hump_torso.Roll = torso.Roll;
+        hump_torso.Pitch = torso.Pitch;
+        hump_torso.Yaw = torso.Yaw;
+        hump_torso.Xsize = torso.Xsize;
+        hump_torso.Ysize = torso.Ysize;
+        hump_torso.Xpos = torso.Xpos;
+        hump_torso.Zsize = torso.Zsize;
+
+        h_planner->setTorso(hump_torso);
+
+        DHparams rDH = this->scene->getRobot()->getDH_rightArm();
+        DHparams lDH = this->scene->getRobot()->getDH_leftArm();
+
+        HUMotion::DHparameters right_arm_DH;
+        HUMotion::DHparameters left_arm_DH;
+
+        right_arm_DH.a = rDH.a;
+        right_arm_DH.alpha = rDH.alpha;
+        right_arm_DH.d = rDH.d;
+        right_arm_DH.theta = rDH.theta;
+        left_arm_DH.a = lDH.a;
+        left_arm_DH.alpha = lDH.alpha;
+        left_arm_DH.d = lDH.d;
+        left_arm_DH.theta = lDH.theta;
+
+        h_planner->setDH_rightArm(right_arm_DH);
+        h_planner->setDH_leftArm(left_arm_DH);
+
+#if HAND == 1
+        electric_gripper e_hand = this->scene->getRobot()->getElectricGripper();
+        std::vector<int> rk; this->scene->getRobot()->getRK(rk);
+        HUMotion::ElectricGripper hump_ehand;
+
+        hump_ehand.A1 = e_hand.A1;
+        hump_ehand.D3 = e_hand.D3;
+        hump_ehand.maxAperture = e_hand.maxAperture;
+        hump_ehand.minAperture = e_hand.minAperture;
+        hump_ehand.rk = rk;
+
+        h_planner->setElectricGripper(hump_ehand);
+#endif
+#if HEAD==1
+        robot_part head = this->scene->getRobot()->getHead();
+        HUMotion::RobotPart hump_head;
+
+        hump_head.Xpos = head.Xpos;
+        hump_head.Ypos = head.Ypos;
+        hump_head.Zpos = head.Zpos;
+        hump_head.Roll = head.Roll;
+        hump_head.Pitch = head.Pitch;
+        hump_head.Yaw = head.Yaw;
+        hump_head.Xsize = head.Xsize;
+        hump_head.Ysize = head.Ysize;
+        hump_head.Xpos = head.Xpos;
+        hump_head.Zsize = head.Zsize;
+
+        h_planner->setHead(hump_head);
+#endif
+        HUMotion::wpPtr hump_wp;
+        HUMotion::wp_specs hump_wp_specs;
+        vector <HUMotion::wp_specs> hump_wp_vec;
+        waypoint wp_specs;
+        vector <waypoint> wps; this->wp->getWaypoints(wps);
+        bool wp_wks; this->wp->getWPworkspace(wp_wks);
+        int wp_nr = this->wp->getWPnumber();
+        for (size_t i=0; i< wps.size(); ++i){
+
+            wp_specs=wps.at(i);
+
+            hump_wp_specs.name = wp_specs.name;
+
+            hump_wp_specs.OpSpace.Xpos = wp_specs.OperatSpace.position.Xpos;
+            hump_wp_specs.OpSpace.Ypos = wp_specs.OperatSpace.position.Ypos;
+            hump_wp_specs.OpSpace.Zpos = wp_specs.OperatSpace.position.Zpos;
+            hump_wp_specs.OpSpace.Roll = wp_specs.OperatSpace.or_rpy.roll;
+            hump_wp_specs.OpSpace.Pitch = wp_specs.OperatSpace.or_rpy.pitch;
+            hump_wp_specs.OpSpace.Yaw = wp_specs.OperatSpace.or_rpy.yaw;
+            hump_wp_specs.OpSpace.velocity = wp_specs.OperatSpace.velocity;
+            hump_wp_specs.OpSpace.accelaration = wp_specs.OperatSpace.accelaration;
+
+            hump_wp_specs.JntSpace.PosJoints = wp_specs.JointSpace.PosJoints;
+            hump_wp_specs.JntSpace.accelaration = wp_specs.JointSpace.accelaration;
+            hump_wp_specs.JntSpace.velocity = wp_specs.JointSpace.velocity;
+
+            hump_wp_vec.push_back(hump_wp_specs);
+        }
+
+        hump_wp.reset(new HUMotion::Waypoint());
+        hump_wp->setWaypoint(hump_wp_vec);
+        hump_wp->setWorkspace(wp_wks);
+        hump_wp->setWPnr(wp_nr);
+        this->h_planner->addWaypoint(hump_wp);
+
+        //test each waypoint function individualy
+        /*
+        vector <double> teste;
+        vector <double>res;
+        teste.push_back(0.2);
+        teste.push_back(0.5);
+        res= this->h_planner->den1_wp(teste,teste,teste,2);
+        res.clear();
+        res= this->h_planner->num1_wp(teste,teste,teste,2);
+        res.clear();
+        double aaa;
+        aaa=this->h_planner->get_eq_den(teste,teste,teste);
+        double bbb;
+        vector <double>xpos;
+        xpos.push_back(10);
+        xpos.push_back(20);
+        bbb= this->h_planner->get_eq_num(teste,teste,teste,xpos,50,0);
+        vector <double> e;
+        e= this->h_planner->get_pi_num(teste,teste,xpos,50,0);
+        e.clear();
+        e = this->h_planner->get_pi_eq(teste,xpos,50,0);
+        vector <vector<double>> x_wp_dof;
+        vector <double> xf_dof;
+        vector <double> x0_dof;
+        e.clear();
+        x_wp_dof.push_back(xpos);
+        xf_dof.push_back(50);
+        x0_dof.push_back(0);
+        e = this->h_planner->get_equations(teste,x_wp_dof,xf_dof,x0_dof);
+        vector <double> x_minus;
+        vector <double> v_minus;
+        vector <double> acc_minus;
+        std::tie(x_minus,v_minus,acc_minus) = this->h_planner->get_eq_minus(teste,xpos, 50,0);
+        vector <vector<double>> x_plus;
+        vector <vector<double>> v_plus;
+        vector <vector<double>> acc_plus;
+        std::tie(x_plus,v_plus,acc_plus) = this->h_planner->get_eq_plus(teste,xpos, 50,0);
+        */
+        //vector <HUMotion::wp_specs> get_wp; hump_wp->getWP(get_wp);
+        //this->h_planner->plan_waypoints(get_wp);
+    }
+}
 
 Problem::Problem(int planner_id,Movement* mov,Scenario* scene)
 {
@@ -217,7 +441,9 @@ Problem::Problem(const Problem& s)
     this->targetAxis = s.targetAxis;
     this->mov = movementPtr(new Movement(*s.mov.get()));
     this->scene = scenarioPtr(new Scenario(*s.scene.get()));
-
+#if WP == 1
+    this->wp = waypointPtr(new Waypoint(*s.wp.get()));
+#endif
     if(s.h_planner!=nullptr)
         this->h_planner = h_plannerPtr(new HUMotion::HUMPlanner(*s.h_planner.get()));
 
@@ -535,7 +761,10 @@ bool Problem::getRPY(std::vector<double>& rpy, Matrix3d& Rot)
         return false;
 }
 
-
+//end_effector orientation
+// roll- around z,
+// pitch-around y,
+// yaw-around x
 bool Problem::RPY_matrix(std::vector<double>& rpy, Matrix3d& Rot)
 {
     Rot = Matrix3d::Zero();
@@ -546,6 +775,7 @@ bool Problem::RPY_matrix(std::vector<double>& rpy, Matrix3d& Rot)
         double pitch = rpy.at(1); // around y
         double yaw = rpy.at(2); // around x
 
+        //transformation matrix
         Rot(0,0) = cos(roll)*cos(pitch);  Rot(0,1) = cos(roll)*sin(pitch)*sin(yaw)-sin(roll)*cos(yaw); Rot(0,2) = sin(roll)*sin(yaw)+cos(roll)*sin(pitch)*cos(yaw);
         Rot(1,0) = sin(roll)*cos(pitch);  Rot(1,1) = cos(roll)*cos(yaw)+sin(roll)*sin(pitch)*sin(yaw); Rot(1,2) = sin(roll)*sin(pitch)*cos(yaw)-cos(roll)*sin(yaw);
         Rot(2,0) = -sin(pitch);           Rot(2,1) = cos(pitch)*sin(yaw);                              Rot(2,2) = cos(pitch)*cos(yaw);
@@ -577,6 +807,9 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
 #elif HAND == 1
     // Electric Parallel Gripper
     int hand_code = 2;
+#elif HAND == 2
+    // Vacuum Gripper
+    int hand_code = 3;
 #endif
 
     std::vector<double> finalHand;
@@ -594,7 +827,7 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     std::vector<double> tar_pose;
     std::vector<double> place_location;
 
-    if(mov_type != 1 && mov_type != 5)
+    if(mov_type != 1 && mov_type != 5 && mov_type != 6)
     {
         try
         {
@@ -655,7 +888,7 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
             this->scene->getRobot()->getRightHandHomePosture(finalHand);
         else if(mov_type == 1)
             finalHand=this->move_final_hand;
-        else
+        else if(mov_type !=6)
         {
             dHO = this->dHOr;
             tar = obj->getTargetRight();
@@ -683,28 +916,31 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     }
 
 
-    if(mov_type != 1 && mov_type != 5)
+    if(mov_type != 1 && mov_type != 5 && mov_type != 6)
     {       
         // compute the position of the target when the object will be engaged
         pos eng1_pos = eng1->getPos(); // position related to the world of the engage point of the other object
         orient eng1_or = eng1->getOr(); // orientation of the engage point of the other object
         std::vector<double> rpy_eng1 = {eng1_or.roll, eng1_or.pitch, eng1_or.yaw};
+        //orientation rpy of the engage point
         Matrix3d Rot_eng1; this->RPY_matrix(rpy_eng1, Rot_eng1);
 
-        pos new_tar;
+        pos new_tar;//position in the Cartesian space
         std::vector<double> rpy = {tar->getOr().roll, tar->getOr().pitch, tar->getOr().yaw};
-        Matrix3d Rot_tar; this->RPY_matrix(rpy, Rot_tar);
+        Matrix3d Rot_tar; this->RPY_matrix(rpy, Rot_tar);//orientation rpy of the target
         Vector3d v(eng_to_tar.at(0),eng_to_tar.at(1),eng_to_tar.at(2));
         Vector3d eng_to_tar_w = Rot_tar*v;
+        // position in the Cartesian space of the target
         new_tar.Xpos = eng1_pos.Xpos - eng_to_tar_w(0);
         new_tar.Ypos = eng1_pos.Ypos - eng_to_tar_w(1);
         new_tar.Zpos = eng1_pos.Zpos - eng_to_tar_w(2);
 
-        orient eng_or = eng->getOr(); // orientation of the engage point of the object to engage
+        // orientation of the engage point of the object to engage
+        orient eng_or = eng->getOr();
         std::vector<double> rpy_eng = {eng_or.roll, eng_or.pitch, eng_or.yaw};
-        Matrix3d Rot_eng; this->RPY_matrix(rpy_eng,Rot_eng);
-        Matrix3d Rot_eng_inv = Rot_eng.transpose();
-        Matrix3d Rot_eng_tar = Rot_eng_inv * Rot_tar;
+        Matrix3d Rot_eng; this->RPY_matrix(rpy_eng,Rot_eng);//get rpy matrix
+        Matrix3d Rot_eng_inv = Rot_eng.transpose();// rpy matrix transpose
+        Matrix3d Rot_eng_tar = Rot_eng_inv * Rot_tar; // matrix engage point to the target
         Matrix3d Rot_new_tar = Rot_eng1 * Rot_eng_tar;
         std::vector<double> rpy_new_tar; this->getRPY(rpy_new_tar,Rot_new_tar);
 
@@ -736,6 +972,14 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     params.mov_specs.mov_infoline = this->mov->getInfoLine();
     params.mov_specs.finalHand = finalHand;
 
+    vector <HUMotion::wp_specs> wps;
+#if WP == 1
+    // get the waypoints
+    HUMotion::wpPtr hump_wp;
+    this->h_planner->getWaypoints(hump_wp);
+    hump_wp->getWP(wps);
+    //wps = this->h_planner->waypoints->waypoints;
+#endif
     HUMotion::planning_result_ptr res;
     long long curr_time;
     switch(mov_type)
@@ -781,6 +1025,11 @@ HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
     case 5:// go-park
         curr_time = this->GetTimeMs64();
         res = this->h_planner->plan_move(params,initPosture,homePosture);
+        this->exec_time = double(this->GetTimeMs64() - curr_time);
+        break;
+    case 6: // waypoints        
+        curr_time = this->GetTimeMs64();
+        res = this->h_planner->plan_waypoints(params,wps);
         this->exec_time = double(this->GetTimeMs64() - curr_time);
         break;
     }

@@ -39,7 +39,14 @@ public:
     Object(string name, pos ppos, orient oor, dim ssize,
            Target* pTR, Target* pTL,
            EngagePoint* pEng);
-
+    /**
+     * @brief Object, a constructor
+     * @param name
+     * @param ppos
+     * @param oor
+     * @param ssize
+    */
+    Object(string name, pos ppos, orient oor, dim ssize);
     /**
      * @brief Object, a copy constructor
      * @param obj

@@ -12,11 +12,14 @@ class HandPosPlot : public SurfacePlot
 {
 
 public:
+    HandPosPlot();
     /**
      * @brief HandPosPlot, a constructor
      * @param hand_pos
      */
     HandPosPlot(vector<vector<double>>& hand_pos);
+
+    void set_title(QString title);
 };
 
 } // namespace motion_manager

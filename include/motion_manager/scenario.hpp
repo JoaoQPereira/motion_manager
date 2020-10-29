@@ -4,7 +4,7 @@
 #include "robot.hpp"
 #include "object.hpp"
 #include "pose.hpp"
-
+#include "waypoint.hpp"
 
 namespace motion_manager
 {
@@ -12,6 +12,9 @@ namespace motion_manager
 typedef boost::shared_ptr<Robot> robotPtr; /**< shared pointer to a robot */
 typedef boost::shared_ptr<Object> objectPtr; /**< shared pointer to an object*/
 typedef boost::shared_ptr<Pose> posePtr; /**< shared pointer to a pose*/
+
+typedef boost::shared_ptr<Waypoint> waypointPtr; /**< shared pointer to a waypoint*/
+
 
 class Scenario
 {    
@@ -92,6 +95,12 @@ public:
      * @return
      */
     bool getPoses(vector<posePtr>& pts);
+    /**
+     * @brief getWaypoints
+     * @param wps
+     * @return
+     */
+    bool getWaypoints(vector<waypointPtr> &wps);
 
     /**
      * @brief This method adds a new object to the scenario
@@ -104,7 +113,12 @@ public:
      * @param pose_ptr
      */
     void addPose(posePtr pose_ptr);
-
+    /**
+     * @brief addWaypoint
+     * @param wp_Ptr
+     */
+    void addWaypoint(waypointPtr wp_ptr);
+    //void addWaypoint(Waypoint &wp_ptr);
     /**
      * @brief This method gets the object at the position pos in the vector of objects
      * @param pos
@@ -132,7 +146,7 @@ public:
      * @return
      */
     posePtr getPose(string pose_name);
-
+    waypointPtr getWaypoint_traj(string traj_name);
     /**
      * @brief This method adds the robot to the scenario
      * @param hh_ptr
@@ -145,6 +159,7 @@ private:
     vector<objectPtr> objs_list; /**< the objects in the scenario */
     vector<posePtr> poses_list; /**< the poses in the scenario */
     robotPtr rPtr; /**< the robot in the scenario */
+    vector<waypointPtr> wps_list; /** the waypoints in the scenario **/
 };
 
 } // namespace motion_manager

@@ -71,6 +71,7 @@ public:
           vector<double>& min_rl, vector<double>& max_rl,
           vector<double>& min_ll, vector<double>& max_ll);
 #endif
+
 #elif HAND == 1
     /**
      * @brief Robot
@@ -111,6 +112,52 @@ public:
           vector<double>& min_rl, vector<double>& max_rl,
           vector<double>& min_ll, vector<double>& max_ll);
 
+
+#if HEAD == 1
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param headspecs
+     * @param r
+     * @param l
+     * @param min_rl
+     * @param max_rl
+     * @param min_ll
+     * @param max_ll
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, electric_gripper hspecs,
+          robot_part headspecs, vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
+#endif
+#elif HAND==2
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, vacuum_gripper hspecs);
+
+    /**
+     * @brief Robot
+     * @param name
+     * @param torsospecs
+     * @param aspecs
+     * @param hspecs
+     * @param r
+     * @param l
+     */
+    Robot(string name, robot_part torsospecs, arm aspecs, vacuum_gripper hspecs,
+          vector<double>& r, vector<double>& l,
+          vector<double>& min_rl, vector<double>& max_rl,
+          vector<double>& min_ll, vector<double>& max_ll);
+
+
 #if HEAD == 1
     /**
      * @brief Robot
@@ -132,7 +179,6 @@ public:
           vector<double>& min_ll, vector<double>& max_ll);
 #endif
 #endif
-
     /**
      * @brief Robot, a copy constructor
      * @param hh
@@ -175,6 +221,12 @@ public:
      * @param specs
      */
     void setElectricGripper(electric_gripper& specs);
+#elif HAND == 2
+    /**
+     * @brief This method sets the specifications of the vacuum gripper
+     * @param specs
+     */
+    void setVacuumGripper(vacuum_gripper& specs);
 #endif
 
     /**
@@ -318,6 +370,12 @@ public:
      * @return
      */
     electric_gripper getElectricGripper();
+#elif HAND == 2
+    /**
+     * @brief This method gets hand specifications of the robot
+     * @return
+     */
+    vacuum_gripper getVacuumGripper();
 #endif
 
     /**
@@ -720,6 +778,7 @@ public:
      * @param velocities
      */
     void getWristVel(int arm, vector<double>& vel, vector<double>& posture,vector<double>& velocities);
+    void getWristURVel(int arm, vector<double> &vel, vector<double> &posture, vector<double> &velocities, int wrist);
 
     /**
      * @brief getWristVelNorm
@@ -729,6 +788,8 @@ public:
      * @return
      */
     double getWristVelNorm(int arm, vector<double>& posture,vector<double>& velocities);
+
+    double getWristURVelNorm(int arm, vector<double> &posture, vector<double> &velocities, int wrist);
 
     /**
      * @brief getElbowVel
@@ -791,6 +852,7 @@ public:
      */
     robot_part getHead();
 #endif
+    void getDHposture_UR(vector<double> &posture);
 
 private:
     /**
@@ -882,6 +944,10 @@ private:
 #elif HAND == 1
     electric_gripper m_electric_gripper_specs; /**< specifications of the hand */
     vector<int> rk; /**< r parameters of the barrett hand */
+#elif HAND == 2
+    vacuum_gripper m_vacuum_specs;
+    vector<int> rk; /**< r parameters of the barrett hand */
+
 #endif
 
     DHparams m_DH_rightArm; /**< current D-H parameters of the right arm */

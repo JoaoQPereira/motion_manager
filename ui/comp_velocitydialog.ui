@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab_hand">
     <attribute name="title">
@@ -147,6 +147,104 @@
      <property name="text">
       <string>Save</string>
      </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_wrist2">
+    <attribute name="title">
+     <string>Wrist2</string>
+    </attribute>
+    <widget class="QWidget" name="layoutWidget_4">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>1091</width>
+       <height>591</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_x" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_y" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_z" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_lin_vel" native="true"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_wx" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_wy" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_wz" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist2_ang_vel" native="true"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>Wrist3</string>
+    </attribute>
+    <widget class="QWidget" name="layoutWidget_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>1091</width>
+       <height>591</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_x" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_y" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_z" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_lin_vel" native="true"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_12">
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_wx" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_wy" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_wz" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plot_wrist3_ang_vel" native="true"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_elbow">

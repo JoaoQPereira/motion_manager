@@ -44,6 +44,7 @@
 #include "task.hpp"
 #include "scenario.hpp"
 
+#include "waypoint.hpp"
 
 namespace motion_manager
 {
@@ -161,6 +162,11 @@ public:
      * @param scene
      * @return
      */
+
+    bool setWaypoint(vector<double> &robot_waypoints);
+
+    void updateWaypoints(vector <vector<double>> robot_wps);
+
     bool execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene);
 
     /**
@@ -234,8 +240,12 @@ public:
      */
     QStringListModel* loggingModel();
 
-
-
+    /**
+     * @brief This method gets the waypoints of the movement
+     * @param scene
+     * @return
+     */
+    bool getWaypoints(scenarioPtr scene);
 
 private:
     /**
@@ -275,6 +285,15 @@ private:
     bool getRPY(Matrix4d Trans, std::vector<double>& rpy);
 
     /**
+     * @brief This method return the RPY values starting from the rotation matrix
+     * @param rpy
+     * @param rot
+     * @param rpy
+     * @return
+     */
+    bool RotgetRPY(Matrix3d rot, std::vector<double>& rpy);
+
+    /**
      * @brief RPY_matrix
      * @param rpy
      * @param Rot
@@ -294,6 +313,16 @@ private:
      */
     void preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int arm, int attach, MatrixXd traj, string objName);
 #elif HAND == 1
+    /**
+     * @brief preMovementOperation
+     * @param node
+     * @param movType
+     * @param retreat
+     * @param attach
+     * @param objName
+     */
+    void preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int attach, string objName);
+#elif HAND == 2
     /**
      * @brief preMovementOperation
      * @param node
@@ -329,6 +358,18 @@ private:
     void publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, MatrixXi hand_handles, int sceneID, double timeTot, double tol);
 
 #elif HAND == 1
+    /**
+     * @brief publishData
+     * @param node
+     * @param traj
+     * @param timesteps
+     * @param handles
+     * @param sceneID
+     * @param timeTot
+     * @param tol
+     */
+    void publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol);
+#elif HAND == 2
     /**
      * @brief publishData
      * @param node
@@ -569,6 +610,9 @@ private:
     void SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state);
 #endif
 #endif
+    //**************************** Callacks of the collaborative robot UR10 ****************************//
+
+    void URJointsCallback(const sensor_msgs::JointState &state);
 
 
     int init_argc; /**< initial argc */
@@ -579,6 +623,8 @@ private:
     scenarioPtr curr_scene; /**< current scenario */
     movementPtr curr_mov; /**< current movement that is being executed */
     src::severity_logger< severity_level > lg; /**< logger */
+
+
     //***************************************** V-Rep simulator ******************************************//
     bool simulationRunning; /**< true if the simulation in V-REP is running */
     double simulationTime;/**< current time of the simulation */
@@ -610,6 +656,8 @@ private:
     std::vector<double> left_2hand_force; /**< forces of the left hand 2 phalanx */
 #elif HAND == 1
     // **** Electric Gripper **** //
+    bool closed;
+#elif HAND == 2
     bool closed;
 #endif
     // **** ROS communication **** //
@@ -643,6 +691,7 @@ private:
     // Head
     float pan;
     // **** ROS communication **** //
+    // create the action client
     // Actionlibs clients
     motionCommClient* motionComm; /**< */
     followJointTrajectoryClient* folJointTraj; /**< */
@@ -657,7 +706,14 @@ private:
     bool gripperCalibrated;
 #endif
 #endif
-
+#if UR ==1
+    //************************************ Collaborative robot Sawyer ************************************//
+    std::vector<double> robotPosture_wp; /**< position of the right arm*/
+    std::vector<double> robotVel_wp; /**< velocity of the right arm*/
+    // Subscribers of the joints and robot states
+    ros::Subscriber subJointsStateRobotUR; /**< ROS subscriber to the topic /joint_states*/
+    vector<vector<double>> robot_waypoints;
+#endif
 
 
 
@@ -677,6 +733,12 @@ Q_SIGNALS:
      * @param value
      */
     void newElement(string value);
+
+    /**
+     * @brief This method signals a new waypoint
+     * @param value
+     */
+    void newWaypoint(string value);
 
     /**
      * @brief updateElement

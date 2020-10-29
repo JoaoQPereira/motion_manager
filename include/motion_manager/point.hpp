@@ -87,7 +87,7 @@ public:
     void getYt(vector<double>& yt);
 
     /**
-     * @brief This method gets the y axis of the orientation frame.
+     * @brief This method gets the z axis of the orientation frame.
      * @param zt
      */
     void getZt(vector<double>& zt);

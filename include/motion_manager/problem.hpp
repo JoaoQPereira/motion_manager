@@ -5,13 +5,16 @@
 #include "movement.hpp"
 #include "scenario.hpp"
 #include <humplanner.hpp>
-
+#include "waypoint.hpp"
 
 namespace motion_manager
 {
 typedef boost::shared_ptr<HUMotion::HUMPlanner> h_plannerPtr; /**< shared pointer to a human-like motion planner */
 typedef boost::shared_ptr<Scenario> scenarioPtr; /**< shared pointer to a scenario */
 typedef boost::shared_ptr<Movement> movementPtr; /**< shared pointer to a movement */
+
+typedef boost::shared_ptr<Waypoint> waypointPtr; /**< shared pointer to a waypoint */
+
 
 class Problem
 {
@@ -21,6 +24,16 @@ public:
      * @brief Problem, a constructor
      */
     Problem();
+
+    /**
+     * @brief Problem
+     * @param planner_id
+     * @param wp
+     * @param mov
+     * @param scene
+     */
+    Problem(int planner_id, Waypoint* wp, Movement* mov,Scenario* scene);
+
 
     /**
      * @brief Problem, a constructor
@@ -158,6 +171,7 @@ public:
      */
     double getTime();
 
+    void test_waypoints();
 private:
     /**
      * @brief This method computes the final posture of the fingers.\n
@@ -210,6 +224,8 @@ private:
     HUMotion::hump_params h_params; /**< parameters of the HUMP planner */
     movementPtr mov; /**< movement to be planned */
     scenarioPtr scene; /**< current scene */
+    waypointPtr wp; /**< waypoints for the trajectory to be planned */
+
     int targetAxis; /**< approaching direction towards the target: 0 = none , 1 = x axis , 2 = y axis, 3 = z axis*/
     objectPtr obj_curr; /**< current object being manipulated */
     targetPtr tar_eng; /**< target of the engaged object */

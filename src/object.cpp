@@ -219,6 +219,19 @@ Object::Object(string name, pos ppos, orient oor, dim ssize,
     this->setup_features = false;
 }
 
+Object::Object(string name, pos ppos, orient oor, dim ssize)
+{
+    this->m_name = name;
+    this->m_pos = ppos;
+    this->m_or = oor;
+    this->m_size = ssize;
+    this->handle = -1;
+    this->handle_body = -1;
+
+    this->m_targetRightEnabled = false;
+    this->m_targetLeftEnabled = false;
+    this->setup_features = false;
+}
 
 Object::Object(const Object &obj)
 {

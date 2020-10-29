@@ -16,3 +16,7 @@
 #define MOVEIT @MOVEIT@
 // ROBOT
 #define ROBOT @ROBOT@
+// UR
+#define UR @UR@
+// WP
+#define WP @WP@

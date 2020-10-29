@@ -26,6 +26,9 @@ SET(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 ##############################################################################
 # Catkin
 ##############################################################################
+#set(qt_build_DIR /opt/ros/kinetic/share/qt_build/cmake)
+
+
 
 # qt_build provides the qt cmake glue, roscpp the comms for a default talker
 find_package(catkin REQUIRED COMPONENTS
@@ -44,10 +47,13 @@ include_directories(${catkin_INCLUDE_DIRS})
 # exporting anything.
 catkin_package()
 
+#add_definitions(-DBOOST_LOG_DYN_LINK)
 set(Boost_USE_STATIC_LIBS ON)
+
 find_package(Boost REQUIRED COMPONENTS log_setup log thread filesystem)
 include_directories( ${Boost_INCLUDE_DIRS})
 link_directories( ${Boost_LIBRARY_DIRS} )
+#find_library(loglib boost_log 3rdparty/boost_1_58_0/stage/lib)
 
 
 find_package(OpenGL)
@@ -86,17 +92,23 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 # Settings
 ##############################################################################
 ##Real Robot configuration
+# WP=0, NO waypoints configuration
+# WP=1, Use waypoints configuration
+set (WP 1)
+set (UR 1)
 # ROBOT=0, don't communicate with robot
 # ROBOT=1, communicate with robot
 set (ROBOT 0)
-
+#set (ROBOT 1)
 ## Robot parts configuration
 # 1 means that the part is present and it is taken into account for the generation of the trajectories,
 # 0 otherwise.
 # The torso and the arms are the only parts assumed for any robot. In other words, the anthropomorphism of the system is assumed.
 # The characteristics of the torso will be those ones of the robot.
 # However the following parts may be taken into account when they are present
-set (HEAD 1)
+#set (HEAD 1)
+set (HEAD 0) #UR robot does not have head
+
 # set (NECK 0)
 # set (PELVIS 1)
 # set (RIGHT_UPPER_LEG 1)
@@ -109,7 +121,8 @@ set (HEAD 1)
 ## Hand configuration
 # HAND=0. Barrett hand
 # HAND=1. Electric Parallel Gripper
-set (HAND 1)
+# HAND=2. vacuum Gripper
+set (HAND 2)
 
 set(MAIN_PATH ${PROJECT_SOURCE_DIR}) ## Path of the main directory
 set(PATH_SCENARIOS /home/$ENV{USER}/scenarios) ## Path of the scenarios
@@ -204,6 +217,7 @@ link_directories(
 ##############################################################################
 add_executable(${PROJECT_NAME} ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#target_link_libraries(Boost::log INTERFACE ${loglib})
 
 # ********** link external libraries ********
 # Human-like Upper-limbs Motion Planner (HUMP)

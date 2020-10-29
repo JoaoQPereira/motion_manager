@@ -31,6 +31,9 @@ Movement::Movement(int type, int arm)
     case 5:
         this->strType = string("Go park");
         break;
+    case 6:
+        this->strType = string("Waypoints");
+        break;
     }
 
     this->prec=false;
@@ -355,6 +358,9 @@ void Movement::setType(int t)
         break;
     case 5:
         this->strType = string("Go park");
+        break;
+    case 6:
+        this->strType = string("Waypoints");
         break;
     }
 }

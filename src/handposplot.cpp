@@ -3,7 +3,12 @@
 
 namespace motion_manager {
 
-HandPosPlot::HandPosPlot(vector<vector<double>>& hand_pos)
+HandPosPlot::HandPosPlot()
+{
+
+}
+
+HandPosPlot::HandPosPlot(vector<vector<double> > &hand_pos)
 {
     setTitle("Hand position [mm]");
 
@@ -49,6 +54,11 @@ HandPosPlot::HandPosPlot(vector<vector<double>>& hand_pos)
 
     updateData();
     updateGL();
+}
+
+void HandPosPlot::set_title(QString title)
+{
+    setTitle(title);
 }
 
 }// namespace motion_manager

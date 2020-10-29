@@ -59,6 +59,48 @@ void CompVelocityDialog::setupPlots(vector<vector<double>> &linear_velocity,vect
         plotComp(ui->plot_elbow_wz,QString("Elbow angular velocity z"),time,angular_vel_z,false); // plot vel wz
         plotComp(ui->plot_elbow_ang_vel,QString("Elbow angular velocity norm"),time,angular_vel_norm,false); // plot angular vel norm
         break;
+#if UR == 1
+    case 2: // wrist 1
+        plotComp(ui->plot_wrist_x,QString("Wrist1 linear velocity x"),time,linear_vel_x,true); // plot linear vel x
+        plotComp(ui->plot_wrist_y,QString("Wrist1 linear velocity y"),time,linear_vel_y,true); // plot linear vel y
+        plotComp(ui->plot_wrist_z,QString("Wrist1 linear velocity z"),time,linear_vel_z,true); // plot linear vel z
+        plotComp(ui->plot_wrist_lin_vel,QString("Wrist1 linear velocity norm"),time,linear_vel_norm,true); // plot linear vel norm
+        plotComp(ui->plot_wrist_wx,QString("Wrist1 angular velocity x"),time,angular_vel_x,false); // plot vel wx
+        plotComp(ui->plot_wrist_wy,QString("Wrist1 angular velocity y"),time,angular_vel_y,false); // plot vel wy
+        plotComp(ui->plot_wrist_wz,QString("Wrist1 angular velocity z"),time,angular_vel_z,false); // plot vel wz
+        plotComp(ui->plot_wrist_ang_vel,QString("Wrist1 angular velocity norm"),time,angular_vel_norm,false); // plot angular vel norm
+        break;
+    case 3: // wrist 2
+        plotComp(ui->plot_wrist2_x,QString("Wrist2 linear velocity x"),time,linear_vel_x,true); // plot linear vel x
+        plotComp(ui->plot_wrist2_y,QString("Wrist2 linear velocity y"),time,linear_vel_y,true); // plot linear vel y
+        plotComp(ui->plot_wrist2_z,QString("Wrist2 linear velocity z"),time,linear_vel_z,true); // plot linear vel z
+        plotComp(ui->plot_wrist2_lin_vel,QString("Wrist2 linear velocity norm"),time,linear_vel_norm,true); // plot linear vel norm
+        plotComp(ui->plot_wrist2_wx,QString("Wrist2 angular velocity x"),time,angular_vel_x,false); // plot vel wx
+        plotComp(ui->plot_wrist2_wy,QString("Wrist2 angular velocity y"),time,angular_vel_y,false); // plot vel wy
+        plotComp(ui->plot_wrist2_wz,QString("Wrist2 angular velocity z"),time,angular_vel_z,false); // plot vel wz
+        plotComp(ui->plot_wrist2_ang_vel,QString("Wrist2 angular velocity norm"),time,angular_vel_norm,false); // plot angular vel norm
+        break;
+    case 4: // wrist 3
+        plotComp(ui->plot_wrist3_x,QString("Wrist3 linear velocity x"),time,linear_vel_x,true); // plot linear vel x
+        plotComp(ui->plot_wrist3_y,QString("Wrist3 linear velocity y"),time,linear_vel_y,true); // plot linear vel y
+        plotComp(ui->plot_wrist3_z,QString("Wrist3 linear velocity z"),time,linear_vel_z,true); // plot linear vel z
+        plotComp(ui->plot_wrist3_lin_vel,QString("Wrist3 linear velocity norm"),time,linear_vel_norm,true); // plot linear vel norm
+        plotComp(ui->plot_wrist3_wx,QString("Wrist3 angular velocity x"),time,angular_vel_x,false); // plot vel wx
+        plotComp(ui->plot_wrist3_wy,QString("Wrist3 angular velocity y"),time,angular_vel_y,false); // plot vel wy
+        plotComp(ui->plot_wrist3_wz,QString("Wrist3 angular velocity z"),time,angular_vel_z,false); // plot vel wz
+        plotComp(ui->plot_wrist3_ang_vel,QString("Wrist3 angular velocity norm"),time,angular_vel_norm,false); // plot angular vel norm
+        break;
+    case 5: default: // hand
+        plotComp(ui->plot_hand_x,QString("Hand linear velocity x"),time,linear_vel_x,true); // plot linear vel x
+        plotComp(ui->plot_hand_y,QString("Hand linear velocity y"),time,linear_vel_y,true); // plot linear vel y
+        plotComp(ui->plot_hand_z,QString("Hand linear velocity z"),time,linear_vel_z,true); // plot linear vel z
+        plotComp(ui->plot_hand_lin_vel,QString("Hand linear velocity norm"),time,linear_vel_norm,true); // plot linear vel norm
+        plotComp(ui->plot_hand_wx,QString("Hand angular velocity x"),time,angular_vel_x,false); // plot vel wx
+        plotComp(ui->plot_hand_wy,QString("Hand angular velocity y"),time,angular_vel_y,false); // plot vel wy
+        plotComp(ui->plot_hand_wz,QString("Hand angular velocity z"),time,angular_vel_z,false); // plot vel wz
+        plotComp(ui->plot_hand_ang_vel,QString("Hand angular velocity norm"),time,angular_vel_norm,false); // plot angular vel norm
+        break;
+#else
     case 2: // wrist
         plotComp(ui->plot_wrist_x,QString("Wrist linear velocity x"),time,linear_vel_x,true); // plot linear vel x
         plotComp(ui->plot_wrist_y,QString("Wrist linear velocity y"),time,linear_vel_y,true); // plot linear vel y
@@ -79,6 +121,7 @@ void CompVelocityDialog::setupPlots(vector<vector<double>> &linear_velocity,vect
         plotComp(ui->plot_hand_wz,QString("Hand angular velocity z"),time,angular_vel_z,false); // plot vel wz
         plotComp(ui->plot_hand_ang_vel,QString("Hand angular velocity norm"),time,angular_vel_norm,false); // plot angular vel norm
         break;
+    #endif
     }
 }
 

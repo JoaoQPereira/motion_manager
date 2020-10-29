@@ -18,6 +18,7 @@ Point::Point(string name, pos ppos, orient oor)
     this->m_or.pitch = oor.pitch;
     this->m_or.roll = oor.roll;
     this->m_or.yaw = oor.yaw;
+
 }
 
 

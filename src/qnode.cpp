@@ -2,6 +2,7 @@
 
 #include <ros/network.h>
 #include <string>
+#include <iterator>
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -34,7 +35,6 @@
 #include <vrep_common/simRosSetJointPosition.h>
 #include <geometric_shapes/solid_primitive_dims.h>
 #include "../include/motion_manager/v_repConst.hpp"
-
 
 namespace motion_manager{
 
@@ -72,6 +72,12 @@ QNode::QNode(int argc, char** argv ) :
     // Collaborative Robot Sawyer
     robotPosture.assign(njoints, 0.0f);
     robotVel.assign(njoints, 0.0f);
+#endif
+#if UR == 1
+    int njoints = JOINTS_ARM;
+    // Collaborative Robot UR10
+    robotPosture_wp.assign(njoints, 0.0f);
+    robotVel_wp.assign(njoints, 0.0f);
 #endif
     //Objects information
     got_scene = false;
@@ -212,7 +218,7 @@ bool QNode::getArmsHandles(int robot)
         }
 
         // ARoS and Jade
-        if(robot != 2)
+        if(robot != 2 && robot != 3 )
         {
             srvgetHandle.request.objectName = string("left_joint") + QString::number(k).toStdString();
             add_client.call(srvgetHandle);
@@ -589,6 +595,7 @@ bool QNode::getArmsHandles(int robot)
     }
 #endif
 
+
     return succ;
 }
 
@@ -610,7 +617,7 @@ bool QNode::loadScenario(const std::string& path,int id)
 
         // Create the action client specifying the server name to connect: "/motion/motion_command"
         motionComm = new motionCommClient("/motion/motion_command", true);
-        motionComm->waitForServer();
+        motionComm->waitForServer(); // wait for the action server to start
 
         // Create the action client specifying the server name to connect: "/robot/limb/right/follow_joint_trajectory"
         folJointTraj = new followJointTrajectoryClient("/robot/limb/right/follow_joint_trajectory", true);
@@ -634,11 +641,11 @@ bool QNode::loadScenario(const std::string& path,int id)
     vrep_common::simRosLoadScene srv;
     srv.request.fileName = path;
     add_client.call(srv);
-
     int res = srv.response.result;
 
     if(res == 1)
     {
+        //subscribe to V-REP's info stream
         subInfo = n.subscribe("/vrep/info", 1, &QNode::infoCallback, this);
         subJoints_state = n.subscribe("/vrep/joints_state", 1, &QNode::JointsCallback, this);
         subRightProxSensor = n.subscribe("/vrep/right_prox_sensor", 1, &QNode::rightProxCallback, this);
@@ -685,6 +692,10 @@ bool QNode::loadScenario(const std::string& path,int id)
             // Cup 1 (obj_id = 4)
             subCup1 = n.subscribe("/vrep/Cup1_pose", 1, &QNode::Cup1Callback, this);
             break;
+
+         case 6:
+            //subscribe to the topics of the UR10 Pick and Place scene
+            break;
         }
 
         ros::spinOnce();
@@ -694,8 +705,7 @@ bool QNode::loadScenario(const std::string& path,int id)
     else
         return false;
 }
-
-
+// get the elements of the vrep simulation
 bool QNode::getElements(scenarioPtr scene)
 {
     ros::NodeHandle n;
@@ -733,6 +743,7 @@ bool QNode::getElements(scenarioPtr scene)
     orient engage_or;// engage point orientation
     // **** robot info **** //
     robot_part robot_torso_specs;
+    robot_part_q robot_UR_torso_specs;
     arm robot_arm_specs; // specs of the arms
     robot_part robot_head_specs; // specs of the head
     std::string Hname; // name of the robot
@@ -773,6 +784,22 @@ bool QNode::getElements(scenarioPtr scene)
     Matrix4d mat_r_hand;
     Matrix4d mat_l_hand;
 
+
+    // ** Waypoints ** //
+    waypoint wp_specs;
+    wp_specs.JointSpace.PosJoints =  vector <double> (JOINTS_ARM); // size of the number of dof
+    int wp_ws; // OP space - 1  Joint space - 0
+    std::vector <waypoint> waypoints_vec;
+    std::string wp_name; // waypoint name
+    std::string wp_name_str;
+    std::string wp_pos_str;
+    string wp_op_or_str;
+    std::vector<double> wp_op_or_vec;
+    std::vector<double> wp_op_pos_vec;
+    //std::vector<std::string> wp_str;
+    int wp_nr; // number of waypoints in each trajectorie
+    int traj_nr; // number of different trajectories with waypoints
+    std::string traj_name; // name of a trajectorie with waypoints
 #if HAND == 0
     // **** Barrett Hand parameters **** //
     barrett_hand robot_hand_specs; // specs of the barret hand
@@ -791,10 +818,15 @@ bool QNode::getElements(scenarioPtr scene)
     double minAp;//[mm]
     double A1; //[mm]
     double D3; //[mm]
+#elif HAND == 2
+    // **** Vacuum Gripper parameters **** //
+    vacuum_gripper robot_vacuum_gripper;
+    double D7;
 #endif
 
     // **** torso parameters **** //
     robot_part torso;  // parameters of the torso (ARoS, Jarde and Sawyer)
+    robot_part_q torso_UR;  // parameters of the UR torso ( orientation in quaternions)
     std::string torso_str;
     std::vector<double> torso_vec;
     // **** head parameters **** //
@@ -811,6 +843,8 @@ bool QNode::getElements(scenarioPtr scene)
     std::vector<double> min_llimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // minimum left limits
     std::vector<double> max_llimits = std::vector<double>(JOINTS_ARM+JOINTS_HAND); // maximum left limits
 
+
+
     // **** others **** //
     int rows;
     const string NOBJECTS = string("n_objects");
@@ -823,13 +857,27 @@ bool QNode::getElements(scenarioPtr scene)
         throw string("No scenario");
 
 
+
     // ******************************* //
     //     Objects in the scenario     //
     // ******************************* //
+
+
+    //service -> simRosGetIntegerSignal
+    //This creates a client for simRosGetIntegerSingal service.
+    //The ros::ServiceClient object (add_client)is used to call the service
     add_client = n.serviceClient<vrep_common::simRosGetIntegerSignal>("/vrep/simRosGetIntegerSignal");
+    //vrep_common::simRosGetIntegerSignal srvi-
+    // generate a service class. A service class contains two members, request and response.
+    //It also contains two class definitions, Request and Response.
+    //srvi - is the service  and request a signalName that is the number of objects (n_objects)
     srvi.request.signalName = NOBJECTS;
+    //calls the service
     add_client.call(srvi);
+
+    //server srvi response
     if(srvi.response.result == 1)
+        //return of objects in simulation
         n_objs = srvi.response.signalValue;
     else
     {
@@ -837,11 +885,14 @@ bool QNode::getElements(scenarioPtr scene)
         throw string("Communication error");
     }
 
-    if(scenarioID == 2 || scenarioID == 4 || scenarioID == 6)
+    if(scenarioID == 2 || scenarioID == 4 || scenarioID == 6 ||scenarioID == 7)
     {
+        //service class request a signalName NPOSES
         srvi.request.signalName = NPOSES;
+        //call the service
         add_client.call(srvi);
         if(srvi.response.result == 1)
+            //get the number of the poses
             n_poses = srvi.response.signalValue;
         else
         {
@@ -849,7 +900,7 @@ bool QNode::getElements(scenarioPtr scene)
             throw string("Communication error");
         }
     }
-
+    //creates a client client_getHandle for simRosGetObjectHandle service
     client_getHandle = n.serviceClient<vrep_common::simRosGetObjectHandle>("/vrep/simRosGetObjectHandle");
     if(scenarioID == 1 || scenarioID ==  3 || scenarioID == 5 || scenarioID == 6) // Toy Vehicle scenarios (ARoS, Sawyer)
     {
@@ -873,22 +924,32 @@ bool QNode::getElements(scenarioPtr scene)
         objs_prefix.push_back("Cup1");           // obj_id = 4
         objs_prefix.push_back("Table");          // obj_id = 5
     }
+    else if(scenarioID == 7){ //  (UR10 Universal Robot)
+        objs_prefix.push_back("FaultyBox");      // obj_id = 0
+        objs_prefix.push_back("GoodBox");        // obj_id = 1
+        objs_prefix.push_back("Conveyor");        // obj_id = 1
+
+    }
 
     while(cnt_obj < n_objs)
     {
         signPrefix = objs_prefix[cnt_obj];
-
+        ///gets the information of the object
+        //service simRosGetStringSignal
+        // add_client -> client  for the service
         add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        // srvs -> object created to represent the service vrep_common::simRosGetStringSignal
+        // service request info of the object signPrefix
         srvs.request.signalName = signPrefix + string("Info");
         add_client.call(srvs);
         if(srvs.response.result == 1)
+            // obj_info_str gets the information of the object by vrep
             obj_info_str = srvs.response.signalValue;
         else
         {
             throw string("Error: Couldn't get the information of the object");
             succ = false;
         }
-
         if(succ)
         {
             floatCount = obj_info_str.size() / sizeof(float);
@@ -896,6 +957,8 @@ bool QNode::getElements(scenarioPtr scene)
             if(!obj_info_vec.empty())
                 obj_info_vec.clear();
             for(int k = 0; k < floatCount; ++k)
+                //c_str() converts a C++ string into a C-style string which is essentially a null terminated array of bytes.
+                //You use it when you want to pass a C++ string into a function that expects a C-style string
                 obj_info_vec.push_back(static_cast<double>(((float*)obj_info_str.c_str())[k]));
 
             // position of the object
@@ -910,49 +973,91 @@ bool QNode::getElements(scenarioPtr scene)
             obj_size.Xsize = obj_info_vec.at(6) * 1000; //[mm]
             obj_size.Ysize = obj_info_vec.at(7) * 1000; //[mm]
             obj_size.Zsize = obj_info_vec.at(8) * 1000; //[mm]
-            // position of the target right
-            tarRight_pos.Xpos = obj_info_vec.at(9) * 1000;//[mm]
-            tarRight_pos.Ypos = obj_info_vec.at(10) * 1000;//[mm]
-            tarRight_pos.Zpos = obj_info_vec.at(11) * 1000;//[mm]
-            // orientation of the target right
-            tarRight_or.roll = obj_info_vec.at(12) * static_cast<double>(M_PI)/180;//[rad]
-            tarRight_or.pitch = obj_info_vec.at(13) * static_cast<double>(M_PI)/180;//[rad]
-            tarRight_or.yaw = obj_info_vec.at(14) * static_cast<double>(M_PI)/180;//[rad]
-            // position of the target left
-            tarLeft_pos.Xpos = obj_info_vec.at(15) * 1000;//[mm]
-            tarLeft_pos.Ypos = obj_info_vec.at(16) * 1000;//[mm]
-            tarLeft_pos.Zpos = obj_info_vec.at(17) * 1000;//[mm]
-            // orientation of the target left
-            tarLeft_or.roll = obj_info_vec.at(18) * static_cast<double>(M_PI)/180;//[rad]
-            tarLeft_or.pitch = obj_info_vec.at(19) * static_cast<double>(M_PI)/180;//[rad]
-            tarLeft_or.yaw = obj_info_vec.at(20) * static_cast<double>(M_PI)/180;//[rad]
-            // position of the engage point
-            engage_pos.Xpos = obj_info_vec.at(21) * 1000;//[mm]
-            engage_pos.Ypos = obj_info_vec.at(22) * 1000;//[mm]
-            engage_pos.Zpos = obj_info_vec.at(23) * 1000;//[mm]
-            // orientation of the engage point
-            engage_or.roll = obj_info_vec.at(24) * static_cast<double>(M_PI)/180;//[rad]
-            engage_or.pitch = obj_info_vec.at(25) * static_cast<double>(M_PI)/180;//[rad]
-            engage_or.yaw = obj_info_vec.at(26) * static_cast<double>(M_PI)/180;//[rad]
+            if(obj_info_vec.size()>9)
+            {
+                // position of the target right
+                tarRight_pos.Xpos = obj_info_vec.at(9) * 1000;//[mm]
+                tarRight_pos.Ypos = obj_info_vec.at(10) * 1000;//[mm]
+                tarRight_pos.Zpos = obj_info_vec.at(11) * 1000;//[mm]
+                // orientation of the target right
+                tarRight_or.roll = obj_info_vec.at(12) * static_cast<double>(M_PI)/180;//[rad]
+                tarRight_or.pitch = obj_info_vec.at(13) * static_cast<double>(M_PI)/180;//[rad]
+                tarRight_or.yaw = obj_info_vec.at(14) * static_cast<double>(M_PI)/180;//[rad]
+                // position of the target left
+                tarLeft_pos.Xpos = obj_info_vec.at(15) * 1000;//[mm]
+                tarLeft_pos.Ypos = obj_info_vec.at(16) * 1000;//[mm]
+                tarLeft_pos.Zpos = obj_info_vec.at(17) * 1000;//[mm]
+                // orientation of the target left
+                tarLeft_or.roll = obj_info_vec.at(18) * static_cast<double>(M_PI)/180;//[rad]
+                tarLeft_or.pitch = obj_info_vec.at(19) * static_cast<double>(M_PI)/180;//[rad]
+                tarLeft_or.yaw = obj_info_vec.at(20) * static_cast<double>(M_PI)/180;//[rad]
+                // position of the engage point
+                engage_pos.Xpos = obj_info_vec.at(21) * 1000;//[mm]
+                engage_pos.Ypos = obj_info_vec.at(22) * 1000;//[mm]
+                engage_pos.Zpos = obj_info_vec.at(23) * 1000;//[mm]
+                // orientation of the engage point
+                engage_or.roll = obj_info_vec.at(24) * static_cast<double>(M_PI)/180;//[rad]
+                engage_or.pitch = obj_info_vec.at(25) * static_cast<double>(M_PI)/180;//[rad]
+                engage_or.yaw = obj_info_vec.at(26) * static_cast<double>(M_PI)/180;//[rad]
+            }
+            else{ // Waypoint scenario only needs the position/orientation and size of the objects
+
+                // position of the target right
+                tarRight_pos.Xpos = NULL;//[mm]
+                tarRight_pos.Ypos = NULL;//[mm]
+                tarRight_pos.Zpos = NULL;//[mm]
+                // orientation of the target right
+                tarRight_or.roll = NULL;//[rad]
+                tarRight_or.pitch = NULL;//[rad]
+                tarRight_or.yaw = NULL;//[rad]
+                // position of the target left
+                tarLeft_pos.Xpos = NULL;//[mm]
+                tarLeft_pos.Ypos = NULL;//[mm]
+                tarLeft_pos.Zpos = NULL;//[mm]
+                // orientation of the target left
+                tarLeft_or.roll =NULL;//[rad]
+                tarLeft_or.pitch = NULL;//[rad]
+                tarLeft_or.yaw = NULL;//[rad]
+                // position of the engage point
+                engage_pos.Xpos = NULL;//[mm]
+                engage_pos.Ypos = NULL;//[mm]
+                engage_pos.Zpos = NULL;//[mm]
+                // orientation of the engage point
+                engage_or.roll = NULL;//[rad]
+                engage_or.pitch = NULL;//[rad]
+                engage_or.yaw = NULL;//[rad]
+            }
+
+            // object class
 
             Object* ob = new Object(signPrefix, obj_pos, obj_or, obj_size,
-                                    new Target(signPrefix + signTarRight, tarRight_pos, tarRight_or),
-                                    new Target(signPrefix + signTarLeft, tarLeft_pos, tarLeft_or),
-                                    new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
+                                        new Target(signPrefix + signTarRight, tarRight_pos, tarRight_or),
+                                        new Target(signPrefix + signTarLeft, tarLeft_pos, tarLeft_or),
+                                        new EngagePoint(signPrefix + signEngage, engage_pos, engage_or));
 
+            //get information about the object
+            //Organize the information in the constructor above to print
             infoLine = ob->getInfoLine();
+            //This method signals that a new element is part of the scenario
             Q_EMIT newElement(infoLine);
+            //This method signals a new object in the scenario
             Q_EMIT newObject(ob->getName());
 
             //handle of the object
+            //vrep_common::simRosGetObjectHandle srv_get_handle;
+            //service srv_get_handle request a objectName
+            //client calls the service
             srv_get_handle.request.objectName = signPrefix;
             client_getHandle.call(srv_get_handle);
+            //handle of the visible part of the object (the body)
             ob->setHandle(srv_get_handle.response.handle);
+
             // handle of the visible object
             srv_get_handle.request.objectName = signPrefix + string("_body");
             client_getHandle.call(srv_get_handle);
             ob->setHandleBody(srv_get_handle.response.handle);
             // add the object to the scenario
+            // objectPtr- shared pointer to an object in the scenario
             scene->addObject(objectPtr(ob));
             // add the pose to the scenario
             if(scenarioID == 2 || scenarioID == 4) // Drinking Service scenarios (ARoS, Sawyer)
@@ -1046,8 +1151,9 @@ bool QNode::getElements(scenarioPtr scene)
                 pose_or.pitch = pose_info_vec.at(4) * static_cast<double>(M_PI)/180; //[rad]
                 pose_or.yaw = pose_info_vec.at(5) * static_cast<double>(M_PI)/180;//[rad]
 
+                //set the new pose
                 Pose* ps = new Pose(signPrefix, pose_pos, pose_or, poses_rel[cnt_pose], poses_obj_id[cnt_pose]);
-
+                //emit a signal newpose in the secnario
                 Q_EMIT newPose(ps->getName());
                 // add the pose to the scenario
                 scene->addPose(posePtr(ps));
@@ -1058,8 +1164,7 @@ bool QNode::getElements(scenarioPtr scene)
                 throw string("Error while retrieving the poses of the scenario");
         }
     }
-
-
+    
     // ******************************* //
     //              Robot              //
     // ******************************* //
@@ -1085,7 +1190,8 @@ bool QNode::getElements(scenarioPtr scene)
     if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios (Toy Vehicle, Drinking Service)
         succ = getArmsHandles(0);
     else if(scenarioID >= 3) // Sawyer scenarios (Toy Vehicle, Drinking Service)
-        succ = getArmsHandles(2);
+        //succ = getArmsHandles(2);
+        succ = getArmsHandles(3); // robot=3 just to test the UR scenario because does not have gripper for now
 
     // transformation matrix for the arm
     add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
@@ -1093,6 +1199,7 @@ bool QNode::getElements(scenarioPtr scene)
     // ******************************* //
     //            Right Arm            //
     // ******************************* //
+    //get the transformation matrix of the arm
     srvs.request.signalName = string("mat_right_arm");
     add_client.call(srvs);
     if(srvs.response.result == 1)
@@ -1169,6 +1276,7 @@ bool QNode::getElements(scenarioPtr scene)
     // ******************************* //
     //          DH Parameters          //
     // ******************************* //
+    //get Denavit Hartenberg parameters of the arm
     add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
     srvs.request.signalName = string("DH_params_arm");
     add_client.call(srvs);
@@ -1186,20 +1294,29 @@ bool QNode::getElements(scenarioPtr scene)
         DH_params_vec.clear();
         theta_offset.clear();
     }
+    //convert the received DH parameters - string-  to double/flout
     for(int k = 0; k < floatCount; ++k)
         DH_params_vec.push_back(static_cast<double>(((float*)DH_params_str.c_str())[k]));
 
-    robot_arm_specs.arm_specs.alpha = std::vector<double>(7);
-    robot_arm_specs.arm_specs.a = std::vector<double>(7);
-    robot_arm_specs.arm_specs.d = std::vector<double>(7);
-    robot_arm_specs.arm_specs.theta = std::vector<double>(7);
+    //define the size of the vectors of DH parameters
+    //robot_arm_specs.arm_specs.alpha = std::vector<double>(JOINTS_ARM);
+    //robot_arm_specs.arm_specs.a = std::vector<double>(JOINTS_ARM);
+    //robot_arm_specs.arm_specs.d = std::vector<double>(JOINTS_ARM);
+    //robot_arm_specs.arm_specs.theta = std::vector<double>(JOINTS_ARM);
+    //UR has more DH frames than joints - has 8
+    int DH_frames=floatCount/4;
+    robot_arm_specs.arm_specs.alpha = std::vector<double>(DH_frames);
+    robot_arm_specs.arm_specs.a = std::vector<double>(DH_frames);
+    robot_arm_specs.arm_specs.d = std::vector<double>(DH_frames);
+    robot_arm_specs.arm_specs.theta = std::vector<double>(DH_frames);
 
-    for(int i = 0; i < 7; ++i)
+   // for(int i = 0; i < JOINTS_ARM; ++i)
+    for(int i = 0; i < DH_frames; ++i)
     {
         robot_arm_specs.arm_specs.alpha.at(i) = DH_params_vec.at(i) * static_cast<double>(M_PI) / 180; // [rad]
-        robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i + 7) * 1000; // [mm]
-        robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i + 14) * 1000; // [mm]
-        theta_offset.push_back(DH_params_vec.at(i + 21) * static_cast<double>(M_PI) / 180); // [rad]
+        robot_arm_specs.arm_specs.a.at(i) = DH_params_vec.at(i + DH_frames) * 1000; // [mm]
+        robot_arm_specs.arm_specs.d.at(i) = DH_params_vec.at(i + DH_frames*2) * 1000; // [mm]
+        theta_offset.push_back(DH_params_vec.at(i + DH_frames*3) * static_cast<double>(M_PI) / 180); // [rad]
     }
 
 
@@ -1208,94 +1325,98 @@ bool QNode::getElements(scenarioPtr scene)
     //           Barrett Hand          //
     // ******************************* //
     // **** Max aperture **** //
-    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
-    srvf.request.signalName = string("maxAperture_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        maxAp = srvf.response.signalValue * 1000;
-    else
-    {
-        throw string("Error: Couldn't get the information of the maximum aperture");
-        succ = false;
+    if(scenarioID!=7){ // HAND =0 and UR scene
+        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+        srvf.request.signalName = string("maxAperture_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            maxAp = srvf.response.signalValue * 1000;
+        else
+        {
+            throw string("Error: Couldn't get the information of the maximum aperture");
+            succ = false;
+        }
+
+        // **** Aw **** //
+        srvf.request.signalName = string("Aw_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            Aw = srvf.response.signalValue * 1000;
+        else
+        {
+            throw string("Error: Couldn't get the information of the Aw");
+            succ = false;
+        }
+
+        // **** A1 **** //
+        srvf.request.signalName = string("A1_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            A1 = srvf.response.signalValue * 1000;
+        else
+        {
+            throw string("Error: Couldn't get the information of the A1");
+            succ = false;
+        }
+
+        // **** A2 **** //
+        srvf.request.signalName = string("A2_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            A2 = srvf.response.signalValue * 1000;
+        else
+        {
+            throw string("Error: Couldn't get the information of the A2");
+            succ = false;
+        }
+
+        // **** A3 **** //
+        srvf.request.signalName = string("A3_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            A3 = srvf.response.signalValue * 1000;
+        else
+        {
+            throw string("Error: Couldn't get the information of the A3");
+            succ = false;
+        }
+
+        // **** D3 **** //
+        srvf.request.signalName = string("D3_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            D3 = srvf.response.signalValue * 1000;
+        else
+        {
+            throw string("Error: Couldn't get the information of the D3");
+            succ = false;
+        }
+
+        // **** Phi2 **** //
+        srvf.request.signalName = string("phi2_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            phi2 = srvf.response.signalValue;
+        else
+        {
+            throw string("Error: Couldn't get the information of the phi2");
+            succ = false;
+        }
+
+        // **** Phi3 **** //
+        srvf.request.signalName = string("phi3_info");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            phi3 = srvf.response.signalValue;
+        else
+        {
+            throw string("Error: Couldn't get the information of the phi3");
+            succ = false;
+        }
     }
 
-    // **** Aw **** //
-    srvf.request.signalName = string("Aw_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        Aw = srvf.response.signalValue * 1000;
-    else
-    {
-        throw string("Error: Couldn't get the information of the Aw");
-        succ = false;
-    }
-
-    // **** A1 **** //
-    srvf.request.signalName = string("A1_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        A1 = srvf.response.signalValue * 1000;
-    else
-    {
-        throw string("Error: Couldn't get the information of the A1");
-        succ = false;
-    }
-
-    // **** A2 **** //
-    srvf.request.signalName = string("A2_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        A2 = srvf.response.signalValue * 1000;
-    else
-    {
-        throw string("Error: Couldn't get the information of the A2");
-        succ = false;
-    }
-
-    // **** A3 **** //
-    srvf.request.signalName = string("A3_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        A3 = srvf.response.signalValue * 1000;
-    else
-    {
-        throw string("Error: Couldn't get the information of the A3");
-        succ = false;
-    }
-
-    // **** D3 **** //
-    srvf.request.signalName = string("D3_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        D3 = srvf.response.signalValue * 1000;
-    else
-    {
-        throw string("Error: Couldn't get the information of the D3");
-        succ = false;
-    }
-
-    // **** Phi2 **** //
-    srvf.request.signalName = string("phi2_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        phi2 = srvf.response.signalValue;
-    else
-    {
-        throw string("Error: Couldn't get the information of the phi2");
-        succ = false;
-    }
-
-    // **** Phi3 **** //
-    srvf.request.signalName = string("phi3_info");
-    add_client.call(srvf);
-    if(srvf.response.result == 1)
-        phi3 = srvf.response.signalValue;
-    else
-    {
-        throw string("Error: Couldn't get the information of the phi3");
-        succ = false;
-    }
 #elif HAND == 1
+
     // ******************************* //
     //         Electric Gripper        //
     // ******************************* //
@@ -1343,12 +1464,26 @@ bool QNode::getElements(scenarioPtr scene)
         throw string("Error: Couldn't get the information of the minimum aperture");
         succ = false;
     }
-#endif
+#elif HAND == 2
+    // **** Vacuum gripper dimension **** //
+    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    srvf.request.signalName = string("vacuum_length");
+    add_client.call(srvf);
+    if(srvf.response.result == 1)
+        D7 = srvf.response.signalValue * 1000;
+    else
+    {
+        throw string("Error: Couldn't get the information of the vacuum gripper dimension");
+        succ = false;
+    }
 
+#endif // endif of Hand 1
 
     // ******************************* //
     //               Head              //
     // ******************************* //
+// UR DOES NOT HAVE HEAD
+#if UR == 0
 #if HEAD == 1
     add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
     srvs.request.signalName = string("HeadInfo");
@@ -1379,6 +1514,7 @@ bool QNode::getElements(scenarioPtr scene)
     head.Xsize = head_vec.at(6) * 1000;//[mm]
     head.Ysize = head_vec.at(7) * 1000;//[mm]
     head.Zsize = head_vec.at(8) * 1000;//[mm]
+#endif // endif HEAD
 #endif
 
 
@@ -1402,6 +1538,22 @@ bool QNode::getElements(scenarioPtr scene)
     for(int k = 0; k < floatCount; ++k)
         torso_vec.push_back(static_cast<double>(((float*)torso_str.c_str())[k]));
 
+#if UR == 1   // UR 6 DOFs scenario
+    //position of the torso
+    torso_UR.Xpos = torso_vec.at(0) * 1000;//[mm]
+    torso_UR.Ypos = torso_vec.at(1) * 1000;//[mm]
+    torso_UR.Zpos = torso_vec.at(2) * 1000;//[mm]
+    //orientation of the torso
+    torso_UR.q_X = torso_vec.at(3); //quaternion X scalar
+    torso_UR.q_Y = torso_vec.at(4); //quaternion Y scalar
+    torso_UR.q_Z = torso_vec.at(5); //quaternion Z scalar
+    torso_UR.q_Z = torso_vec.at(6); // quaternion W real
+    //size of the torso
+    torso_UR.Xsize = torso_vec.at(7) * 1000;//[mm]
+    torso_UR.Ysize = torso_vec.at(8) * 1000;//[mm]
+    torso_UR.Zsize = torso_vec.at(9) * 1000;//[mm]
+
+#elif UR == 0 // SUBSTITUIR POR WP DEPOIS
     //position of the torso
     torso.Xpos = torso_vec.at(0) * 1000;//[mm]
     torso.Ypos = torso_vec.at(1) * 1000;//[mm]
@@ -1414,6 +1566,7 @@ bool QNode::getElements(scenarioPtr scene)
     torso.Xsize = torso_vec.at(6) * 1000;//[mm]
     torso.Ysize = torso_vec.at(7) * 1000;//[mm]
     torso.Zsize = torso_vec.at(8) * 1000;//[mm]
+#endif
 
 
     // ******************************* //
@@ -1517,12 +1670,224 @@ bool QNode::getElements(scenarioPtr scene)
         }
     }
 
+#if WP==1
+
+    // ******************************* //
+    //            waypoints            //
+    // ******************************* //
+
+//     in this scene I have 5 possible trajectories:
+//         pick
+//         show
+//         faulty box
+//         good box
+//     so I need to get the waypoints for these 4 trajectories
+#if UR==0
+
+    //get the number of different trajectories with waypoints
+    add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    srvf.request.signalName = string("number_traj");
+    add_client.call(srvf);
+    if(srvf.response.result == 1)
+        traj_nr = srvf.response.signalValue;
+    else
+    {
+           succ = false;
+           throw string("Error: Couldn't get the information of the waypoints trajectories quantity");
+    }
+
+    for (int traj_count=0; traj_count<traj_nr; traj_count++)
+    {
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("traj_name"+QString::number(traj_count+1).toStdString());
+        add_client.call(srvs);
+        if(srvs.response.result == 1)
+            traj_name = srvs.response.signalValue;
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the waypoints trajectorie name");
+        }
+
+        //get the number of waypoints to receive
+        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+        srvf.request.signalName = string("number_wps"+QString::number(traj_count+1).toStdString());
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            wp_nr = srvf.response.signalValue;
+        else
+        {
+               succ = false;
+               throw string("Error: Couldn't get the information of the waypoints quantity");
+        }
+
+
+        //get the waypoints workspace
+        add_client = n.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+        srvf.request.signalName = string("wp_workspace");
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+            wp_ws = srvf.response.signalValue;
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the waypoints workspace");
+        }
+
+        add_client = n.serviceClient<vrep_common::simRosGetStringSignal>("/vrep/simRosGetStringSignal");
+        srvs.request.signalName = string("waypoints_val_"+QString::number(traj_count+1).toStdString());
+        add_client.call(srvs);
+        if(srvs.response.result == 1)
+            wp_pos_str = srvs.response.signalValue;
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't get the information of the waypoints position and orientation");
+        }
+
+
+       //unpack waypoints string received from vrep
+       floatCount = wp_pos_str.size()/sizeof(float);
+       vector<vector<double>> wp_str(wp_nr, vector<double>(floatCount/wp_nr,0));
+       int wp_index=0;
+       int count=0;
+       for (int i=0;i<floatCount;i++){
+           wp_str[wp_index][count]=static_cast<double>(((float*)wp_pos_str.c_str())[i])* static_cast<double>(M_PI)/180;//[rad];
+           count=count+1;
+           if(count==floatCount/wp_nr){
+               wp_index=wp_index+1;
+               count=0;
+           }
+       }
+
+       if(!waypoints_vec.empty())
+           waypoints_vec.clear();
+
+       for (int i=0;i<wp_nr;i++)
+       {
+           if(wp_ws==1){//operational space
+
+               // waypoint position of the end_effector
+               wp_specs.OperatSpace.position.Xpos = wp_str[i][0] * 1000;//[mm] pos X
+               wp_specs.OperatSpace.position.Ypos = wp_str[i][1] * 1000;//[mm] pos Y
+               wp_specs.OperatSpace.position.Zpos = wp_str[i][2] * 1000;//[mm] pos Z
+               //waypoint orientation in quaternions of the end_effector
+               wp_specs.OperatSpace.or_quat.X = wp_str[i][3];//rot in X
+               wp_specs.OperatSpace.or_quat.Y = wp_str[i][4];//rot in Y
+               wp_specs.OperatSpace.or_quat.Z = wp_str[i][5];//rot in Z
+               wp_specs.OperatSpace.or_quat.W = wp_str[i][6];//rot in W
+
+               //get RPY angles from quaternions
+               Eigen::Quaterniond q;
+               q.x() = wp_specs.OperatSpace.or_quat.X;
+               q.y() = wp_specs.OperatSpace.or_quat.Y;
+               q.z() = wp_specs.OperatSpace.or_quat.Z;
+               q.w() = wp_specs.OperatSpace.or_quat.W;
+
+               Eigen::Matrix3d Rot = q.normalized().toRotationMatrix();
+               // get rpy from rotation matrix
+               std::vector<double> rpy;
+               if(this->RotgetRPY(Rot,rpy))
+               {
+                   wp_specs.OperatSpace.or_rpy.roll =  rpy.at(0);//rot in X
+                   wp_specs.OperatSpace.or_rpy.pitch = rpy.at(1) ;//rot in Y
+                   wp_specs.OperatSpace.or_rpy.yaw = rpy.at(2);//rot in Z
+
+               }
+
+
+           }else if(wp_ws==0){
+              //joint space
+              wp_specs.JointSpace.PosJoints = wp_str[i];
+
+           }
+
+           //waypoint name
+           wp_specs.name = string(traj_name+QString::number(i+1).toStdString());
+
+           //waypoints in an vector of waypoint structure
+           waypoints_vec.push_back(wp_specs);
+        }
+
+       //set the waypoints
+       //I received the initial and final points as waypoints. However, henceforth they will not count as waypoint
+       // therefore, wp_nr - 2
+       Waypoint *wp = new Waypoint(wp_nr-2,waypoints_vec,wp_ws,traj_name);
+       // display info of the waypoints
+       if(wp_ws==1){
+           for (int i=0; i<wp_nr;i++){
+               infoLine = wp->getInfoLine_OP(wp->get_waypoint(i));
+               Q_EMIT newElement(infoLine);
+           }
+       }else{
+           for (int i=0; i<wp_nr;i++){
+               infoLine = wp->getInfoLine_Joint(wp->get_waypoint(i));
+               Q_EMIT newElement(infoLine);
+           }
+       }
+       //add the waypoints to the scene
+       scene->addWaypoint(waypointPtr(wp));
+       //add the waypoint to the combobox
+       Q_EMIT newWaypoint(traj_name);
+    }
+ }
+#elif UR==1
+    wp_nr = this->robot_waypoints.size();
+    wp_ws = false; //wp in joint space
+
+    for(int i=0; i<robot_waypoints.size();i++)
+    {
+        wp_specs.JointSpace.PosJoints = this->robot_waypoints.at(i);
+        wp_specs.name = string("wp"+QString::number(i+1).toStdString());
+        //waypoints in an vector of waypoint structure
+        waypoints_vec.push_back(wp_specs);
+    }
+        traj_name = "wp_traj";
+        //set the waypoints
+        //I received the initial and final points as waypoints. However, henceforth they will not count as waypoint
+        // therefore, wp_nr - 2
+        Waypoint *wp = new Waypoint(wp_nr-2,waypoints_vec,wp_ws,traj_name);
+        // display info of the waypoints
+        if(wp_ws==1){
+            for (int i=0; i<wp_nr;i++){
+                infoLine = wp->getInfoLine_OP(wp->get_waypoint(i));
+                Q_EMIT newElement(infoLine);
+            }
+        }else{
+            for (int i=0; i<wp_nr;i++){
+                infoLine = wp->getInfoLine_Joint(wp->get_waypoint(i));
+                Q_EMIT newElement(infoLine);
+            }
+        }
+        //add the waypoints to the scene
+        scene->addWaypoint(waypointPtr(wp));
+        //add the waypoint to the combobox
+        Q_EMIT newWaypoint(traj_name);
+
+#endif
+#endif
 
     // ******************************* //
     //           Create robot          //
     // ******************************* //
     if(succ)
     {
+/*
+#if UR == 1 // if UR -> 6 DOFs robot
+
+        // **** Torso info **** //
+        robot_UR_torso_specs.Xpos = torso_UR.Xpos;
+        robot_UR_torso_specs.Ypos = torso_UR.Ypos;
+        robot_UR_torso_specs.Zpos = torso_UR.Zpos;
+        robot_UR_torso_specs.q_X = torso_UR.q_X;
+        robot_UR_torso_specs.q_Y = torso_UR.q_Y;
+        robot_UR_torso_specs.q_Z = torso_UR.q_Z;
+        robot_UR_torso_specs.q_W = torso_UR.q_W;
+        robot_UR_torso_specs.Xsize = torso_UR.Xsize;
+        robot_UR_torso_specs.Ysize = torso_UR.Ysize;
+        robot_UR_torso_specs.Zsize = torso_UR.Zsize;
+#elif UR == 0 // 7 DOFs robots
+*/
         // **** Torso info **** //
         robot_torso_specs.Xpos = torso.Xpos;
         robot_torso_specs.Ypos = torso.Ypos;
@@ -1533,7 +1898,9 @@ bool QNode::getElements(scenarioPtr scene)
         robot_torso_specs.Xsize = torso.Xsize;
         robot_torso_specs.Ysize = torso.Ysize;
         robot_torso_specs.Zsize = torso.Zsize;
-#if HEAD == 1
+//#endif
+
+#if HEAD == 1  // UR robot does not have head
         // **** Head info **** //
         robot_head_specs.Xpos = head.Xpos;
         robot_head_specs.Ypos = head.Ypos;
@@ -1567,11 +1934,13 @@ bool QNode::getElements(scenarioPtr scene)
             min_llimits = min_rlimits;
             max_llimits = max_rlimits;
         }
+
 #if HEAD == 1
         Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_hand_specs,
                                 robot_head_specs, rposture, lposture,
                                 min_rlimits, max_rlimits,
                                 min_llimits, max_llimits);
+
 #else
         Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_hand_specs,
                                 rposture, lposture,
@@ -1579,6 +1948,7 @@ bool QNode::getElements(scenarioPtr scene)
                                 min_llimits, max_llimits);
 
 #endif
+
         // **** Transformation matrices **** //
         rptr->setMatRight(mat_right);
         if(scenarioID == 1 || scenarioID == 2) // ARoS scenarios
@@ -1622,24 +1992,36 @@ bool QNode::getElements(scenarioPtr scene)
         infoLine = rptr->getInfoLine();
         Q_EMIT newElement(infoLine);
         scene->addRobot(robotPtr(rptr));
-#elif HAND == 1
+
+
+#elif HAND ==1
+
+
         // **** Electric gripper info **** //
         robot_gripper_specs.maxAperture = maxAp;
         robot_gripper_specs.minAperture = minAp;
         robot_gripper_specs.A1 = A1;
         robot_gripper_specs.D3 = D3;
 
+
         // add the joints offset
         std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
         lposture = rposture;
         min_llimits = min_rlimits;
         max_llimits = max_rlimits;
+
 #if HEAD == 1
         Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_gripper_specs,
                                 robot_head_specs, rposture, lposture,
                                 min_rlimits, max_rlimits,
                                 min_llimits, max_llimits);
-#endif
+#elif HEAD == 0
+        Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_gripper_specs,
+                                rposture, lposture,
+                                min_rlimits, max_rlimits,
+                                min_llimits, max_llimits);
+#endif // endif HEAD=1
+
         // **** Transformation matrices **** //
         rptr->setMatRight(mat_right);
         rptr->setMatLeft(mat_right);
@@ -1647,12 +2029,14 @@ bool QNode::getElements(scenarioPtr scene)
         // **** Right joints **** //
         std::vector<double> rightp;
         rptr->getRightPosture(rightp);
+        // subtract theta_offset from the range rightp.begin to rightp.end and save it from rightp.begin
         std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
 
         std::vector<string> rj = std::vector<string>(rightp.size());
         for(size_t i = 0; i < rightp.size(); ++i)
         {
-            if(i < rightp.size() - 1)
+            if(i < rightp.size()) // size of rightp is (JOINTS_ARM+JOINTS_HAND)
+
                 rj.at(i) = string("right_joint "+ QString::number(i + 1).toStdString()+ ": "+
                                   QString::number(rightp.at(i) * 180 / static_cast<double>(M_PI)).toStdString() + " [deg]");
             else
@@ -1669,7 +2053,61 @@ bool QNode::getElements(scenarioPtr scene)
         infoLine = rptr->getInfoLine();
         Q_EMIT newElement(infoLine);
         scene->addRobot(robotPtr(rptr));
-#endif
+
+#elif HAND == 2 // vacuum gripper
+
+        robot_vacuum_gripper.D7 = D7;
+        // add the joints offset
+        std::transform(rposture.begin(), rposture.end(), theta_offset.begin(), rposture.begin(), std::plus<double>());
+        lposture = rposture;
+        min_llimits = min_rlimits;
+        max_llimits = max_rlimits;
+
+        #if HEAD == 1
+                Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_vacuum_gripper,
+                                        robot_head_specs, rposture, lposture,
+                                        min_rlimits, max_rlimits,
+                                        min_llimits, max_llimits);
+        #elif HEAD == 0
+                Robot *rptr = new Robot(Hname, robot_torso_specs, robot_arm_specs, robot_vacuum_gripper,
+                                        rposture, lposture,
+                                        min_rlimits, max_rlimits,
+                                        min_llimits, max_llimits);
+        #endif // endif HEAD=1
+
+                // **** Transformation matrices **** //
+                rptr->setMatRight(mat_right);
+                rptr->setMatLeft(mat_right);
+
+                // **** Right joints **** //
+                std::vector<double> rightp;
+                rptr->getRightPosture(rightp);
+                // subtract theta_offset from the range rightp.begin to rightp.end and save it from rightp.begin
+                std::transform(rightp.begin(), rightp.end(),theta_offset.begin(), rightp.begin(), std::minus<double>());
+
+                std::vector<string> rj = std::vector<string>(rightp.size());
+                for(size_t i = 0; i < rightp.size(); ++i)
+                {
+                    if(i < rightp.size()) // size of rightp is (JOINTS_ARM+JOINTS_HAND)
+
+                        rj.at(i) = string("right_joint "+ QString::number(i + 1).toStdString()+ ": "+
+                                          QString::number(rightp.at(i) * 180 / static_cast<double>(M_PI)).toStdString() + " [deg]");
+                    else
+                        rj.at(i) = string("right_joint "+ QString::number(i+1).toStdString()+ ": "+
+                                          QString::number(rightp.at(i)).toStdString() + " [mm]");
+
+                    Q_EMIT newJoint(rj.at(i));
+                }
+
+                rptr->getLeftPosture(rightp);
+
+                // **** Create robot **** //
+                // display info of the robot
+                infoLine = rptr->getInfoLine();
+                Q_EMIT newElement(infoLine);
+                scene->addRobot(robotPtr(rptr));
+
+#endif // Endif Hand =1
     }
     else
         throw string("Error while retrieving elements from the scenario");
@@ -1684,13 +2122,44 @@ bool QNode::getElements(scenarioPtr scene)
     // we got all the elements of the scenario
     got_scene = true;
 
+
     return succ;
 }
+
+
+bool QNode::setWaypoint(vector<double> &waypoints)
+{
+    ros::NodeHandle n;
+    vector <double> offset_robot {0,-M_PI_2,0,-M_PI_2,0,0};
+    vector <double> robot_wp_offset =  vector <double> (JOINTS_ARM); // size of the number of dof
+
+    string topic = "/joint_states";
+    subJointsStateRobotUR = n.subscribe(topic, 1, &QNode::URJointsCallback, this);
+    sleep(2);
+    ros::spinOnce();
+
+    robot_wp_offset = robotPosture_wp;
+    std::transform(robot_wp_offset.begin(), robot_wp_offset.end(),offset_robot.begin(), robot_wp_offset.begin(), std::minus<double>());
+
+    waypoints = robot_wp_offset;
+    this->robot_waypoints.push_back(waypoints);
+
+    return true;
+}
+
+void QNode::updateWaypoints(vector<vector<double>> robot_wps)
+{
+    this->robot_waypoints.clear();
+    this->robot_waypoints = robot_wps;
+}
+
 
 
 #if HAND == 0
 void QNode::preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int arm, int attach, MatrixXd traj, string objName)
 #elif HAND == 1
+void QNode::preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int attach, string objName)
+#elif HAND == 2
 void QNode::preMovementOperation(ros::NodeHandle node, int movType, bool retreat, int attach, string objName)
 #endif
 {
@@ -1766,9 +2235,12 @@ void QNode::posMovementOperation(ros::NodeHandle node, int movType, bool plan, i
 void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, MatrixXi hand_handles, int sceneID, double timeTot, double tol)
 #elif HAND == 1
 void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol)
+#elif HAND == 2
+void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol)
 #endif
 {
     // **** Publishers **** //
+    // publish in the topic /motion_manager/set_joints
     ros::Publisher pub = node.advertise<vrep_common::JointSetStateData>("/" + nodeName + "/set_joints", 1);
 #if HAND == 0
     ros::Publisher pubHand = node.advertise<vrep_common::JointSetStateData>("/" + nodeName + "/set_pos_hand", 1);
@@ -1805,6 +2277,7 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
 
         while(ros::ok() && simulationRunning && interval)
         {
+            //rostopic message type
             vrep_common::JointSetStateData dataTraj;
 #if HAND == 0
             vrep_common::JointSetStateData dataHand;
@@ -1866,6 +2339,14 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
                     bool isHandJoint = ((col == traj.cols() - 1) || (col == traj.cols() - 2) || (col == traj.cols() - 3) || (col == traj.cols() - 4));
 #elif HAND == 1
                     bool handClosed = closed;
+                    //traj = 0..7 cols - 7 arm joints + 1 hand joint
+                    //traj.cols() - 1 = 7
+                    bool isArmJoint = (col != traj.cols() - 1);
+                    bool isHandJoint = (col == traj.cols() - 1);
+#elif HAND == 2
+                    bool handClosed = closed;
+                    //traj = 0..7 cols - 7 arm joints + 1 hand joint
+                    //traj.cols() - 1 = 7
                     bool isArmJoint = (col != traj.cols() - 1);
                     bool isHandJoint = (col == traj.cols() - 1);
 #endif
@@ -1979,7 +2460,9 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
 #if HAND == 0
         hand_handles = right_hand_handles;
 #endif
+#if HAND != 2
         h_attach = right_attach;
+#endif
         break;
     case 2: // left arm
         handles = left_handles;
@@ -2012,6 +2495,7 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
 #elif HAND == 1
         closed = true;
 #endif
+    case 6: // waypoints 
         break;
     }
 
@@ -2030,8 +2514,11 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
     //         Execute movement        //
     // ******************************* //
     std::vector<MatrixXd> traj_mov_planned = traj_mov;
+#if UR == 0
     std::vector<MatrixXd> traj_mov_robot = this->robotJointPositions(traj_mov_planned);
-
+#elif UR == 1
+    std::vector<MatrixXd> traj_mov_robot =traj_mov_planned;
+#endif
     // **** Join plan and approach stage **** //
     this->joinStages(traj_mov_robot, timesteps, traj_descr);
 
@@ -2060,6 +2547,8 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
         this->preMovementOperation(node, movType, retreat, armCode, h_attach, tt, obj_name);
 #elif HAND == 1
         this->preMovementOperation(node, movType, retreat, h_attach, obj_name);
+#elif HAND == 2
+        
 #endif
 
         // Trajectory to be performed and timesteps
@@ -2074,6 +2563,8 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
                 (client_enableSubscriber_hand.call(srv_enableSubscriber_hand)) && (srv_enableSubscriber_hand.response.subscriberID != -1))
 #elif HAND == 1
         if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
+#elif HAND == 2
+        if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
 #endif
         {
             // **** Publish the data in the V-REP topics **** //
@@ -2081,6 +2572,9 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
             this->publishData(node, traj_stage, timesteps_stage, handles, hand_handles, scenarioID, timeTot, tol_stop_stage);
 #elif HAND == 1
             this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
+#elif HAND == 2
+            this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
+
 #endif
             // **** Post-movement operations **** //
             this->posMovementOperation(node, movType, plan, h_attach);
@@ -2134,6 +2628,8 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
     // ******************************* //
     //           Subscribers           //
     // ******************************* //
+
+    //tell V-REP to subscribe to set_joints topic
     // set joints position or velocity
     ros::ServiceClient client_enableSubscriber = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
     vrep_common::simRosEnableSubscriber srv_enableSubscriber;
@@ -2179,7 +2675,11 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
             movTask.push_back(mov);
 
             vector<MatrixXd> traj_mov_planned = traj_task.at(kk);
+#if UR ==0
             vector<MatrixXd> traj_mov_robot = this->robotJointPositions(traj_mov_planned);
+#elif UR == 1
+            vector<MatrixXd> traj_mov_robot = traj_mov_planned;
+#endif
             vector<vector<double>> timesteps_mov = timesteps_task.at(kk);
             vector<string> traj_descr_mov = traj_descr_task.at(kk);
 
@@ -2240,8 +2740,10 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
 #if HAND == 0
             hand_handles = right_hand_handles;
 #endif
+#if HAND != 2
             h_attach = right_attach;
-            break;
+#endif
+             break;
         case 2: // left arm
             handles = left_handles;
 #if HAND == 0
@@ -2293,13 +2795,19 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
                 (client_enableSubscriber_hand.call(srv_enableSubscriber_hand)) && (srv_enableSubscriber_hand.response.subscriberID != -1))
 #elif HAND == 1
         if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
+#elif HAND == 2
+        if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
 #endif
         {
+            // the subscriber was succesfully started on V-REP and V-REP is now listening
             // **** Publish the data in the V-REP topics **** //
 #if HAND == 0
             this->publishData(node, traj.at(k).at(0), timesteps.at(k).at(0), handles, hand_handles, scenarioID, timeTot, tols_stop_task.at(k).at(0));
 #elif HAND == 1
             this->publishData(node, traj.at(k).at(0), timesteps.at(k).at(0), handles, scenarioID, timeTot, tol_stop);
+#elif HAND == 2
+            this->publishData(node, traj.at(k).at(0), timesteps.at(k).at(0), handles, scenarioID, timeTot, tol_stop);
+
 #endif
             // **** Post-movement operations **** //
             this->posMovementOperation(node, movType, plan, h_attach);
@@ -2328,7 +2836,7 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
     return true;
 }
 
-
+//subtracts the offset of the joints to their position
 vector<MatrixXd> QNode::robotJointPositions(std::vector<MatrixXd>& traj_mov)
 {
     for(size_t k = 0; k < traj_mov.size(); ++k)
@@ -3060,6 +3568,7 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
 //*****************************************************************************************************************************//
 //                                                           Logging                                                           //
 //*****************************************************************************************************************************//
+
 void QNode::log(const LogLevel &level, const string &msg)
 {
     logging_model.insertRows(logging_model.rowCount(),1);
@@ -3208,6 +3717,30 @@ bool QNode::getRPY(Matrix4d Trans, std::vector<double> &rpy)
     }
 }
 
+bool QNode::RotgetRPY(Matrix3d rot, std::vector<double> &rpy)
+{
+    rpy = std::vector<double>(3);
+
+    if((abs(rot(0, 0)) < 1e-5) && (abs(rot(1, 0)) < 1e-5))
+    {
+        rpy.at(0) = 0; // [rad]
+        rpy.at(1) = atan2(-rot(2, 0), rot(0, 0)); // [rad]
+        rpy.at(2) = atan2(-rot(1, 2), rot(1, 1)); // [rad]
+
+        return false;
+    }
+    else
+    {
+        rpy.at(0) = atan2(rot(1, 0), rot(0, 0)); // [rad]
+        double sp = sin(rpy.at(0));
+        double cp = cos(rpy.at(0));
+        rpy.at(1) = atan2(- rot(2, 0), cp * rot(0, 0) + sp*rot(1, 0)); // [rad]
+        rpy.at(2) = atan2(sp*rot(0, 2) - cp * rot(1, 2), cp*rot(1, 1) - sp * rot(0,1)); // [rad]
+
+        return true;
+    }
+}
+
 
 void QNode::RPY_matrix(std::vector<double> rpy, Matrix3d &Rot)
 {
@@ -3224,7 +3757,6 @@ void QNode::RPY_matrix(std::vector<double> rpy, Matrix3d &Rot)
         Rot(2, 0) = -sin(pitch);             Rot(2, 1) = cos(pitch) * sin(yaw);                                    Rot(2, 2) = cos(pitch) * cos(yaw);
     }
 }
-
 
 //*****************************************************************************************************************************//
 //                                                         Barrett Hand                                                        //
@@ -3297,6 +3829,7 @@ bool QNode::closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture)
 //*****************************************************************************************************************************//
 //                                                       V-REP Callbacks                                                       //
 //*****************************************************************************************************************************//
+
 void QNode::infoCallback(const vrep_common::VrepInfoConstPtr& info)
 {
     simulationTime = info->simulationTime.data;
@@ -3327,6 +3860,10 @@ void QNode::JointsCallback(const sensor_msgs::JointState &state)
 #elif HAND == 1
     const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
                              "right_gripper_jointClose"};
+#elif HAND == 2
+    const char *r_names[] = {"right_joint0", "right_joint1", "right_joint2", "right_joint3","right_joint4", "right_joint5", "right_joint6",
+                             "right_gripper_jointClose"};
+
 #endif
 
     for(int i = 0; i < JOINTS_ARM+JOINTS_HAND; ++i)
@@ -3433,6 +3970,7 @@ void QNode::leftProxCallback(const vrep_common::ProximitySensorData& data)
 //*****************************************************************************************************************************//
 //                                                    Toy Vehicles Callbacks                                                   //
 //*****************************************************************************************************************************//
+
 void QNode::BlueColumnCallback(const geometry_msgs::PoseStamped &data)
 {
     int obj_id = 0;
@@ -3517,6 +4055,7 @@ void QNode::BaseCallback(const geometry_msgs::PoseStamped &data)
 //*****************************************************************************************************************************//
 //                                                  Human Assistance Callbacks                                                 //
 //*****************************************************************************************************************************//
+
 void QNode::BottleTeaCallback(const geometry_msgs::PoseStamped &data)
 {
     int obj_id = 0;
@@ -3610,7 +4149,37 @@ void QNode::SawyerGripperCallback(const intera_core_msgs::IODeviceStatus &state)
             robotVel.at(7) = atof(data.c_str());
     }
 }
-#endif
-#endif
+#endif //  endif of if HAND == 1
+#endif  //  endif of if robot == 1
+
+
+//*****************************************************************************************************************************//
+//                                                    Robot UR10 Callbacks                                                   //
+//*****************************************************************************************************************************/
+
+void QNode::URJointsCallback(const sensor_msgs::JointState &state)
+{
+    std::vector<std::string> joints_names = state.name;
+    std::vector<double> joints_pos(state.position.begin(),state.position.end());
+    std::vector<double> joints_vel(state.velocity.begin(), state.velocity.end());
+
+    const char *r_names[] = {"elbow_joint", "shoulder_lift_joint", "shoulder_pan_joint", "wrist_1_joint", "wrist_2_joint","wrist_3_joint"};
+
+    for(int i = 0; i < JOINTS_ARM; ++i)
+    {
+        size_t r_index = std::find(joints_names.begin(), joints_names.end(), r_names[i]) - joints_names.begin();
+
+        if(r_index < joints_names.size())
+        {
+            //use this to get the UR joints positions from ros
+            robotPosture_wp.at(i) = joints_pos.at(r_index);
+            robotVel_wp.at(i) = joints_vel.at(r_index);
+        }
+    }
+
+}
+
+
+
 
 }  // namespace motion_manager

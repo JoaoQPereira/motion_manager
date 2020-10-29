@@ -3,6 +3,7 @@
 
 #include "object.hpp"
 #include "pose.hpp"
+#include "waypoint.hpp"
 
 
 namespace motion_manager
@@ -11,6 +12,7 @@ namespace motion_manager
 typedef boost::shared_ptr<Object> objectPtr;
 typedef boost::shared_ptr<Pose> posePtr;
 
+typedef boost::shared_ptr<Waypoint> waypointPtr;
 
 class Movement
 {

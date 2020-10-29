@@ -305,6 +305,11 @@ public Q_SLOTS:
      * @param value
      */
     void updateElement(int id,string value);
+    /**
+     * @brief This method adds a new waypoint to the widget
+     * @param value
+     */
+    void addWaypoint(string value);
 
     /**
      * @brief This method add an object to the lists of
@@ -366,6 +371,11 @@ public Q_SLOTS:
      */
     void on_pushButton_save_res_task_clicked();
 
+    void on_pushButton_setWaypoint_clicked();
+
+    void on_pushButton_deleteWaypoint_clicked();
+
+
 private:
     Ui::MainWindowDesign ui; /**< handles of the main user interface */
     QNode qnode; /**< ROS node handle */
@@ -383,6 +393,7 @@ private:
     int usedPlat_move; /**< platform used to execute the planned movement */
     bool execSettings_move = false; /** < ask again you options: V-Rep or robot*/
 
+    vector<vector<double>> robot_waypoints;
     vector< vector < double > > timesteps_mov; /**< current time steps of the movement */
     QVector<double> qtime_mov; /**< time of the current movement for plotting */
     vector<double> tols_stop_mov; /**< vector of the tolerances to stop each stage in the movement */
@@ -409,12 +420,26 @@ private:
     vector<vector<double>> handAngularVelocity_mov;/**< hand angular velocity during the movement */
     vector<vector<double>> wristLinearVelocity_mov; /**< wrist linear velocity during the movement */
     vector<vector<double>> wristAngularVelocity_mov;/**< wrist angular velocity during the movement */
+#if UR == 1
+    vector<vector<double>> wrist1LinearVelocity_mov; /**< wrist linear velocity during the movement */
+    vector<vector<double>> wrist1AngularVelocity_mov;/**< wrist angular velocity during the movement */
+    vector<vector<double>> wrist2LinearVelocity_mov; /**< wrist linear velocity during the movement */
+    vector<vector<double>> wrist2AngularVelocity_mov;/**< wrist angular velocity during the movement */
+    vector<vector<double>> wrist3LinearVelocity_mov; /**< wrist linear velocity during the movement */
+    vector<vector<double>> wrist3AngularVelocity_mov;/**< wrist angular velocity during the movement */
+#endif
     vector<vector<double>> elbowLinearVelocity_mov; /**< elbow linear velocity during the movement */
     vector<vector<double>> elbowAngularVelocity_mov;/**< elbow angular velocity during the movement */
     vector<vector<double>> shoulderLinearVelocity_mov; /**< shoulder linear velocity during the movement */
     vector<vector<double>> shoulderAngularVelocity_mov;/**< shoulder angular velocity during the movement */
     vector<double> handVelocityNorm_mov; /**< hand velocity norm during the movement */
     vector<double> wristVelocityNorm_mov; /**< wrist velocity norm during the movement */
+#if UR==1
+    vector<double> wrist1VelocityNorm_mov; /**< wrist1 velocity norm during the movement */
+    vector<double> wrist2VelocityNorm_mov; /**< wrist2 velocity norm during the movement */
+    vector<double> wrist3VelocityNorm_mov; /**< wrist3  velocity norm during the movement */
+
+#endif
     vector<double> elbowVelocityNorm_mov; /**< elbow velocity norm during the movement */
     vector<double> shoulderVelocityNorm_mov; /**< shoulder velocity norm during the movement */
     double prob_time_mov;/**< time taken to solve the problem */
@@ -436,8 +461,13 @@ private:
     scenarioPtr init_scene; /**< initial scenario */
     scenarioPtr curr_scene; /**< current scenario */
 
+    //boost::shared_ptr<HandPosPlot> handPosPlot_mov_ptr; /**< pointer to the hand position plot of the movement */
     boost::shared_ptr<HandPosPlot> handPosPlot_mov_ptr; /**< pointer to the hand position plot of the movement */
+
     boost::shared_ptr<HandPosPlot> handPosPlot_task_ptr;/**< pointer to the hand position plot of the task */
+
+    //waypointPtr waypoints; /** Pointer to the waypoints **/
+    waypointPtr waypoints;
 };
 
 }  //  motion_manager
