@@ -32,9 +32,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     mTolHumpdlg = new TolDialogHUMP(this);
     mTolHumpdlg->setModal(true);
 
-    //create Execute Movement Tunning dialog
+    //create Define Waypoints Platform Tunning dialog
     mMovExecutedlg = new Mov_ExecuteDialog(&qnode, this);
     mMovExecutedlg->setModal(true);
+
+    //create Execute Movement Tunning dialog
+    PlatWaypointdlg = new set_waypointsdialog(&qnode, this);
+    PlatWaypointdlg->setModal(true);
 
     //create Execute Movement Tunning dialog
     mTaskExecutedlg = new Task_ExecuteDialog(&qnode, this);
@@ -70,10 +74,14 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     QObject::connect(mvrepCommdlg, SIGNAL(vrepConnected(bool)), this, SLOT(updateVrepStatus(bool)));
 
     // Plataform used to execute the planned movement
-    QObject::connect(mMovExecutedlg, SIGNAL(addPlat_execMove(int, bool)), this, SLOT(execMove(int, bool)));
+    QObject::connect(PlatWaypointdlg, SIGNAL(addPlat_setWps(int)), this, SLOT(SetWaypoints(int)));
 
     // Plataform used to execute the selected task
     QObject::connect(mTaskExecutedlg, SIGNAL(addPlat_execTask(int, bool)), this, SLOT(execTask(int, bool)));
+
+    // Plataform used to execute the planned movement
+    QObject::connect(mMovExecutedlg, SIGNAL(addPlat_execMove(int, bool)), this, SLOT(execMove(int, bool)));
+
 
     // new element in the scenario signal
     QObject::connect(&qnode, SIGNAL(newElement(string)),this,SLOT(addElement(string)));
@@ -196,6 +204,37 @@ void MainWindow::updateRVizStatus(bool c)
 
 }
 
+void MainWindow::SetWaypoints(int c)
+{
+    if(c == 0)  //Define waypoints using Coppelia
+    {
+
+    }
+    else if(c == 1) //Define waypoints using Polyscope
+    {
+        qnode.ConnectPolyscope();
+
+        try
+        {
+            //if(qnode.moveRobotCoppelia(this->curr_scene))
+            //{
+
+            //}
+            // initialize a thread to move the coppelia robot while the waypoints are defined in Polyscope
+            qnode.ThreadState(true);
+            qnode.start();
+        }
+        catch(std::string str)
+        {
+            qnode.log(QNode::Error,str);
+        }
+        catch(std::exception e)
+        {
+            qnode.log(QNode::Error,e.what());
+        }
+
+    }
+}
 
 void MainWindow::execMove(int c, bool a)
 {
@@ -204,12 +243,20 @@ void MainWindow::execMove(int c, bool a)
     else if(c == 1) //Execute the planned movement in Robot
     {
 #if ROBOT == 1
+#if UR == 0
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
         {
             std::vector<double> paramsTimeMapping;
             mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
+
             qnode.execMovementSawyer(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
         }
+#else
+
+         std::vector<double> paramsTimeMapping;
+         mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
+         qnode.execMovementUR(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
+#endif
 #endif
     }
 
@@ -227,12 +274,18 @@ void MainWindow::execTask(int c, bool a)
     else if(c == 1) //Execute the task in Robot
     {
 #if ROBOT == 1
+#if UR ==0
         if(this->curr_scene->getRobot()->getName() == "Sawyer")
         {
             std::vector<vector<double>> paramsTimeMapping;
             mTaskExecutedlg->getTimeMappingParams(paramsTimeMapping);
+
             qnode.execTaskSawyer(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, paramsTimeMapping);
         }
+#else
+           // qnode.execTaskUR(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, paramsTimeMapping);
+
+#endif
 #endif
     }
 
@@ -451,7 +504,11 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 if (qnode.loadScenario(path_vrep_HRColab_UR, this->scenario_id))
                 {
                     qnode.log(QNode::Info,string("waypoints scenario: Human-Robot Collaboration (UR10)- HAS BEEN LOADED"));
-                    ui.pushButton_getElements->setEnabled(true);
+                    ui.pushButton_getElements->setEnabled(false);
+                    ui.pushButton_getWaypoints->setEnabled(true);
+                    ui.pushButton_deleteWaypoint->setEnabled(true);
+                    ui.pushButton_saveWaypoints->setEnabled(true);
+                    ui.pushButton_setWaypoint->setEnabled(true);
                     ui.groupBox_getElements->setEnabled(true);
                     ui.groupBox_homePosture->setEnabled(true);
                     string title = string("waypoints scenario with UR10 robot");
@@ -462,6 +519,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                  {
                     qnode.log(QNode::Error,std::string("waypoints scenario: Human-Robot Collaboration (UR10)- HAS NOT BEEN LOADED. You probaly have to stop the simulation"));
                     ui.groupBox_getElements->setEnabled(false);
+                    ui.pushButton_getWaypoints->setEnabled(false);
                     ui.groupBox_homePosture->setEnabled(false);
                     ui.pushButton_loadScenario->setEnabled(true);
                  }
@@ -568,7 +626,11 @@ void MainWindow::on_pushButton_loadScenario_clicked()
                 if (qnode.loadScenario(path_vrep_wp_sawyer, this->scenario_id))
                 {
                     qnode.log(QNode::Info,string("waypoints scenario with Sawyer - HAS BEEN LOADED"));
-                    ui.pushButton_getElements->setEnabled(true);
+                    ui.pushButton_getElements->setEnabled(false);
+                    ui.pushButton_getWaypoints->setEnabled(true);
+                    ui.pushButton_deleteWaypoint->setEnabled(true);
+                    ui.pushButton_saveWaypoint->setEnabled(true);
+                    ui.pushButton_setWaypoint->setEnabled(true);
                     ui.groupBox_getElements->setEnabled(true);
                     ui.groupBox_homePosture->setEnabled(true);
                     string title = string("waypoints scenario with Sawyer robot");
@@ -593,7 +655,7 @@ void MainWindow::on_pushButton_loadScenario_clicked()
 void MainWindow::on_pushButton_setWaypoint_clicked()
 {
     vector <double> wp;
-    if(qnode.setWaypoint(wp))
+    if(qnode.setWaypoint(wp))// get the waypoint
     {
         string info_wp = string("Waypoint:{");
         for (int i = 0; i < wp.size(); i++){
@@ -604,6 +666,17 @@ void MainWindow::on_pushButton_setWaypoint_clicked()
     }
     robot_waypoints.push_back(wp);
 }
+
+void MainWindow::on_pushButton_SaveTrajectory_clicked()
+{
+    mov_wps.push_back(robot_waypoints);
+    mov_name.push_back(ui.qline_edit_MovementName->text());
+    robot_waypoints.clear();
+    qnode.setMovWps(mov_wps,mov_name);
+}
+
+
+
 void MainWindow::on_pushButton_deleteWaypoint_clicked()
 {
     robot_waypoints.pop_back();
@@ -621,6 +694,40 @@ void MainWindow::on_pushButton_deleteWaypoint_clicked()
     qnode.updateWaypoints(robot_waypoints);
 }
 
+void MainWindow::on_pushButton_getWaypoints_clicked()
+{
+    //ui.listWidget_waypoints->clear();
+    //show platform to decide where the waypoints are defined
+    PlatWaypointdlg->show();
+
+}
+
+void MainWindow::on_pushButton_getWaypoints_pressed()
+{
+    qnode.log(QNode::Info,string("getting the waypoints . . ."));
+    ui.pushButton_getElements->setEnabled(false);
+    ui.pushButton_deleteWaypoint->setEnabled(true);
+    ui.pushButton_saveWaypoints->setEnabled(true);
+    ui.pushButton_setWaypoint->setEnabled(true);
+    ui.pushButton_SaveTrajectory->setEnabled(true);
+    ui.groupBox_2->setEnabled(true);
+    ui.qline_edit_MovementName->setEnabled(true);
+
+}
+
+
+void MainWindow::on_pushButton_saveWaypoints_clicked()
+{
+
+    ui.pushButton_getElements->setEnabled(true);
+    ui.pushButton_deleteWaypoint->setEnabled(false);
+    ui.pushButton_saveWaypoints->setEnabled(false);
+    ui.pushButton_setWaypoint->setEnabled(false);
+    //qnode.moveRobotToInitPos();
+
+    // stop the thread of moving the vrep robot, since the waypoints are already defined
+    qnode.ThreadState(false);
+}
 
 
 void MainWindow::on_pushButton_getElements_pressed()
@@ -1361,12 +1468,19 @@ void MainWindow::on_pushButton_execMov_clicked()
         else if(usedPlat_move == 1) //Execute the planned movement in Robot
         {
 #if ROBOT == 1
+#if UR == 0
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
             {
                 std::vector<double> paramsTimeMapping;
                 mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
+
                 qnode.execMovementSawyer(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
-            }
+             }
+#else
+            std::vector<double> paramsTimeMapping;
+            mMovExecutedlg->getTimeMappingParams(paramsTimeMapping);
+            qnode.execMovementUR(this->jointsPosition_mov, this->timesteps_mov, this->traj_descr_mov, this->curr_mov, paramsTimeMapping);
+#endif
 #endif
         }
     }
@@ -1428,12 +1542,18 @@ void MainWindow::on_pushButton_execTask_clicked()
         else if(usedPlat_task == 1) //Execute the task in Robot
         {
 #if ROBOT == 1
+#if UR == 0
             if(this->curr_scene->getRobot()->getName() == "Sawyer")
             {
                 std::vector<vector<double>> paramsTimeMapping;
                 mTaskExecutedlg->getTimeMappingParams(paramsTimeMapping);
                 qnode.execTaskSawyer(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, paramsTimeMapping);
             }
+#else
+           // std::vector<vector<double>> paramsTimeMapping;
+           // mTaskExecutedlg->getTimeMappingParams(paramsTimeMapping);
+           // qnode.execTaskUR(this->jointsPosition_task, this->timesteps_task, this->tols_stop_task, this->traj_descr_task, this->curr_task, paramsTimeMapping);
+#endif
 #endif
         }
     }
@@ -3092,6 +3212,7 @@ void MainWindow::ReadSettings()
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
 #if ROBOT == 1
+#if UR == 0
     QString master_url = ("http://021604CP00018.local:11311/");
     QString host_url = ("192.168.197.115");
     //something is wrong with 2 lines, the variables does not keep the following values.
@@ -3100,9 +3221,10 @@ void MainWindow::ReadSettings()
     mrosCommdlg->setMasterUrl(master_url);
     mrosCommdlg->setHostUrl(host_url);
 #endif
+#endif
 #if ROBOT == 0
-    QString master_url = settings.value("master_url",QString("http://192.168.1.2:11311/")).toString();
-    QString host_url = settings.value("host_url", QString("192.168.1.3")).toString();
+    QString master_url = settings.value("master_url",QString("http://127.0.0.1:11311/")).toString();
+    QString host_url = settings.value("host_url", QString("127.0.0.1")).toString();
     mrosCommdlg->setMasterUrl(master_url);
     mrosCommdlg->setHostUrl(host_url);
 #endif

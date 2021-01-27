@@ -63,19 +63,21 @@ QNode::QNode(int argc, char** argv ) :
     closed = false;
 #endif
 
-#if ROBOT == 1
 #if HAND == 0
     int njoints = JOINTS_ARM;
 #elif HAND == 1
     int njoints = JOINTS_ARM + JOINTS_HAND;
+#elif HAND == 2
+    int njoints = JOINTS_ARM;
 #endif
+#if ROBOT == 1
     // Collaborative Robot Sawyer
     robotPosture.assign(njoints, 0.0f);
     robotVel.assign(njoints, 0.0f);
 #endif
+
 #if UR == 1
-    int njoints = JOINTS_ARM;
-    // Collaborative Robot UR10
+    // waypoints
     robotPosture_wp.assign(njoints, 0.0f);
     robotVel_wp.assign(njoints, 0.0f);
 #endif
@@ -105,7 +107,7 @@ bool QNode::on_init()
         return false;
 
     ros::start();
-    start();
+    //start();
     return true;
 }
 
@@ -122,10 +124,14 @@ bool QNode::on_init_url(const std::string &master_url, const std::string &host_u
         return false;
 
     ros::start();
-    start();
+    //start();
     return true;
 }
 
+void QNode::ThreadState(bool thread)
+{
+    this->thread_state = thread;
+}
 
 //*****************************************************************************************************************************//
 //                                                       V-REP Simulator                                                       //
@@ -152,12 +158,13 @@ bool QNode::checkVrep()
 
 void QNode::run()
 {
-    while (ros::ok())
-    {
+   // while (ros::ok())
+   // {
         // infinite loop while ros is running
-    }
-
-    ros::spinOnce();
+   // }
+    if(this->thread_state)
+        moveRobotCoppelia();
+   // ros::spinOnce();
 }
 
 
@@ -599,6 +606,17 @@ bool QNode::getArmsHandles(int robot)
     return succ;
 }
 
+void QNode::ConnectPolyscope()
+{
+    ros::NodeHandle n;
+
+    // Create the action client specifying the server name to connect: "/scaled_pos_joint_traj_controller/follow_joint_trajectory"
+    folJointTraj = new followJointTrajectoryClient("/scaled_pos_joint_traj_controller/follow_joint_trajectory", true);
+    folJointTraj->waitForServer(); //Wait for follow_joint_trajectory_Action server
+
+    ros::spinOnce();
+
+}
 
 
 bool QNode::loadScenario(const std::string& path,int id)
@@ -606,8 +624,10 @@ bool QNode::loadScenario(const std::string& path,int id)
     ros::NodeHandle n;
 
 #if ROBOT == 1
+
     // **** Robot subscribers **** //
-    if(id >= 2)
+
+    if(id >= 2 && id != 6)
     {
         subJointsStateRobot = n.subscribe("/robot/joint_states", 1, &QNode::SawyerJointsCallback, this);
         subHeadState = n.subscribe("/robot/head/head_state", 1, &QNode::SawyerHeadCallback, this);
@@ -623,8 +643,9 @@ bool QNode::loadScenario(const std::string& path,int id)
         folJointTraj = new followJointTrajectoryClient("/robot/limb/right/follow_joint_trajectory", true);
         folJointTraj->waitForServer();
     }
-#endif
 
+
+#endif
     // **** V-Rep subscribers **** //
     // pause simulations
     add_client = n.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
@@ -1832,17 +1853,21 @@ bool QNode::getElements(scenarioPtr scene)
     }
  }
 #elif UR==1
-    wp_nr = this->robot_waypoints.size();
-    wp_ws = false; //wp in joint space
 
-    for(int i=0; i<robot_waypoints.size();i++)
+    int mov_nr = this->mov_wps.size(); // number of movements (pick, place ....)
+    wp_ws = false; //wp in joint space
+    for(int k=0; k<mov_nr; k++)
     {
-        wp_specs.JointSpace.PosJoints = this->robot_waypoints.at(i);
-        wp_specs.name = string("wp"+QString::number(i+1).toStdString());
-        //waypoints in an vector of waypoint structure
-        waypoints_vec.push_back(wp_specs);
-    }
-        traj_name = "wp_traj";
+        wp_nr = this->mov_wps[k].size(); // number of waypoints of each movement
+
+        for(int i=0; i<wp_nr;i++)
+        {
+            wp_specs.JointSpace.PosJoints = this->mov_wps[k].at(i);
+            wp_specs.name = string(this->mov_name[k].toStdString()+": wp"+QString::number(i+1).toStdString());
+            //waypoints in an vector of waypoint structure
+            waypoints_vec.push_back(wp_specs);
+        }
+        traj_name = this->mov_name[k].toStdString();
         //set the waypoints
         //I received the initial and final points as waypoints. However, henceforth they will not count as waypoint
         // therefore, wp_nr - 2
@@ -1863,7 +1888,7 @@ bool QNode::getElements(scenarioPtr scene)
         scene->addWaypoint(waypointPtr(wp));
         //add the waypoint to the combobox
         Q_EMIT newWaypoint(traj_name);
-
+    }
 #endif
 #endif
 
@@ -1872,22 +1897,7 @@ bool QNode::getElements(scenarioPtr scene)
     // ******************************* //
     if(succ)
     {
-/*
-#if UR == 1 // if UR -> 6 DOFs robot
 
-        // **** Torso info **** //
-        robot_UR_torso_specs.Xpos = torso_UR.Xpos;
-        robot_UR_torso_specs.Ypos = torso_UR.Ypos;
-        robot_UR_torso_specs.Zpos = torso_UR.Zpos;
-        robot_UR_torso_specs.q_X = torso_UR.q_X;
-        robot_UR_torso_specs.q_Y = torso_UR.q_Y;
-        robot_UR_torso_specs.q_Z = torso_UR.q_Z;
-        robot_UR_torso_specs.q_W = torso_UR.q_W;
-        robot_UR_torso_specs.Xsize = torso_UR.Xsize;
-        robot_UR_torso_specs.Ysize = torso_UR.Ysize;
-        robot_UR_torso_specs.Zsize = torso_UR.Zsize;
-#elif UR == 0 // 7 DOFs robots
-*/
         // **** Torso info **** //
         robot_torso_specs.Xpos = torso.Xpos;
         robot_torso_specs.Ypos = torso.Ypos;
@@ -1898,7 +1908,6 @@ bool QNode::getElements(scenarioPtr scene)
         robot_torso_specs.Xsize = torso.Xsize;
         robot_torso_specs.Ysize = torso.Ysize;
         robot_torso_specs.Zsize = torso.Zsize;
-//#endif
 
 #if HEAD == 1  // UR robot does not have head
         // **** Head info **** //
@@ -2124,6 +2133,125 @@ bool QNode::getElements(scenarioPtr scene)
 
 
     return succ;
+}
+
+// this function is to listenned the topic joint_state of the robot and send the data to coppelia simulator
+// thus, we can see the simulated robot in coppelia moving while we move the real robot to set the waypoints
+bool QNode::moveRobotCoppelia()
+{
+    bool succ;
+    ros::NodeHandle node;
+    std::vector<int> handles;
+    vrep_common::simRosGetFloatSignal srvf;
+
+    // get the joints handles
+    succ=getArmsHandles(3);
+    handles = right_handles;
+
+    // start the simulation
+    add_client = node.serviceClient<vrep_common::simRosStartSimulation>("/vrep/simRosStartSimulation");
+    vrep_common::simRosStartSimulation srvc;
+    add_client.call(srvc);
+    sleep(1);
+
+
+    // listen to the topic joint_states of the real robot
+    vector <double> offset_robot {0,-M_PI_2,0,-M_PI_2,0,0};
+    vector <double> robot_pos =  vector <double> (JOINTS_ARM); // size of the number of dof
+    vector <double> robot_vel =  vector <double> (JOINTS_ARM); // size of the number of dof
+
+    
+    string topic = "/joint_states";
+    subJointsStateRobotUR = node.subscribe(topic, 1, &QNode::URJointsCallback, this);
+    sleep(2);
+    ros::spinOnce();
+
+    //1º tenho q meter o robo no coppelia na pos atual do robo real
+
+    std::vector<double> coppelia_pos = std::vector<double>(JOINTS_ARM+JOINTS_HAND);
+
+    add_client = node.serviceClient<vrep_common::simRosGetFloatSignal>("/vrep/simRosGetFloatSignal");
+    // **** [Right arm] actual robot pos **** //
+    for(size_t i = 0; i < coppelia_pos.size(); ++i)
+    {
+        srvf.request.signalName = string("sright_joint"+QString::number(i).toStdString());
+        add_client.call(srvf);
+        if(srvf.response.result == 1)
+        {
+            coppelia_pos.at(i) = srvf.response.signalValue;
+        }
+        else
+        {
+            throw string("Error: Couldn't get the information of the right home posture");
+            succ = false;
+        }
+    }
+    // robot joints position
+    robot_pos = robotPosture_wp;
+    std::transform(robot_pos.begin(), robot_pos.end(),offset_robot.begin(), robot_pos.begin(), std::minus<double>());
+
+    // joints velocity
+    robot_vel = robotVel_wp;
+
+
+    // ******************************* //
+    //           Subscribers           //
+    // ******************************* //
+    // set joints position or velocity
+    ros::ServiceClient client_enableSubscriber = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+    vrep_common::simRosEnableSubscriber srv_enableSubscriber;
+    srv_enableSubscriber.request.topicName = "/" + nodeName + "/set_joints"; // the topic name
+    srv_enableSubscriber.request.queueSize = 1; // the subscriber queue size (on V-REP side)
+    srv_enableSubscriber.request.streamCmd = simros_strmcmd_set_joint_state; // the subscriber type
+
+    // publish in the topic /motion_manager/set_joints
+    if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
+    {
+        ros::Publisher pub = node.advertise<vrep_common::JointSetStateData>("/" + nodeName + "/set_joints", 1);
+        ros::spinOnce();
+
+        while(ros::ok() && simulationRunning && this->thread_state)
+        {
+
+            subJointsStateRobotUR = node.subscribe(topic, 1, &QNode::URJointsCallback, this);
+            sleep(1);
+            ros::spinOnce();
+
+            // robot joints position
+            robot_pos = robotPosture_wp;
+            std::transform(robot_pos.begin(), robot_pos.end(),offset_robot.begin(), robot_pos.begin(), std::minus<double>());
+            //rostopic message type
+            vrep_common::JointSetStateData dataTraj;
+            for(int i=0; i<robot_pos.size();i++)
+            {
+
+                // ************************ //
+                // Set data to be published //
+                // ************************ //
+                // **** Joints handles to be changed during the movement  **** //
+                dataTraj.handles.data.push_back(handles.at(i));
+                // Position mode
+                dataTraj.setModes.data.push_back(0);
+                // Joints values
+                dataTraj.values.data.push_back(robot_pos.at(i));
+            }
+            pub.publish(dataTraj);
+
+        }
+    }
+
+    // stop the simulation
+    add_client = node.serviceClient<vrep_common::simRosStopSimulation>("/vrep/simRosStopSimulation");
+    vrep_common::simRosStopSimulation srvcc;
+    add_client.call(srvcc);
+
+    return succ;
+}
+
+void QNode::setMovWps(vector<vector<vector<double>>> movements_wps, vector <QString> movement_name)
+{
+    this->mov_wps = movements_wps;
+    this->mov_name = movement_name;
 }
 
 
@@ -2366,7 +2494,7 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
                             // Position mode
                             dataTraj.setModes.data.push_back(0);
                             // Joints values
-                            dataTraj.values.data.push_back(pos_mstep);
+                            dataTraj.values.data.push_back(pos_mstep);                         
                         }
                         else if(isHandJoint && !handClosed)
                         {
@@ -3013,12 +3141,166 @@ void QNode::joinMovements(vector<vector<MatrixXd>> &traj, vector<vector<vector<d
 //                                                 Collaborative Robot Sawyer                                                  //
 //*****************************************************************************************************************************//
 #if ROBOT == 1
+bool QNode::moveRobotToInitPosUR(VectorXd &goal)
+{
+
+    // **** Initial Posture = Current Robot Posture **** //
+    vector<double> robotPos(robotPosture_wp.begin(),robotPosture_wp.end()-JOINTS_HAND);
+/*
+    // **** Final Posture = Initial WAYPOINT Posture **** //
+    vector<double> firstWPoffset (robot_waypoints.at(0).begin(),robot_waypoints.at(0).end());
+#if UR==1
+    vector <double> offset_robot {0,-M_PI_2,0,-M_PI_2,0,0};
+    std::transform(firstWPoffset.begin(), firstWPoffset.end(),offset_robot.begin(), firstWPoffset.begin(), std::plus<double>());
+#endif
+    vector<double> finalPos (firstWPoffset.begin(),firstWPoffset.end());
+    */
+    // **** Final Posture = Initial Simulation Posture **** //
+
+    vector<double> finalPos(&goal[0], goal.data() + (goal.cols() * goal.rows() - JOINTS_HAND));
+#if UR == 1
+    //vector <double> offset_robot {0,-M_PI_2,0,-M_PI_2,0,0};
+    //std::transform(finalPos.begin(), finalPos.end(),offset_robot.begin(), finalPos.begin(), std::plus<double>());
+#endif
+
+    // Initial point: current posture
+    trajectory_msgs::JointTrajectoryPoint init_point;
+    init_point.positions = robotPos;
+    init_point.velocities = {0,0,0,0,0,0};
+    init_point.time_from_start = ros::Duration(0);
+    // Final point: first waypoint
+    trajectory_msgs::JointTrajectoryPoint final_point;
+    final_point.positions = finalPos;
+    final_point.velocities = {0,0,0,0,0,0};
+    final_point.time_from_start = ros::Duration(5.0);
+
+    //Trajectory to be performed
+    trajectory_msgs::JointTrajectory traj;
+
+    traj.joint_names = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint","wrist_3_joint"};
+    traj.points.push_back(init_point);
+    traj.points.push_back(final_point);
+
+    // Define the goal message
+    control_msgs::FollowJointTrajectoryGoal goToFirstWP;
+    goToFirstWP.trajectory = traj;
+
+    folJointTraj->sendGoal(goToFirstWP);
+    folJointTraj->waitForResult(ros::Duration(45));
+
+    if(folJointTraj->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        log(QNode::Error, string("Error in reaching the initial position of the robotic arm"));
+        return false;
+    }
+    ros::spinOnce();;
+
+    return true;
+
+}
+
+bool QNode::execMovementUR(std::vector<MatrixXd>& traj_mov, std::vector<std::vector<double>> timesteps_mov, std::vector<string>& traj_descr, movementPtr mov, vector<double> paramsTimeMapping)
+{
+    ros::NodeHandle node;
+    int movType = mov->getType();
+    int nMicroSteps = 3;
+    bool isGripperClosed;
+
+    // ************************************************** //
+    //        Publishers and Gripper configuration        //
+    // ************************************************** //
+
+     pubHeadState = node.advertise<intera_core_msgs::HeadPanCommand>("/robot/head/command_head_pan", 1, true);
+
+#if HAND == 2
+    // **** Publisher to the topic "io/end_effector/right_gripper/command" **** //
+    //pubCommGripper = node.advertise<intera_core_msgs::IOComponentCommand>("/io/end_effector/right_gripper/command", 1, true);
+
+    // **** Gripper state at the beginning of the movement to be executed **** //
+    switch (movType)
+    {
+    case 0: case 1: case 4: case 5: // reach-to-grasp, reaching, disengage, go-park
+        isGripperClosed = false;
+        break;
+    case 2: case 3: // transport, engage
+        isGripperClosed = true;
+        break;
+    case 6:
+        isGripperClosed = false;
+        break;
+    }
+#endif
+
+    // ************************************************** //
+    //                  Initial Postures                  //
+    // ************************************************** //
+    this->theta_offset.clear();
+    this->theta_offset = {0,M_PI_2,0,M_PI_2,0,0};
+    vector<MatrixXd> traj_mov_planned = traj_mov;
+    vector<MatrixXd> traj_mov_robot = robotJointPositions(traj_mov_planned);
+    VectorXd initPos = traj_mov_robot.at(0).row(0);
+
+    // **** Move the robotic arm to its initial posture **** //
+    this->moveRobotToInitPosUR(initPos);
+
+
+    // ************************************************** //
+    //           Perform the planned trajectory           //
+    // ************************************************** //
+    sleep(5);
+
+    for(size_t k = 0; k < traj_mov_robot.size(); ++k)
+    {
+        std::vector<vector<double>> trajToExecute;
+        std::vector<double> timeFromStart;
+
+        string mov_descr = traj_descr.at(k);
+
+        // **** Hand state: close or opened **** //
+        switch (movType)
+        {
+        case 6: // Reach-to-grasp, Disengage
+            //if(strcmp(mov_descr.c_str(), "plan") == 0)
+              //  isGripperClosed = false;
+            //else
+              //  isGripperClosed = true;
+            break;
+
+        }
+
+        // **** Joints linear interpolation **** //
+        MatrixXd traj_stage = traj_mov_robot.at(k);
+        std::vector<double> timesteps_stage = timesteps_mov.at(k);
+        this->jointInterpolation(nMicroSteps, traj_stage, timesteps_stage, trajToExecute, timeFromStart);
+
+        // **** Joint Trajectory Action Server **** //
+        bool closeGripper = (((strcmp(mov_descr.c_str(), "plan") == 0) && (movType == 0 || movType == 4)));
+        this->jointTrajectoryAction(trajToExecute, timeFromStart, paramsTimeMapping, closeGripper, isGripperClosed);
+
+        ros::spinOnce();
+    }
+
+    log(QNode::Info,string("Movement completed."));
+    ros::spinOnce();
+
+    return true;
+}
+#endif
+
+
+//*****************************************************************************************************************************//
+//                                                 Collaborative Robot Sawyer                                                  //
+//*****************************************************************************************************************************//
+
+
+#if ROBOT == 1
 bool QNode::moveRobotToStartPos(VectorXd &goal, double tol)
 {
     // **** Initial Posture = Current Robot Posture **** //
     vector<double> robotPos(robotPosture.begin(), robotPosture.end() - JOINTS_HAND);
     // **** Final Posture = Initial Simulation Posture **** //
     vector<double> finalPos(&goal[0], goal.data() + (goal.cols() * goal.rows() - JOINTS_HAND));
+
 
     // **** Diference betwwen simulation and robot posture **** //
     double diff = 0.0;
@@ -3187,6 +3469,9 @@ void QNode::jointInterpolation(int nMicroSteps, MatrixXd &traj_stage, std::vecto
 #elif HAND == 1
     int nJoints = JOINTS_ARM + JOINTS_HAND;
     int aux = 0;
+#elif HAND == 2
+    int nJoints = JOINTS_ARM ;
+    int aux = 0;
 #endif
 
     for(size_t kk = 0; kk < traj_stage.rows() - 1; ++kk)
@@ -3234,7 +3519,11 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
 {
     // Define the trajectory message
     trajectory_msgs::JointTrajectory jointTraj;
+#if UR == 0 // Sawyer
     jointTraj.joint_names = {"right_j0", "right_j1", "right_j2", "right_j3", "right_j4", "right_j5", "right_j6"};
+#elif UR == 1 // Universal robots
+    jointTraj.joint_names = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint","wrist_3_joint"};
+#endif
     jointTraj.header.stamp = ros::Time::now();
 
     for(size_t step = 0; step < trajToExecute.size(); ++step)
@@ -3257,12 +3546,15 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
 #elif HAND == 1
     folJointTraj->sendGoal(goal, followJointTrajectoryClient::SimpleDoneCallback(), followJointTrajectoryClient::SimpleActiveCallback(),
                            boost::bind(&QNode::feedbackCb, this, _1, trajToExecute, params, isGripperClosed));
+#elif HAND == 2
+    folJointTraj->sendGoal(goal, followJointTrajectoryClient::SimpleDoneCallback(), followJointTrajectoryClient::SimpleActiveCallback());
 #endif
     folJointTraj->waitForResult(ros::Duration(45));
 
 
     if(folJointTraj->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
+#if WP == 0
         if(closeGripper)
         {
             setGripperPosition(0.0);
@@ -3281,6 +3573,8 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
         return false;
     }
 
+#endif
+    }
     ros::spinOnce();
 }
 
@@ -3292,10 +3586,11 @@ bool QNode::execMovementSawyer(std::vector<MatrixXd>& traj_mov, std::vector<std:
     double tolArm = 0.04; // radians = 2.29 degrees
     double tolHead = 0.01; // radians = 0.57 degress
     int nMicroSteps = 3;
+    bool isGripperClosed;
+
 #if HAND == 1
     // **** Electric Gripper **** //
     double tolGrip = 0.035; // radians = 2.01 degrees
-    bool isGripperClosed;
 #endif
 
 
@@ -3413,10 +3708,11 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
     // **** Tolerances **** //
     double tolArm =  0.035; // radians = 2.01 degrees
     double tolHead = 0.01; // radians = 0.57 degress
+    bool isGripperClosed;
+
 #if HAND == 1
     // **** Electric Gripper **** //
     double tolGrip = 0.003; // meters
-    bool isGripperClosed;
 #endif
 
 
@@ -3563,6 +3859,8 @@ bool QNode::execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<ve
     return true;
 }
 #endif
+
+
 
 
 //*****************************************************************************************************************************//
@@ -4163,7 +4461,8 @@ void QNode::URJointsCallback(const sensor_msgs::JointState &state)
     std::vector<double> joints_pos(state.position.begin(),state.position.end());
     std::vector<double> joints_vel(state.velocity.begin(), state.velocity.end());
 
-    const char *r_names[] = {"elbow_joint", "shoulder_lift_joint", "shoulder_pan_joint", "wrist_1_joint", "wrist_2_joint","wrist_3_joint"};
+   // const char *r_names[] = {"elbow_joint", "shoulder_lift_joint", "shoulder_pan_joint", "wrist_1_joint", "wrist_2_joint","wrist_3_joint"};
+    const char *r_names[] = {"shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint","wrist_3_joint"};
 
     for(int i = 0; i < JOINTS_ARM; ++i)
     {
@@ -4178,7 +4477,6 @@ void QNode::URJointsCallback(const sensor_msgs::JointState &state)
     }
 
 }
-
 
 
 

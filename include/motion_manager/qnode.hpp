@@ -19,6 +19,10 @@
 #include <vrep_common/simRosSetStringSignal.h>
 #include <algorithm>
 
+#include <trajectory_msgs/JointTrajectory.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <control_msgs/FollowJointTrajectoryActionGoal.h>
+
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <intera_motion_msgs/MotionCommandAction.h>
 #include <intera_core_msgs/IODeviceStatus.h>
@@ -63,6 +67,8 @@ typedef boost::shared_ptr<Object> objectPtr;/**< shared pointer to an object in 
 
 typedef actionlib::SimpleActionClient<intera_motion_msgs::MotionCommandAction> motionCommClient; /**< */
 typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> followJointTrajectoryClient; /**< */
+
+typedef actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryActionGoal> followJointGoalTrajectoryClient;
 
 const double MIN_EXEC_TIMESTEP_VALUE = 0.3; /**< minimum value of the timestep during the execution of the movement [sec]. It is used to join the stages of the movements when timestep is zero*/
 
@@ -145,6 +151,13 @@ public:
     bool loadScenario(const string &path,int id);
 
     /**
+     * @brief This method connects Polyscope to Coppeliasims
+     * @param id
+     * @return
+     */
+    void ConnectPolyscope();
+
+    /**
      * @brief This method gets the elements of the scenario
      * @param scene
      * @return
@@ -163,11 +176,15 @@ public:
      * @return
      */
 
+    bool execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene);
+
+    bool moveRobotCoppelia();
+
+    void setMovWps(vector<vector<vector<double>>> movements_wps, vector <QString> movement_name);
+
     bool setWaypoint(vector<double> &robot_waypoints);
 
     void updateWaypoints(vector <vector<double>> robot_wps);
-
-    bool execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene);
 
     /**
      * @brief execTask
@@ -213,8 +230,13 @@ public:
      */
     bool execTaskSawyer(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<double>>> &timesteps_task, vector<vector<double>> &tols_stop_task, vector<vector<string>> &traj_descr_task, taskPtr task, vector<vector<double>> &paramsTimeMapping);
 
-#endif
 
+    //************************ Functions related to the collaborative robots Universal Robots ***********************//
+
+    bool execMovementUR(std::vector<MatrixXd>& traj_mov, std::vector<std::vector<double>> timesteps_mov, std::vector<string>& traj_descr, movementPtr mov, vector<double> paramsTimeMapping);
+
+    bool moveRobotToInitPosUR(VectorXd &goal);
+#endif
 
     //************************* Functions related to the logging functionalities *************************//
     /** This enumerator is used for logging functionalities */
@@ -247,6 +269,9 @@ public:
      */
     bool getWaypoints(scenarioPtr scene);
 
+
+
+    void ThreadState(bool thread);
 private:
     /**
      * @brief This method gets the current date and time already formatted
@@ -409,6 +434,7 @@ private:
      */
     bool closeBarrettHand_to_pos(int hand, std::vector<double>& hand_posture);
 #endif
+
 
 
     //************************ Functions related to the Collaborative Robot Sawyer ***********************//
@@ -613,7 +639,7 @@ private:
     //**************************** Callacks of the collaborative robot UR10 ****************************//
 
     void URJointsCallback(const sensor_msgs::JointState &state);
-
+    bool thread_state;
 
     int init_argc; /**< initial argc */
     char** init_argv; /**< initial argv */
@@ -706,14 +732,18 @@ private:
     bool gripperCalibrated;
 #endif
 #endif
-#if UR ==1
-    //************************************ Collaborative robot Sawyer ************************************//
+
     std::vector<double> robotPosture_wp; /**< position of the right arm*/
     std::vector<double> robotVel_wp; /**< velocity of the right arm*/
+    vector<vector<double>> robot_waypoints; // waypoints of a movement
+    std::vector<std::vector<std::vector<double>>> mov_wps ;  // 3D array to save : diferent movements has many waypoints
+    vector <QString> mov_name; // waypoints movement name
+    //************************************ Collaborative robot Universal Robot ************************************//
     // Subscribers of the joints and robot states
     ros::Subscriber subJointsStateRobotUR; /**< ROS subscriber to the topic /joint_states*/
-    vector<vector<double>> robot_waypoints;
-#endif
+    followJointGoalTrajectoryClient* folJointTrajGoal; /**< */
+   // followJointTrajectoryClient* folJointTraj; /**< */
+
 
 
 

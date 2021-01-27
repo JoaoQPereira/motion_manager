@@ -1,3 +1,5 @@
 doc/
 *.user
 config.hpp
+*.cxx_parameters
+*.autosave

@@ -14,6 +14,7 @@
 #include "roscommdialog.hpp"
 #include "vrepcommdialog.hpp"
 #include "toldialoghump.hpp"
+#include "set_waypointsdialog.hpp"
 #include "mov_executedialog.hpp"
 #include "task_executedialog.hpp"
 #include "config.hpp"
@@ -266,6 +267,12 @@ public Q_SLOTS:
     void updateRosStatus(bool c);
 
     /**
+     * @brief This method defines which software is used to set the waypoints
+     *  c , c = 0 => "Coppelia simulator", c = 1 => "Polyscope"
+     */
+    void SetWaypoints(int c);
+
+    /**
      * @brief This method executes the planned movement in the selected plataform
      * @param c , c = 0 => "V-Rep simulator", c = 1 => "robot"
      * @param a , a = true => "Don't ask again", a = false => "ask again"
@@ -373,7 +380,17 @@ public Q_SLOTS:
 
     void on_pushButton_setWaypoint_clicked();
 
+    void on_pushButton_SaveTrajectory_clicked();
+
+
     void on_pushButton_deleteWaypoint_clicked();
+
+    void on_pushButton_saveWaypoints_clicked();
+
+    void on_pushButton_getWaypoints_clicked();
+
+    void on_pushButton_getWaypoints_pressed();
+
 
 
 private:
@@ -382,6 +399,7 @@ private:
     RosCommDialog *mrosCommdlg; /**< handle of the ROS communication dialog */
     VrepCommDialog *mvrepCommdlg; /**< handle of the V-REP communication dialog */
     TolDialogHUMP *mTolHumpdlg; /**< handle of the HUMP tuning dialog */
+    set_waypointsdialog *PlatWaypointdlg; /**< handle of the platform options dialog to plan the waypoints*/
     Mov_ExecuteDialog *mMovExecutedlg; /**< handle of the Execute Settings dialog in movements*/
     Task_ExecuteDialog *mTaskExecutedlg; /**< handle of the Execute Settings dialog in tasks */
     ResultsJointsDialog *mResultsJointsdlg;/**< handle of the results joints dlg*/
@@ -392,7 +410,10 @@ private:
     bool execSettings_task = false; /** < ask again you options: V-Rep or robot*/
     int usedPlat_move; /**< platform used to execute the planned movement */
     bool execSettings_move = false; /** < ask again you options: V-Rep or robot*/
+    int usedPlat_wps; /**< platform used to define the waypoints*/
 
+    std::vector<std::vector<std::vector<double>>> mov_wps ;  // 3D array to save : diferent movements has many waypoints
+    vector <QString> mov_name; // waypoints movement name
     vector<vector<double>> robot_waypoints;
     vector< vector < double > > timesteps_mov; /**< current time steps of the movement */
     QVector<double> qtime_mov; /**< time of the current movement for plotting */
