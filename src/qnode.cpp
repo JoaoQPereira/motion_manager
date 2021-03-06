@@ -821,6 +821,7 @@ bool QNode::getElements(scenarioPtr scene)
     int wp_nr; // number of waypoints in each trajectorie
     int traj_nr; // number of different trajectories with waypoints
     std::string traj_name; // name of a trajectorie with waypoints
+    bool gripper_state;
 #if HAND == 0
     // **** Barrett Hand parameters **** //
     barrett_hand robot_hand_specs; // specs of the barret hand
@@ -1868,10 +1869,12 @@ bool QNode::getElements(scenarioPtr scene)
             waypoints_vec.push_back(wp_specs);
         }
         traj_name = this->mov_name[k].toStdString();
+        gripper_state = gripper_vacuum[k]; // save the vacuum action at the end of the movement
         //set the waypoints
         //I received the initial and final points as waypoints. However, henceforth they will not count as waypoint
         // therefore, wp_nr - 2
-        Waypoint *wp = new Waypoint(wp_nr-2,waypoints_vec,wp_ws,traj_name);
+        Waypoint *wp = new Waypoint(wp_nr-2,waypoints_vec,wp_ws,traj_name, gripper_state);
+        waypoints_vec.clear();
         // display info of the waypoints
         if(wp_ws==1){
             for (int i=0; i<wp_nr;i++){
@@ -2248,6 +2251,11 @@ bool QNode::moveRobotCoppelia()
     return succ;
 }
 
+void QNode::set_VacuumGripper(vector<int> vacuum)
+{
+    this->gripper_vacuum = vacuum;
+}
+
 void QNode::setMovWps(vector<vector<vector<double>>> movements_wps, vector <QString> movement_name)
 {
     this->mov_wps = movements_wps;
@@ -2472,7 +2480,7 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
                     bool isArmJoint = (col != traj.cols() - 1);
                     bool isHandJoint = (col == traj.cols() - 1);
 #elif HAND == 2
-                    bool handClosed = closed;
+                    bool handClosed = false;
                     //traj = 0..7 cols - 7 arm joints + 1 hand joint
                     //traj.cols() - 1 = 7
                     bool isArmJoint = (col != traj.cols() - 1);
@@ -2615,13 +2623,15 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
         closed = false;
 #endif
         break;
-    case 2: case 3: case 4: // transport, engage, disengage
+    case 2: case 3: case 4: // transport, engage, disengage,
 #if HAND == 0
         closed.at(0) = true;
         closed.at(1) = true;
         closed.at(2) = true;
 #elif HAND == 1
         closed = true;
+#elif HAND == 2
+
 #endif
     case 6: // waypoints 
         break;
@@ -2675,7 +2685,7 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
         this->preMovementOperation(node, movType, retreat, armCode, h_attach, tt, obj_name);
 #elif HAND == 1
         this->preMovementOperation(node, movType, retreat, h_attach, obj_name);
-#elif HAND == 2
+#elif HAND == 2 //vacuum gripper
         
 #endif
 
@@ -2700,13 +2710,26 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
             this->publishData(node, traj_stage, timesteps_stage, handles, hand_handles, scenarioID, timeTot, tol_stop_stage);
 #elif HAND == 1
             this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
+
 #elif HAND == 2
             this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
-
 #endif
             // **** Post-movement operations **** //
+
+#if HAND == 0 || HAND == 1
             this->posMovementOperation(node, movType, plan, h_attach);
+#elif HAND == 2
+            vrep_common::simRosSetStringSignal srvs;
+            add_client = node.serviceClient<vrep_common::simRosSetStringSignal>("/vrep/simRosSetStringSignal");
+            srvs.request.signalName = string("Vacuum");
+            srvs.request.signalValue = string("activate");
+            add_client.call(srvs);
+            if(srvs.response.result != 1)
+                log(QNode::Error,string("Error in actuating the vacuum gripper "));
+
         }
+#endif
+
 
         ros::spinOnce();
         // Total time of the movement
@@ -2896,13 +2919,14 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
             closed = false;
 #endif
             break;
-        case 2: case 3: case 4: // transport, engage, disengage
+        case 2: case 3: case 4: // transport, engage, disengage, waypoints
 #if HAND == 0
             closed.at(0) = true;
             closed.at(1) = true;
             closed.at(2) = true;
 #elif HAND == 1
             closed = true;
+#elif HAND == 2
 #endif
             break;
         }
@@ -3225,8 +3249,7 @@ bool QNode::execMovementUR(std::vector<MatrixXd>& traj_mov, std::vector<std::vec
     case 2: case 3: // transport, engage
         isGripperClosed = true;
         break;
-    case 6:
-        isGripperClosed = false;
+    case 6: // waypoints
         break;
     }
 #endif
@@ -3517,6 +3540,7 @@ void QNode::jointInterpolation(int nMicroSteps, MatrixXd &traj_stage, std::vecto
 
 bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, std::vector<double> &timeFromStart, std::vector<double> params, bool closeGripper, bool isGripperClosed)
 {
+
     // Define the trajectory message
     trajectory_msgs::JointTrajectory jointTraj;
 #if UR == 0 // Sawyer
@@ -3554,7 +3578,7 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
 
     if(folJointTraj->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-#if WP == 0
+#if HAND != 2
         if(closeGripper)
         {
             setGripperPosition(0.0);
@@ -3572,6 +3596,8 @@ bool QNode::jointTrajectoryAction(std::vector<vector<double>> &trajToExecute, st
 
         return false;
     }
+
+#elif HAND == 2 // vacuum gripper
 
 #endif
     }

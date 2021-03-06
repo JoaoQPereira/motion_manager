@@ -382,6 +382,7 @@ public Q_SLOTS:
 
     void on_pushButton_SaveTrajectory_clicked();
 
+    void on_pushButton_Gripper_OnOff_clicked();
 
     void on_pushButton_deleteWaypoint_clicked();
 
@@ -391,6 +392,7 @@ public Q_SLOTS:
 
     void on_pushButton_getWaypoints_pressed();
 
+    void LoadWaypoints(vector<vector<vector<double>>> mov_wps , vector <QString> mov_name,  vector <int> mov_gripper_vacuum);
 
 
 private:
@@ -411,10 +413,13 @@ private:
     int usedPlat_move; /**< platform used to execute the planned movement */
     bool execSettings_move = false; /** < ask again you options: V-Rep or robot*/
     int usedPlat_wps; /**< platform used to define the waypoints*/
+    int gripper_vacuum; /**  =true vaccuum gripper activated -- =false vaccuum gripper diacctivated  */
 
-    std::vector<std::vector<std::vector<double>>> mov_wps ;  // 3D array to save : diferent movements has many waypoints
+    vector<vector<vector<double>>> mov_wps ;  // 3D array to save : diferent movements has many waypoints
     vector <QString> mov_name; // waypoints movement name
     vector<vector<double>> robot_waypoints;
+    vector <int> mov_gripper_vacuum;
+
     vector< vector < double > > timesteps_mov; /**< current time steps of the movement */
     QVector<double> qtime_mov; /**< time of the current movement for plotting */
     vector<double> tols_stop_mov; /**< vector of the tolerances to stop each stage in the movement */
@@ -488,7 +493,7 @@ private:
     boost::shared_ptr<HandPosPlot> handPosPlot_task_ptr;/**< pointer to the hand position plot of the task */
 
     //waypointPtr waypoints; /** Pointer to the waypoints **/
-    waypointPtr waypoints;
+    Waypoint waypoints;
 };
 
 }  //  motion_manager

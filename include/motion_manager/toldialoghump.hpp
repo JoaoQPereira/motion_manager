@@ -10,7 +10,6 @@
 #include "config.hpp"
 #include "common.hpp"
 
-
 namespace motion_manager
 {
 

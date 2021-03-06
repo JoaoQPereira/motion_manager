@@ -1,12 +1,13 @@
 #ifndef SET_WAYPOINTSDIALOG_H
 #define SET_WAYPOINTSDIALOG_H
 
-#include <QDialog>
-#include <QFileDialog>
-#include <QFile>
-#include <QTextStream>
+//#include <QDialog>
+//#include <QFileDialog>
+//#include <QFile>
+//#include <QTextStream>
 #include <ui_set_waypointsdialog.h>
 #include "qnode.hpp"
+#include "waypoint.hpp"
 
 
 namespace motion_manager
@@ -29,6 +30,11 @@ public:
      */
     ~set_waypointsdialog();
 
+    void get_waypoints(vector<vector<vector<double>>> &mov_wps , vector <QString> &mov_name,  vector <int> &mov_gripper_vacuum);
+
+    void get_waypoints_mode(bool &load_mode);
+
+
 public Q_SLOTS:
     /**
      * @brief on_pushButtonOK_clicked
@@ -46,14 +52,19 @@ public Q_SLOTS:
      * @brief on_radioButton_execMov_Robot_clicked
      *
      */
-    void on_radioButton_set_Polyscope_clicked();
+   // void on_radioButton_set_Polyscope_clicked();
 
+    void on_pushButton_Load_clicked();
 
 
 private:
     Ui::set_waypointsdialog *ui;
     QNode *qnode; /**< pointer of the ROS node */
-
+    Waypoint *wp;
+    bool wps_mode; // 1 - load waypoints
+    vector<vector<vector<double>>> mov_wps;
+    vector <QString> mov_name;
+    vector <int> mov_gripper_vacuum;
 Q_SIGNALS:
     /**
      * @brief addPlat_execMove
@@ -61,6 +72,7 @@ Q_SIGNALS:
      * @param c (c = 0 => "CoppeliaSim simulator", c = 1 => "Polyscope")
      */
     void addPlat_setWps(int c);
+    void SaveLoadwps(vector<vector<vector<double>>> mov_wps,vector <QString> mov_name,vector <int> mov_gripper_vacuum);
 };
 
 }// namespace motion_manager

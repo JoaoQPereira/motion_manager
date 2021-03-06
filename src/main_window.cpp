@@ -98,8 +98,8 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     //description of the selected scenario
     QObject::connect(ui.listWidget_scenario, SIGNAL(itemClicked(QListWidgetItem*)),this, SLOT(onListScenarioItemClicked(QListWidgetItem*)));
 
-    //new waypoint selected signal
-    //QObject::connect(&qnode, SIGNAL(newWaypoint(string)),this,SLOT(addWaypoint(string)));
+    //save waypoints in case of Load mode
+    QObject::connect(PlatWaypointdlg, SIGNAL (SaveLoadwps(vector<vector<vector<double>>> ,vector <QString>,vector <int>)),this,SLOT(LoadWaypoints(vector<vector<vector<double>>> ,vector <QString>,vector <int>)));
 
     /*********************
     ** Start settings
@@ -671,11 +671,30 @@ void MainWindow::on_pushButton_SaveTrajectory_clicked()
 {
     mov_wps.push_back(robot_waypoints);
     mov_name.push_back(ui.qline_edit_MovementName->text());
+    mov_gripper_vacuum.push_back(gripper_vacuum);
     robot_waypoints.clear();
     qnode.setMovWps(mov_wps,mov_name);
+    qnode.set_VacuumGripper(mov_gripper_vacuum);
+
+    ui.listWidget_waypoints->clear();
 }
 
+void MainWindow::on_pushButton_Gripper_OnOff_clicked()
+{
+    string info_gripper = string("Vacuum Gripper: ");
+    if(ui.radioButton_Gripper_Activated->isChecked())
+    {
+        info_gripper.append(string("Activated"));
+        gripper_vacuum = 1; // activate vacuum gripper
 
+    }
+    else if(ui.radioButton_Gripper_Diactivated->isChecked())
+    {
+        info_gripper.append(string("Deactivated"));
+        gripper_vacuum = 0; // diactivate vacuum gripper
+    }
+    ui.listWidget_waypoints->addItem(QString(info_gripper.c_str()));
+}
 
 void MainWindow::on_pushButton_deleteWaypoint_clicked()
 {
@@ -699,7 +718,20 @@ void MainWindow::on_pushButton_getWaypoints_clicked()
     //ui.listWidget_waypoints->clear();
     //show platform to decide where the waypoints are defined
     PlatWaypointdlg->show();
+    this->mov_wps.clear();
+    this->mov_name.clear();
+    this->mov_gripper_vacuum.clear();
 
+}
+
+void MainWindow::LoadWaypoints(vector<vector<vector<double>>> mov_wps , vector <QString> mov_name,  vector <int> mov_gripper_vacuum)
+{
+    this->mov_wps=mov_wps;
+    this->mov_name=mov_name;
+    this->mov_gripper_vacuum=mov_gripper_vacuum;
+    qnode.setMovWps(mov_wps,mov_name);
+    qnode.set_VacuumGripper(mov_gripper_vacuum);
+    ui.pushButton_getElements->setEnabled(true);
 }
 
 void MainWindow::on_pushButton_getWaypoints_pressed()
@@ -723,10 +755,16 @@ void MainWindow::on_pushButton_saveWaypoints_clicked()
     ui.pushButton_deleteWaypoint->setEnabled(false);
     ui.pushButton_saveWaypoints->setEnabled(false);
     ui.pushButton_setWaypoint->setEnabled(false);
+    ui.groupBox_3->setEnabled(false);
+    ui.groupBox_2->setEnabled(false);
+    ui.pushButton_getWaypoints->setEnabled(false);
     //qnode.moveRobotToInitPos();
 
     // stop the thread of moving the vrep robot, since the waypoints are already defined
     qnode.ThreadState(false);
+
+    // save the trajectories to a file .txt to give the option of loading them after in GetWaypoints
+    waypoints.SaveWaypointsFile(mov_wps,mov_name,mov_gripper_vacuum);
 }
 
 
@@ -752,7 +790,7 @@ void MainWindow::on_pushButton_plan_pressed()
 void MainWindow::on_pushButton_getElements_clicked()
 {
     ui.listWidget_elements->clear();
-    //qnode.setWaypoint();
+
     try
     {
         if (qnode.getElements(this->curr_scene))

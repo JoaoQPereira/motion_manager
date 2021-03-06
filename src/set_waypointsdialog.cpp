@@ -50,9 +50,32 @@ void set_waypointsdialog::on_pushButtonOK_pressed()
 }
 
 
-void set_waypointsdialog::on_radioButton_set_Polyscope_clicked()
+void set_waypointsdialog::on_pushButton_Load_clicked()
 {
 
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    tr("Load waypoints"),
+                                                    "/home/joao/ros_ws/devel/lib/motion_manager/Models",
+                                                    "All Files (*.*);; Tol Files (*.txt)");
+    wp->LoadWaypointsFile(filename,this->mov_wps, this->mov_name,this->mov_gripper_vacuum);
+    this->wps_mode=1; // load file
+    Q_EMIT SaveLoadwps(this->mov_wps, this->mov_name,this->mov_gripper_vacuum);
+
+    this->close();// close window
+
+
+}
+
+void set_waypointsdialog::get_waypoints(vector<vector<vector<double>>> &mov_wps , vector <QString> &mov_name,  vector <int> &mov_gripper_vacuum)
+{
+    mov_wps = this->mov_wps;
+    mov_name = this->mov_name;
+    mov_gripper_vacuum = this->mov_gripper_vacuum;
+}
+
+void set_waypointsdialog::get_waypoints_mode(bool &load_mode)
+{
+    load_mode=this->wps_mode;
 }
 
 

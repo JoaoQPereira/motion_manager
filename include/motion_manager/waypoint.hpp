@@ -2,14 +2,29 @@
 #define WAYPOINT_H
 
 #include "common.hpp"
+#include "QString"
+#include <QTextStream>
+#include <QMessageBox>
+#include <eigen3/Eigen/Dense>
+#include "config.hpp"
+#include <QFileDialog>
+#include <QObject>
+#include <iostream>
+#include <fstream>
+#include <QFile>
+#include <QDialog>
 
 using namespace std;
 
-namespace motion_manager {
-
-
-class Waypoint
+namespace motion_manager
 {
+
+
+class Waypoint: public QDialog
+
+{
+    Q_OBJECT
+
 public:
     /**
      * @brief Waypoint, a constructor
@@ -26,7 +41,7 @@ public:
      * @param wpoint
      * @param workspace
      */
-    Waypoint(int wp_nr, vector <waypoint> wpoint,bool workspace,std::string name);
+    Waypoint(int wp_nr, vector <waypoint> wpoint,bool workspace,std::string name, bool gripper_state);
 
     Waypoint(int wp_nr, vector <waypoint> wps, bool wks);
 
@@ -99,9 +114,15 @@ public:
      * @return
      */
     Eigen::Matrix3d setRotMatrixQuat(orient_q quat);
+
+    bool SaveWaypointsFile(vector<vector<vector<double>>> mov_wps , vector <QString> mov_name,  vector <int> mov_gripper_vacuum);
+
+    bool LoadWaypointsFile(QString filename,vector<vector<vector<double>>> &mov_wps , vector <QString> &mov_name,  vector <int> &mov_gripper_vacuum);
+
 protected:
     string name; /** name of which trajectory these waypoints correspond */
     vector <waypoint> waypoints; //  vector of waypoints
+    bool gripper_state; // gripper action at the end of the trajectory
     bool workspace;
     int nr_wp; // number of waypoints
 };

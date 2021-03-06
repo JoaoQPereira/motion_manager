@@ -180,6 +180,9 @@ public:
 
     bool moveRobotCoppelia();
 
+    void set_VacuumGripper(vector<int> vacuum);
+
+
     void setMovWps(vector<vector<vector<double>>> movements_wps, vector <QString> movement_name);
 
     bool setWaypoint(vector<double> &robot_waypoints);
@@ -684,7 +687,8 @@ private:
     // **** Electric Gripper **** //
     bool closed;
 #elif HAND == 2
-    bool closed;
+    // **** Vacuum Gripper **** //
+    vector<int> gripper_vacuum;
 #endif
     // **** ROS communication **** //
     std::vector<double> theta_offset; /**< offset angle around the z axis between consecutive x axes in [rad]*/
@@ -732,7 +736,6 @@ private:
     bool gripperCalibrated;
 #endif
 #endif
-
     std::vector<double> robotPosture_wp; /**< position of the right arm*/
     std::vector<double> robotVel_wp; /**< velocity of the right arm*/
     vector<vector<double>> robot_waypoints; // waypoints of a movement
