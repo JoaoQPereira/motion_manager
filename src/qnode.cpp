@@ -2560,6 +2560,7 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
     // **** Handles **** //
     int h_attach;
     std::vector<int> handles;
+
 #if HAND == 0
     MatrixXi hand_handles = MatrixXi::Constant(HAND_FINGERS, N_PHALANGE + 1, 1); // matrix fingers x (phalanges + 1) with all elements set as 1
 #endif
@@ -2714,18 +2715,37 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
 #elif HAND == 2
             this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
 #endif
+
+
             // **** Post-movement operations **** //
 
 #if HAND == 0 || HAND == 1
             this->posMovementOperation(node, movType, plan, h_attach);
 #elif HAND == 2
-            vrep_common::simRosSetStringSignal srvs;
-            add_client = node.serviceClient<vrep_common::simRosSetStringSignal>("/vrep/simRosSetStringSignal");
-            srvs.request.signalName = string("Vacuum");
-            srvs.request.signalValue = string("activate");
-            add_client.call(srvs);
-            if(srvs.response.result != 1)
-                log(QNode::Error,string("Error in actuating the vacuum gripper "));
+            int vacuum;
+            if() //activate the vacuum
+            {
+                vrep_common::simRosSetDoubleSignal srds;
+                add_client = node.serviceClient<vrep_common::simRosSetDoubleSignal>("/vrep/simRosSetDoubleSignal");
+                srds.request.signalName = string("Vacuum");
+                srds.request.signalValue = 1;
+                add_client.call(srds);
+                if(srds.response.result != 1)
+                    log(QNode::Error,string("Error in activating the vacuum gripper "));
+            }
+            else // diactivate the vacuum
+            {
+                vrep_common::simRosSetDoubleSignal srds;
+                add_client = node.serviceClient<vrep_common::simRosSetDoubleSignal>("/vrep/simRosSetDoubleSignal");
+                srds.request.signalName = string("Vacuum");
+                srds.request.signalValue = -1;
+                add_client.call(srds);
+                if(srds.response.result != 1)
+                    log(QNode::Error,string("Error in deactivating the vacuum gripper "));
+            }
+
+
+
 
         }
 #endif
