@@ -419,6 +419,7 @@ private:
     vector <QString> mov_name; // waypoints movement name
     vector<vector<double>> robot_waypoints;
     vector <int> mov_gripper_vacuum;
+    int currMovVacuum; // vacuum action at the end of the current movement
 
     vector< vector < double > > timesteps_mov; /**< current time steps of the movement */
     QVector<double> qtime_mov; /**< time of the current movement for plotting */
@@ -492,7 +493,7 @@ private:
 
     boost::shared_ptr<HandPosPlot> handPosPlot_task_ptr;/**< pointer to the hand position plot of the task */
 
-    //waypointPtr waypoints; /** Pointer to the waypoints **/
+    waypointPtr waypointsMov; /** Pointer to the class of the waypoints related to the problem**/
     Waypoint waypoints;
 };
 

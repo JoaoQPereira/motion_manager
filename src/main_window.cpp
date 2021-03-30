@@ -239,7 +239,11 @@ void MainWindow::SetWaypoints(int c)
 void MainWindow::execMove(int c, bool a)
 {
     if(c == 0)  //Execute the planned movement in V-REP simulator
+#if HAND!=2
         qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+#else
+        qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene, this->currMovVacuum);
+#endif
     else if(c == 1) //Execute the planned movement in Robot
     {
 #if ROBOT == 1
@@ -732,6 +736,8 @@ void MainWindow::LoadWaypoints(vector<vector<vector<double>>> mov_wps , vector <
     qnode.setMovWps(mov_wps,mov_name);
     qnode.set_VacuumGripper(mov_gripper_vacuum);
     ui.pushButton_getElements->setEnabled(true);
+    qnode.log(QNode::Info,string("The waypoints of the entire task are now available"));
+
 }
 
 void MainWindow::on_pushButton_getWaypoints_pressed()
@@ -742,9 +748,13 @@ void MainWindow::on_pushButton_getWaypoints_pressed()
     ui.pushButton_saveWaypoints->setEnabled(true);
     ui.pushButton_setWaypoint->setEnabled(true);
     ui.pushButton_SaveTrajectory->setEnabled(true);
+    ui.MovementWP_box->setEnabled(true);
     ui.groupBox_2->setEnabled(true);
+    ui.groupBox_3->setEnabled(true);
     ui.qline_edit_MovementName->setEnabled(true);
-
+    ui.MovementWP_box->setEnabled(true);
+    ui.MovementName_label->setEnabled(true);
+    ui.qline_edit_MovementName->setEnabled(true);
 }
 
 
@@ -758,6 +768,7 @@ void MainWindow::on_pushButton_saveWaypoints_clicked()
     ui.groupBox_3->setEnabled(false);
     ui.groupBox_2->setEnabled(false);
     ui.pushButton_getWaypoints->setEnabled(false);
+    ui.MovementWP_box->setEnabled(false);
     //qnode.moveRobotToInitPos();
 
     // stop the thread of moving the vrep robot, since the waypoints are already defined
@@ -765,6 +776,9 @@ void MainWindow::on_pushButton_saveWaypoints_clicked()
 
     // save the trajectories to a file .txt to give the option of loading them after in GetWaypoints
     waypoints.SaveWaypointsFile(mov_wps,mov_name,mov_gripper_vacuum);
+
+    qnode.log(QNode::Info,string("The waypoints of the entire task are now available"));
+
 }
 
 
@@ -1146,6 +1160,9 @@ void MainWindow::on_pushButton_plan_clicked()
                     }
 
                     this->jointsPosition_mov = jointsPosition_mov_grripper;
+#elif HAND == 2
+                    this->waypointsMov = prob->getWaypointsMov();
+                    this->currMovVacuum = this->waypointsMov->get_vacuumState();
 #endif
 
                     this->jointsVelocity_mov.clear();
@@ -1217,6 +1234,7 @@ void MainWindow::on_pushButton_plan_clicked()
     {
         // time taken to solve the problem
         this->prob_time_mov = prob->getTime();
+
         ui.label_solving_time->setText(QString::number(this->prob_time_mov));
 
         uint tot_steps=0;
@@ -1502,8 +1520,11 @@ void MainWindow::on_pushButton_execMov_clicked()
     else
     {
         if(usedPlat_move == 0) //Execute the planned movement in V-Rep simulator
-            qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
-        else if(usedPlat_move == 1) //Execute the planned movement in Robot
+#if HAND!=2
+        qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene);
+#else
+        qnode.execMovement(this->jointsPosition_mov, this->timesteps_mov, this->tols_stop_mov, this->traj_descr_mov, this->curr_mov, this->curr_scene, this->currMovVacuum);
+#endif        else if(usedPlat_move == 1) //Execute the planned movement in Robot
         {
 #if ROBOT == 1
 #if UR == 0
