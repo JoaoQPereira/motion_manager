@@ -170,10 +170,10 @@ link_directories(
 add_definitions(-DQCUSTOMPLOT_USE_LIBRARY)
 set(QCUSTOMPLOT_HOME /home/$ENV{USER}/qcustomplot)
 include_directories(
-    ${QCUSTOMPLOT_HOME}/${CMAKE_BUILD_TYPE}/include
+    ${QCUSTOMPLOT_HOME}/include
 )
 link_directories(
-    ${QCUSTOMPLOT_HOME}/${CMAKE_BUILD_TYPE}/lib
+    ${QCUSTOMPLOT_HOME}/build
 )
 
 # -- QwtPlot3D
@@ -197,10 +197,10 @@ link_directories(
 # -- EigenPCA
 set(EIGENPCA_HOME /home/$ENV{USER}/EigenPCA)
 include_directories(
-    ${EIGENPCA_HOME}/${CMAKE_BUILD_TYPE}/include
+    ${EIGENPCA_HOME}/include
 )
 link_directories(
-    ${EIGENPCA_HOME}/${CMAKE_BUILD_TYPE}/lib
+    ${EIGENPCA_HOME}/build
 )
 
 # -- Persistence1D

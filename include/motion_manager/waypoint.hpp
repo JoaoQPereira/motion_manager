@@ -91,6 +91,13 @@ public:
      */
     bool getWPworkspace(bool &wp_wks);
     /**
+     * @brief get_vacuumState
+     * @param
+     * @return
+     */
+    int get_vacuumState();
+
+    /**
      * @brief getWPnumber
      * @param nr_wp
      * @return

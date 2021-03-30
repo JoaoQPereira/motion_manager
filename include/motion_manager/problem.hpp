@@ -136,6 +136,12 @@ public:
     movementPtr getMovement();
 
     /**
+     * @brief This method gets the Waypoints related to the problem
+     * @return
+     */
+    waypointPtr getWaypointsMov();
+
+    /**
      * @brief This method gets the engaged object given in engaging/disengaging movements
      * @return
      */
@@ -172,6 +178,8 @@ public:
     double getTime();
 
     void test_waypoints();
+
+
 private:
     /**
      * @brief This method computes the final posture of the fingers.\n

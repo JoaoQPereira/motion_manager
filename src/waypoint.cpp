@@ -77,6 +77,10 @@ waypoint Waypoint::get_waypoint(int index) const{
 void Waypoint::setWaypoint(vector <waypoint> wp){
     this->waypoints.push_back(wp.back());
 }
+// return the vacuum state to be actuated after the current waypoints traj
+int Waypoint::get_vacuumState(){
+    return this->gripper_state;
+}
 
 void Waypoint::setWPworkspace(int wp_space){
     this->workspace=wp_space; // 1-OP 0-Joint space
@@ -135,11 +139,6 @@ Eigen::Matrix3d Waypoint::setRotMatrixQuat(orient_q quat){
 
 bool Waypoint::SaveWaypointsFile(vector<vector<vector<double>>> mov_wps , vector <QString> mov_name,  vector <int> mov_gripper_vacuum)
 {
-    QString filename = QFileDialog::getSaveFileName(this,
-                                                    tr("Save the waypoints"),
-                                                    "/home/joao/ros_ws/devel/lib/motion_manager/Models",
-                                                    "All Files (*.*);; Tol Files (*.txt)");
-
     //  --- create the "Models" directory if it does not exist ---
     struct stat st = {0};
     if (stat("Models", &st) == -1)
@@ -148,37 +147,47 @@ bool Waypoint::SaveWaypointsFile(vector<vector<vector<double>>> mov_wps , vector
     }
     QString path("Models/");
 
-    // ---- write the waypoints ---- //
-    //string filename = namefile + string(".txt");
-    ofstream wp;
-
-    wp.open((path+filename).toStdString());
-
-    for(int i=0; i<mov_name.size();i++)
+    QString filename = QFileDialog::getSaveFileName(this,
+                                                    tr("Save the waypoints"),
+                                                    "/home/joao/ros_ws/devel/lib/motion_manager/Models",
+                                                    "All Files (*.*);; Tol Files (*.txt)");
+    //ofstream wp;
+    QFile f(filename);
+    if(f.open(QIODevice::WriteOnly))
     {
-        wp << string("# Trajectory") + mov_name[i].toStdString() + string("\n");
-        wp << string("mov_name=")+mov_name[i].toStdString() + string("\n");
-        for(int k=0;k<mov_wps[i].size();k++)
+
+        // ---- write the waypoints ---- //
+        //string filename = namefile + string(".txt");
+        //ofstream wp;
+        QTextStream wp(&f);
+
+        //wp.open(("/home/joao/ros_ws/devel/lib/motion_manager/Models"+filename).toStdString());
+
+        for(int i=0; i<mov_name.size();i++)
         {
-            wp << string("#waypoint")+to_string(k+1)+string("\n");
-            wp << string("wp=");
-            for(int j=0;j<mov_wps[i][k].size();j++){
-                // print joints
-                if(j==mov_wps[i][k].size()-1)
-                    wp << to_string(mov_wps[i][k][j]);
-                else
-                    wp << to_string(mov_wps[i][k][j])+string(",");
+            wp << "# Trajectory" << mov_name[i].toStdString().c_str() << endl;
+            wp << "mov_name=" << mov_name[i].toStdString().c_str() << endl;
+            for(int k=0;k<mov_wps[i].size();k++)
+            {
+                wp << "#waypoint"<< to_string(k+1).c_str()<< endl;
+                wp << "wp=";
+                for(int j=0;j<mov_wps[i][k].size();j++){
+                    // print joints
+                    if(j==mov_wps[i][k].size()-1)
+                        wp << to_string(mov_wps[i][k][j]).c_str();
+                    else
+                        wp << to_string(mov_wps[i][k][j]).c_str() << ",";
+                }
+                wp << endl;
             }
-            wp << string("\n");
+            wp << "# Vacuum activation at the end of the movement"<< endl;
+            wp << "vacuum=" << to_string(mov_gripper_vacuum[i]).c_str()<< endl;
+            wp << "end_mov"<< endl;
         }
-        wp << string("# Vacuum activation at the end of the movement \n");
-        wp << string("vacuum=")+to_string(mov_gripper_vacuum[i])+ string("\n");
-        wp << string("end_mov\n");
+
+        //close the file
+        //wp.close();
     }
-
-    //close the file
-    wp.close();
-
     return true;
 }
 

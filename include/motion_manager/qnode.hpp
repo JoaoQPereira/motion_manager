@@ -175,8 +175,11 @@ public:
      * @param scene
      * @return
      */
-
+#if HAND!=2
     bool execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene);
+#else
+    bool execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene, int vacuum_action);
+#endif
 
     bool moveRobotCoppelia();
 
@@ -408,7 +411,7 @@ private:
      * @param timeTot
      * @param tol
      */
-    void publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol);
+    void publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol,int vacumm_action);
 #endif
 
     /**

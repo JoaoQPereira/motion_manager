@@ -2352,6 +2352,8 @@ void QNode::preMovementOperation(ros::NodeHandle node, int movType, bool retreat
 
 void QNode::posMovementOperation(ros::NodeHandle node, int movType, bool plan, int attach)
 {
+#if HAND == 0 || HAND == 1
+
     if((movType == 0) && plan && obj_in_hand)
     {
         add_client = node.serviceClient<vrep_common::simRosSetObjectParent>("/vrep/simRosSetObjectParent");
@@ -2364,6 +2366,51 @@ void QNode::posMovementOperation(ros::NodeHandle node, int movType, bool plan, i
         if(srvset_parent.response.result != 1)
             log(QNode::Error,string("Error in grasping the object "));
     }
+#elif HAND == 2
+    // attach = vacuum action at the end of the movement
+    if(attach) //activate the vacuum
+    {
+        bool interval;
+        bool succ;
+        vrep_common::simRosSetStringSignal srvs;
+        add_client = node.serviceClient<vrep_common::simRosSetStringSignal>("/vrep/simRosSetStringSignal");
+        srvs.request.signalName = string("vacuum_action");
+        srvs.request.signalValue = string("deactivated");
+        add_client.call(srvs);
+        if(srvs.response.result == 1)
+            interval=true;
+        else
+        {
+            succ = false;
+            throw string("Error: Couldn't send the vacuum action");
+        }
+
+        /*
+         vrep_common::simRosSetDoubleSignal srds;
+         add_client = node.serviceClient<vrep_common::simRosSetDoubleSignal>("/vrep/simRosSetDoubleSignal");
+         srds.request.signalName = string("Vacuum");
+         srds.request.signalValue = 1;
+         add_client.call(srds);
+
+         if(srds.response.result != 1)
+            log(QNode::Error,string("Error in activating the vacuum gripper "));
+
+      */
+    }
+
+     else // diactivate the vacuum
+     {
+         /*
+         vrep_common::simRosSetDoubleSignal srds;
+         add_client = node.serviceClient<vrep_common::simRosSetDoubleSignal>("/vrep/simRosSetDoubleSignal");
+         srds.request.signalName = string("Vacuum");
+         srds.request.signalValue = -1;
+         add_client.call(srds);
+        if(srds.response.result != 1)
+        log(QNode::Error,string("Error in deactivating the vacuum gripper "));
+        */
+     }
+#endif
 }
 
 
@@ -2372,7 +2419,7 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
 #elif HAND == 1
 void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol)
 #elif HAND == 2
-void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol)
+void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double> timesteps, std::vector<int> handles, int sceneID, double timeTot, double tol, int vacumm_action)
 #endif
 {
     // **** Publishers **** //
@@ -2380,6 +2427,9 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
     ros::Publisher pub = node.advertise<vrep_common::JointSetStateData>("/" + nodeName + "/set_joints", 1);
 #if HAND == 0
     ros::Publisher pubHand = node.advertise<vrep_common::JointSetStateData>("/" + nodeName + "/set_pos_hand", 1);
+#elif HAND == 2
+    ros::Publisher pubHandVacuum = node.advertise<std_msgs::String>("/" + nodeName + "/set_vacuum", 1);
+
 #endif
 
     ros::spinOnce();
@@ -2417,6 +2467,10 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
             vrep_common::JointSetStateData dataTraj;
 #if HAND == 0
             vrep_common::JointSetStateData dataHand;
+#elif HAND == 2
+            //vrep_common::simRosSetStringSignal dataVacuumSignal;
+           // std_msgs::String dataVacuumSignal;
+
 #endif
 
             // Current micro step time
@@ -2483,15 +2537,16 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
                     bool handClosed = false;
                     //traj = 0..7 cols - 7 arm joints + 1 hand joint
                     //traj.cols() - 1 = 7
-                    bool isArmJoint = (col != traj.cols() - 1);
-                    bool isHandJoint = (col == traj.cols() - 1);
+                    bool isArmJoint = (col != traj.cols());
+                    // bool isHandJoint = (col == traj.cols() -1);
 #endif
 
                     // ************************ //
                     // Set data to be published //
                     // ************************ //
                     // **** Joints handles to be changed during the movement  **** //
-                    if(isArmJoint || (isHandJoint && !handClosed))
+
+                    if(isArmJoint)// || (isHandJoint && !handClosed))
                         dataTraj.handles.data.push_back(handles.at(col));
 
                     if(sceneID != 0)
@@ -2504,6 +2559,8 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
                             // Joints values
                             dataTraj.values.data.push_back(pos_mstep);                         
                         }
+
+                       /*
                         else if(isHandJoint && !handClosed)
                         {
                             // Target position mode
@@ -2521,12 +2578,33 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
                             }
 #endif
                         }
+                        */
                     }
                 }
 
                 pub.publish(dataTraj);
 #if HAND == 0
                 pubHand.publish(dataHand);
+
+#elif HAND ==2
+               // dataVacuumSignal.data = "deactivated";
+                //dataVacuumSignal.request.signalName = "vacuum_action";
+                //dataVacuumSignal.request.signalValue = "activated";
+               // pubHandVacuum.publish(dataVacuumSignal);
+
+                vrep_common::simRosSetStringSignal srvs;
+                add_client = node.serviceClient<vrep_common::simRosSetStringSignal>("/vrep/simRosSetStringSignal");
+                srvs.request.signalName = string("vacuum_action");
+                srvs.request.signalValue = string("activated");
+                add_client.call(srvs);
+                if(srvs.response.result == 1)
+                    bool interval=true;
+                else
+                {
+                    bool succ = false;
+                    throw string("Error: Couldn't send the vacuum action");
+                }
+
 #endif
                 interval = true;
             }
@@ -2542,8 +2620,11 @@ void QNode::publishData(ros::NodeHandle node, MatrixXd traj, std::vector<double>
     }
 }
 
-
+#if HAND!=2
 bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene)
+#else
+bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vector<double>> timesteps, std::vector<double> tols_stop, std::vector<string> &traj_descr, movementPtr mov, scenarioPtr scene, int vacuum_action)
+#endif
 {
     ros::NodeHandle node;
     // **** Scenario **** //
@@ -2583,6 +2664,14 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
     srv_enableSubscriber_hand.request.topicName = "/" + nodeName + "/set_pos_hand"; // the topic name
     srv_enableSubscriber_hand.request.queueSize = 1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber_hand.request.streamCmd = simros_strmcmd_set_joint_state; // the subscriber type
+#elif HAND == 2
+    // set the target postion of the 2nd phalanx of the fingers
+   // ros::ServiceClient client_enableSubscriber_vacuum = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+   // vrep_common::simRosEnableSubscriber srv_enableSubscriber_vacuum;
+   // srv_enableSubscriber_vacuum.request.topicName = "/" + nodeName + "/set_vacuum"; // the topic name
+   // srv_enableSubscriber_vacuum.request.queueSize = 1; // the subscriber queue size (on V-REP side)
+   // srv_enableSubscriber_vacuum.request.streamCmd = simros_strmcmd_set_string_signal; // the subscriber type
+
 #endif
 
     // ******************************* //
@@ -2703,7 +2792,8 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
 #elif HAND == 1
         if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
 #elif HAND == 2
-        if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
+        if(client_enableSubscriber.call(srv_enableSubscriber) && (srv_enableSubscriber.response.subscriberID != -1) !=-1)
+         //(client_enableSubscriber_vacuum.call(srv_enableSubscriber_vacuum)) && (srv_enableSubscriber_vacuum.response.subscriberID != -1))
 #endif
         {
             // **** Publish the data in the V-REP topics **** //
@@ -2713,7 +2803,7 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
             this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
 
 #elif HAND == 2
-            this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage);
+            this->publishData(node, traj_stage, timesteps_stage, handles, scenarioID, timeTot, tol_stop_stage,vacuum_action);
 #endif
 
 
@@ -2722,31 +2812,7 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
 #if HAND == 0 || HAND == 1
             this->posMovementOperation(node, movType, plan, h_attach);
 #elif HAND == 2
-            int vacuum;
-            if() //activate the vacuum
-            {
-                vrep_common::simRosSetDoubleSignal srds;
-                add_client = node.serviceClient<vrep_common::simRosSetDoubleSignal>("/vrep/simRosSetDoubleSignal");
-                srds.request.signalName = string("Vacuum");
-                srds.request.signalValue = 1;
-                add_client.call(srds);
-                if(srds.response.result != 1)
-                    log(QNode::Error,string("Error in activating the vacuum gripper "));
-            }
-            else // diactivate the vacuum
-            {
-                vrep_common::simRosSetDoubleSignal srds;
-                add_client = node.serviceClient<vrep_common::simRosSetDoubleSignal>("/vrep/simRosSetDoubleSignal");
-                srds.request.signalName = string("Vacuum");
-                srds.request.signalValue = -1;
-                add_client.call(srds);
-                if(srds.response.result != 1)
-                    log(QNode::Error,string("Error in deactivating the vacuum gripper "));
-            }
-
-
-
-
+            this->posMovementOperation(node, movType, plan, vacuum_action);
         }
 #endif
 
@@ -2772,8 +2838,11 @@ bool QNode::execMovement(std::vector<MatrixXd> &traj_mov, std::vector<std::vecto
     return true;
 }
 
-
+#if HAND !=2
 bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<double>>> &timesteps_task, vector<vector<double>> &tols_stop_task, vector<vector<string>> &traj_descr_task, taskPtr task, scenarioPtr scene)
+#else
+bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<double>>> &timesteps_task, vector<vector<double>> &tols_stop_task, vector<vector<string>> &traj_descr_task, taskPtr task, scenarioPtr scene)
+#endif
 {
     ros::NodeHandle node;
     // **** Scenario **** //
@@ -2815,6 +2884,14 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
     srv_enableSubscriber_hand.request.topicName = "/" + nodeName + "/set_pos_hand"; // the topic name
     srv_enableSubscriber_hand.request.queueSize = 1; // the subscriber queue size (on V-REP side)
     srv_enableSubscriber_hand.request.streamCmd = simros_strmcmd_set_joint_state; // the subscriber type
+#elif HAND == 2
+    // set the target postion of the 2nd phalanx of the fingers
+    ros::ServiceClient client_enableSubscriber_vacuum = node.serviceClient<vrep_common::simRosEnableSubscriber>("/vrep/simRosEnableSubscriber");
+    vrep_common::simRosEnableSubscriber srv_enableSubscriber_vacuum;
+    srv_enableSubscriber_vacuum.request.topicName = "/" + nodeName + "/set_vacuum"; // the topic name
+    srv_enableSubscriber_vacuum.request.queueSize = 1; // the subscriber queue size (on V-REP side)
+    srv_enableSubscriber_vacuum.request.streamCmd = simros_strmcmd_set_string_signal; // the subscriber type
+
 #endif
 
 
@@ -2968,7 +3045,8 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
 #elif HAND == 1
         if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
 #elif HAND == 2
-        if((client_enableSubscriber.call(srv_enableSubscriber)) && (srv_enableSubscriber.response.subscriberID != -1))
+        if(client_enableSubscriber.call(srv_enableSubscriber) && (srv_enableSubscriber.response.subscriberID != -1) &&
+         (client_enableSubscriber_vacuum.call(srv_enableSubscriber_vacuum)) && (srv_enableSubscriber_vacuum.response.subscriberID != -1))
 #endif
         {
             // the subscriber was succesfully started on V-REP and V-REP is now listening
@@ -2978,11 +3056,11 @@ bool QNode::execTask(vector<vector<MatrixXd>> &traj_task, vector<vector<vector<d
 #elif HAND == 1
             this->publishData(node, traj.at(k).at(0), timesteps.at(k).at(0), handles, scenarioID, timeTot, tol_stop);
 #elif HAND == 2
-            this->publishData(node, traj.at(k).at(0), timesteps.at(k).at(0), handles, scenarioID, timeTot, tol_stop);
+  //          this->publishData(node, traj.at(k).at(0), timesteps.at(k).at(0), handles, scenarioID, timeTot, tol_stop);
 
 #endif
             // **** Post-movement operations **** //
-            this->posMovementOperation(node, movType, plan, h_attach);
+          //  this->posMovementOperation(node, movType, plan, h_attach);
         }
 
         ros::spinOnce();

@@ -203,46 +203,6 @@ Problem::Problem(int planner_id,Waypoint* wp,Movement* mov,Scenario* scene)
         hump_wp->setWPnr(wp_nr);
         this->h_planner->addWaypoint(hump_wp);
 
-        //test each waypoint function individualy
-        /*
-        vector <double> teste;
-        vector <double>res;
-        teste.push_back(0.2);
-        teste.push_back(0.5);
-        res= this->h_planner->den1_wp(teste,teste,teste,2);
-        res.clear();
-        res= this->h_planner->num1_wp(teste,teste,teste,2);
-        res.clear();
-        double aaa;
-        aaa=this->h_planner->get_eq_den(teste,teste,teste);
-        double bbb;
-        vector <double>xpos;
-        xpos.push_back(10);
-        xpos.push_back(20);
-        bbb= this->h_planner->get_eq_num(teste,teste,teste,xpos,50,0);
-        vector <double> e;
-        e= this->h_planner->get_pi_num(teste,teste,xpos,50,0);
-        e.clear();
-        e = this->h_planner->get_pi_eq(teste,xpos,50,0);
-        vector <vector<double>> x_wp_dof;
-        vector <double> xf_dof;
-        vector <double> x0_dof;
-        e.clear();
-        x_wp_dof.push_back(xpos);
-        xf_dof.push_back(50);
-        x0_dof.push_back(0);
-        e = this->h_planner->get_equations(teste,x_wp_dof,xf_dof,x0_dof);
-        vector <double> x_minus;
-        vector <double> v_minus;
-        vector <double> acc_minus;
-        std::tie(x_minus,v_minus,acc_minus) = this->h_planner->get_eq_minus(teste,xpos, 50,0);
-        vector <vector<double>> x_plus;
-        vector <vector<double>> v_plus;
-        vector <vector<double>> acc_plus;
-        std::tie(x_plus,v_plus,acc_plus) = this->h_planner->get_eq_plus(teste,xpos, 50,0);
-        */
-        //vector <HUMotion::wp_specs> get_wp; hump_wp->getWP(get_wp);
-        //this->h_planner->plan_waypoints(get_wp);
     }
 }
 
@@ -792,6 +752,10 @@ movementPtr Problem::getMovement()
     return this->mov;
 }
 
+waypointPtr Problem::getWaypointsMov()
+{
+    return this->wp;
+}
 
 HUMotion::planning_result_ptr Problem::solve(HUMotion::hump_params &params)
 {
@@ -1078,5 +1042,6 @@ double Problem::getTime()
 {
     return this->exec_time/1000;
 }
+
 
 }// motion_manager
